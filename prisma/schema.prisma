@@ -1,0 +1,265 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum InstrumentStatus {
+  available
+  reserved
+  borrowed
+  placed
+  unavailable
+}
+
+enum ItemCondition {
+  ok
+  need_repair
+  retired
+  lost
+}
+
+model Instrument {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  section      String
+  type         String
+  brand        String?
+  serialNumber String?          @map("serial_number")
+  condition    ItemCondition    @default(ok)
+  status       InstrumentStatus @default(available)
+  isLoanable   Boolean          @default(true) @map("is_loanable")
+  location     String           @default("Sekre")
+  notes        String?
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  borrowingRequests BorrowingRequest[]
+
+  @@map("instruments")
+}
+
+model Good {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  quantity       Int           @default(1)
+  condition      ItemCondition @default(ok)
+  location       String        @default("RB1")
+  registrationNo String?       @map("registration_no")
+  notes          String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@map("goods")
+}
+
+model LoanSetting {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dueDate              DateTime @map("due_date") @db.Date
+  depositAmount        Int      @default(100000) @map("deposit_amount")
+  depositPartialAmount Int      @default(50000) @map("deposit_partial_amount")
+  depositGraceDays     Int      @default(14) @map("deposit_grace_days")
+  bankName             String   @map("bank_name")
+  bankAccount          String   @map("bank_account")
+  bankHolder           String   @map("bank_holder")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy            String?  @map("updated_by") @db.Uuid
+
+  updatedByAdmin Admin? @relation(fields: [updatedBy], references: [id])
+
+  @@map("loan_settings")
+}
+
+enum BorrowingRequestStatus {
+  submitted
+  reviewing
+  contract_generated
+  documents_uploaded
+  ready_to_pickup
+  active
+  returned
+  rejected
+  overdue
+}
+
+model BorrowingRequest {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId   String @unique @map("ticket_id")
+  accessCode String @map("access_code")
+
+  instrumentId            String?     @map("instrument_id") @db.Uuid
+  instrument              Instrument? @relation(fields: [instrumentId], references: [id])
+  instrumentTypeRequested String      @map("instrument_type_requested")
+
+  borrowerName   String @map("borrower_name")
+  borrowerEmail  String @map("borrower_email")
+  borrowerPhone  String @map("borrower_phone")
+  borrowerLineId String @map("borrower_line_id")
+  borrowerYear   String @map("borrower_year")
+
+  borrowerKtpNumber       String? @map("borrower_ktp_number")
+  borrowerAddressKtp      String? @map("borrower_address_ktp")
+  borrowerAddressDomicile String? @map("borrower_address_domicile")
+  borrowerFaculty         String? @map("borrower_faculty")
+
+  guardianName       String? @map("guardian_name")
+  guardianPhone      String? @map("guardian_phone")
+  guardianAddressKtp String? @map("guardian_address_ktp")
+
+  depositRefundAmount Int? @map("deposit_refund_amount")
+
+  status    BorrowingRequestStatus @default(submitted)
+  createdAt DateTime               @default(now()) @map("created_at")
+  updatedAt DateTime               @default(now()) @updatedAt @map("updated_at")
+
+  loanPeriods LoanPeriod[]
+
+  @@map("borrowing_requests")
+}
+
+enum PeriodType {
+  initial
+  extension
+}
+
+model LoanPeriod {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId String           @map("request_id") @db.Uuid
+  request   BorrowingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  periodType          PeriodType @map("period_type")
+  sequence            Int
+  dueDate             DateTime   @map("due_date") @db.Date
+  startDate           DateTime?  @map("start_date") @db.Date
+  actualReturnDate    DateTime?  @map("actual_return_date") @db.Date
+  contractDriveFileId String?    @map("contract_drive_file_id")
+  createdAt           DateTime   @default(now()) @map("created_at")
+
+  documents Document[]
+  addendums Addendum[]
+
+  @@map("loan_periods")
+}
+
+enum DocumentType {
+  signed_contract
+  deposit_proof
+  ktp_scan
+}
+
+enum DocumentReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+model Document {
+  id       String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  periodId String     @map("period_id") @db.Uuid
+  period   LoanPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  type          DocumentType
+  driveFileId   String               @map("drive_file_id")
+  reviewStatus  DocumentReviewStatus @default(pending) @map("review_status")
+  reviewerNotes String?              @map("reviewer_notes")
+  uploadedAt    DateTime             @default(now()) @map("uploaded_at")
+  reviewedAt    DateTime?            @map("reviewed_at")
+
+  @@map("documents")
+}
+
+enum AddendumTiming {
+  initial
+  final
+}
+
+model Addendum {
+  id       String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  periodId String     @map("period_id") @db.Uuid
+  period   LoanPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  timing               AddendumTiming
+  instrumentType       String         @map("instrument_type")
+  instrumentBrand      String?        @map("instrument_brand")
+  instrumentSerial     String?        @map("instrument_serial")
+  completeness         String
+  bodyCondition        String         @map("body_condition")
+  accessoriesCondition String?        @map("accessories_condition")
+  driveFileIds         String[]       @default([]) @map("drive_file_ids")
+  notes                String?
+  submittedAt          DateTime       @default(now()) @map("submitted_at")
+
+  @@map("addendums")
+}
+
+enum AdminRole {
+  super_admin
+  admin
+}
+
+model Admin {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  googleId  String?   @unique @map("google_id")
+  email     String    @unique
+  name      String
+  role      AdminRole @default(admin)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  loanSettingsUpdated LoanSetting[]
+  activityLogs        ActivityLog[]
+  inventorySnapshots  InventorySnapshot[]
+
+  @@map("admins")
+}
+
+enum ActivityAction {
+  assign_instrument
+  approve_documents
+  reject_documents
+  confirm_ready
+  confirm_handover
+  confirm_return
+  confirm_extension
+  update_instrument
+  update_goods
+  update_loan_settings
+  export_snapshot
+  reject_request
+  add_admin
+  remove_admin
+}
+
+enum EntityType {
+  borrowing_request
+  loan_period
+  instrument
+  goods
+  loan_settings
+}
+
+model ActivityLog {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId String @map("admin_id") @db.Uuid
+  admin   Admin  @relation(fields: [adminId], references: [id])
+
+  action     ActivityAction
+  entityType EntityType     @map("entity_type")
+  entityId   String         @map("entity_id") @db.Uuid
+  metadata   Json?
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  @@map("activity_logs")
+}
+
+model InventorySnapshot {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  label       String
+  driveFileId String   @map("drive_file_id")
+  createdBy   String   @map("created_by") @db.Uuid
+  creator     Admin    @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("inventory_snapshots")
+}
