@@ -34,3 +34,43 @@ export async function addAdmin(formData: FormData) {
 
   revalidatePath("/admin/settings");
 }
+
+export async function updateLoanSettings(formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session) throw new Error("Not logged in");
+
+  const existing = await prisma.loanSetting.findFirst();
+
+  const data = {
+    dueDate: new Date(formData.get("dueDate") as string),
+    depositAmount: Number(formData.get("depositAmount")),
+    depositPartialAmount: Number(formData.get("depositPartialAmount")),
+    depositGraceDays: Number(formData.get("depositGraceDays")),
+    bankName: formData.get("bankName") as string,
+    bankAccount: formData.get("bankAccount") as string,
+    bankHolder: formData.get("bankHolder") as string,
+    updatedBy: session.user.id,
+  };
+
+  const updated = existing
+    ? await prisma.loanSetting.update({
+        where: { id: existing.id },
+        data,
+      })
+    : await prisma.loanSetting.create({ data });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "update_loan_settings",
+      entityType: "loan_settings",
+      entityId: updated.id,
+      metadata: existing
+        ? { before: existing, after: updated }
+        : { after: updated },
+    },
+  });
+
+  revalidatePath("/admin/settings");
+}
