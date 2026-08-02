@@ -23,6 +23,7 @@ export default async function GoodDetailPage({
 
       {!isEditing ? (
         <>
+          <p>Brand: {good.brand}</p>
           <p>Quantity: {good.quantity}</p>
           <p>Condition: {good.condition}</p>
           <p>Location: {good.location}</p>
@@ -40,6 +41,11 @@ export default async function GoodDetailPage({
             defaultValue={good.name}
             placeholder="Name"
             required
+          />
+          <input
+            name="brand"
+            defaultValue={good.brand ?? ""}
+            placeholder="Brand"
           />
           <input
             name="quantity"

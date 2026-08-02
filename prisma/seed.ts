@@ -7,15 +7,13 @@ import * as fs from "fs";
 
 XLSX.set_fs(fs);
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const STANDARD_LOCATIONS = ["Sekre", "RB1"];
 
-type Row = {
+type InstrumentRow = {
   Section: string;
   Type: string;
   Brand?: string;
@@ -26,10 +24,26 @@ type Row = {
   Notes?: string;
 };
 
-async function main() {
+type GoodRow = {
+  Name: string;
+  Brand?: string;
+  Quantity?: number;
+  Condition?: string;
+  Location?: string;
+  "Registration No"?: string;
+  Notes?: string;
+};
+
+async function seedInstruments() {
+  const existing = await prisma.instrument.count();
+  if (existing > 0) {
+    console.log(`Instruments already seeded (${existing} rows), skipping.`);
+    return;
+  }
+
   const workbook = XLSX.readFile("prisma/seed-data/instruments.xlsx");
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows: Row[] = XLSX.utils.sheet_to_json(sheet);
+  const rows: InstrumentRow[] = XLSX.utils.sheet_to_json(sheet);
 
   const instruments = rows.map((row) => {
     const condition = (row.Condition || "ok") as string;
@@ -54,10 +68,38 @@ async function main() {
     };
   });
 
-  const result = await prisma.instrument.createMany({
-    data: instruments,
-  });
-  console.log(`Seeded ${result.count} instruments from Excel file.`);
+  const result = await prisma.instrument.createMany({ data: instruments });
+  console.log(`Seeded ${result.count} instruments from xlsx.`);
+}
+
+async function seedGoods() {
+  const existing = await prisma.good.count();
+  if (existing > 0) {
+    console.log(`Goods already seeded (${existing} rows), skipping.`);
+    return;
+  }
+
+  const workbook = XLSX.readFile("prisma/seed-data/goods.xlsx");
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows: GoodRow[] = XLSX.utils.sheet_to_json(sheet);
+
+  const goods = rows.map((row) => ({
+    name: row.Name,
+    brand: row.Brand || null,
+    quantity: row.Quantity || 1,
+    condition: (row.Condition || "ok") as any,
+    location: row.Location || "RB1",
+    registrationNo: row["Registration No"] || null,
+    notes: row.Notes || null,
+  }));
+
+  const result = await prisma.good.createMany({ data: goods });
+  console.log(`Seeded ${result.count} goods from xlsx.`);
+}
+
+async function main() {
+  await seedInstruments();
+  await seedGoods();
 }
 
 async function run() {

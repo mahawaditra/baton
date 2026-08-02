@@ -17,6 +17,7 @@ export async function updateGood(id: string, formData: FormData) {
     where: { id },
     data: {
       name: formData.get("name") as string,
+      brand: formData.get("brand") as string,
       quantity: Number(formData.get("quantity")),
       condition: formData.get("condition") as any,
       location: formData.get("location") as string,

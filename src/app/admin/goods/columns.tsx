@@ -13,6 +13,7 @@ const conditionColor: Record<string, string> = {
 
 export const columns: ColumnDef<Good>[] = [
   { accessorKey: "name", header: "Name" },
+  { accessorKey: "brand", header: "Brand" },
   { accessorKey: "quantity", header: "Qty" },
   {
     accessorKey: "condition",

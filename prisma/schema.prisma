@@ -44,6 +44,7 @@ model Instrument {
 model Good {
   id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name           String
+  brand          String?
   quantity       Int           @default(1)
   condition      ItemCondition @default(ok)
   location       String        @default("RB1")
