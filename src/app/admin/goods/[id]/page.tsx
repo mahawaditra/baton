@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { updateGood } from "./actions";
+import Link from "next/link";
 
 export default async function GoodDetailPage({
   params,
@@ -30,9 +31,9 @@ export default async function GoodDetailPage({
           <p>Registration No.: {good.registrationNo}</p>
           <p>Notes: {good.notes}</p>
 
-          <a href={`/admin/goods/${id}?edit=true`}>
+          <Link href={`/admin/goods/${id}?edit=true`}>
             <button>Edit Good</button>
-          </a>
+          </Link>
         </>
       ) : (
         <form action={updateWithId}>

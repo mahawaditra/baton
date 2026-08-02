@@ -6,6 +6,7 @@ import {
   RiwayatKondisi,
   RiwayatPeminjam,
 } from "./tabs";
+import Link from "next/link";
 
 export default async function InstrumentDetailPage({
   params,
@@ -49,13 +50,15 @@ export default async function InstrumentDetailPage({
           {activeRequest && (
             <p>
               Active loan:{" "}
-              <a href={`/admin/requests/${activeRequest.id}`}>View request →</a>
+              <Link href={`/admin/requests/${activeRequest.id}`}>
+                View request →
+              </Link>
             </p>
           )}
 
-          <a href={`/admin/instruments/${id}?edit=true`}>
+          <Link href={`/admin/instruments/${id}?edit=true`}>
             <button>Edit Instrument</button>
-          </a>
+          </Link>
         </>
       ) : (
         <form action={updateWithId}>
@@ -101,10 +104,14 @@ export default async function InstrumentDetailPage({
       )}
       <div>
         <nav>
-          <a href={`/admin/instruments/${id}?tab=peminjam`}>Riwayat Peminjam</a>
-          <a href={`/admin/instruments/${id}?tab=kondisi`}>Riwayat Kondisi</a>
-          <a href={`/admin/instruments/${id}?tab=addendum`}>Addendum</a>
-          <a href={`/admin/instruments/${id}?tab=aktivitas`}>Aktivitas</a>
+          <Link href={`/admin/instruments/${id}?tab=peminjam`}>
+            Riwayat Peminjam
+          </Link>
+          <Link href={`/admin/instruments/${id}?tab=kondisi`}>
+            Riwayat Kondisi
+          </Link>
+          <Link href={`/admin/instruments/${id}?tab=addendum`}>Addendum</Link>
+          <Link href={`/admin/instruments/${id}?tab=aktivitas`}>Aktivitas</Link>
         </nav>
 
         {tab === "peminjam" && <RiwayatPeminjam instrumentId={id} />}
