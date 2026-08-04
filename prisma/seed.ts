@@ -49,9 +49,11 @@ async function seedInstruments() {
     const condition = (row.Condition || "ok") as string;
     const location = row.Location || "Sekre";
     let status = (row.Status || "available") as string;
+    let isLoanable = true;
 
     if (condition === "retired" || condition === "lost") {
       status = "unavailable";
+      isLoanable = false;
     } else if (!STANDARD_LOCATIONS.includes(location)) {
       status = "placed";
     }
@@ -63,6 +65,7 @@ async function seedInstruments() {
       serialNumber: row["Serial Number"] || null,
       condition: condition as any,
       status: status as any,
+      isLoanable,
       location,
       notes: row.Notes || null,
     };

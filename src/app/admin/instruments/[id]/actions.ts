@@ -17,10 +17,20 @@ export async function updateInstrument(id: string, formData: FormData) {
     where: { id },
   });
 
+  const statusLocked =
+    before.status === "reserved" || before.status === "borrowed";
+
   const condition = formData.get("condition") as string;
   let status = formData.get("status") as string;
+  let isLoanable = formData.get("isLoanable") === "true";
 
   if (condition === "retired" || condition === "lost") {
+    isLoanable = false;
+  }
+
+  if (statusLocked) {
+    status = before.status;
+  } else if (condition === "retired" || condition === "lost") {
     status = "unavailable";
   }
 
@@ -31,6 +41,7 @@ export async function updateInstrument(id: string, formData: FormData) {
       serialNumber: formData.get("serialNumber") as string,
       condition: condition as any,
       status: status as any,
+      isLoanable,
       location: formData.get("location") as string,
       notes: formData.get("notes") as string,
     },

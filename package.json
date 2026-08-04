@@ -15,9 +15,11 @@
     "@tanstack/react-table": "^8.21.3",
     "better-auth": "^1.6.19",
     "dotenv": "^17.4.2",
+    "googleapis": "^174.0.0",
     "nanoid": "^6.0.0",
     "next": "16.2.10",
     "pg": "^8.22.0",
+    "puppeteer": "^25.5.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

@@ -32,6 +32,9 @@ export default async function InstrumentDetailPage({
 
   const updateWithId = updateInstrument.bind(null, id);
 
+  const statusLocked =
+    instrument.status === "reserved" || instrument.status === "borrowed";
+
   return (
     <div>
       <h1>
@@ -44,6 +47,7 @@ export default async function InstrumentDetailPage({
           <p>Serial No.: {instrument.serialNumber}</p>
           <p>Condition: {instrument.condition}</p>
           <p>Status: {instrument.status}</p>
+          <p>Loanable: {instrument.isLoanable ? "Yes" : "No"}</p>
           <p>Location: {instrument.location}</p>
           <p>Notes: {instrument.notes}</p>
 
@@ -80,13 +84,36 @@ export default async function InstrumentDetailPage({
             <option value="lost">Lost</option>
           </select>
 
-          <select name="status" defaultValue={instrument.status}>
+          <select
+            name="status"
+            defaultValue={instrument.status}
+            disabled={statusLocked}
+          >
             <option value="available">Available</option>
             <option value="reserved">Reserved</option>
             <option value="borrowed">Borrowed</option>
             <option value="placed">Placed</option>
             <option value="unavailable">Unavailable</option>
           </select>
+          {statusLocked && (
+            <p style={{ color: "red" }}>
+              Status cannot be changed while instrument is reserved or borrowed.
+            </p>
+          )}
+
+          <label>
+            <input
+              type="checkbox"
+              name="isLoanable"
+              value="true"
+              defaultChecked={instrument.isLoanable}
+            />
+            Loanable
+          </label>
+          <p style={{ fontSize: "0.85em", color: "#666" }}>
+            Note: setting Condition to Retired or Lost will force this off
+            automatically, regardless of this checkbox.
+          </p>
 
           <input
             name="location"

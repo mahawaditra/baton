@@ -53,7 +53,7 @@ export function RequestForm() {
           </option>
         ))}
       </select>
-      <input name="year" type="text" placeholder="Angkatan" required />
+      <input name="year" type="text" placeholder="Year (angkatan)" required />
       <button type="submit" disabled={isPending}>
         {isPending ? "Submitting..." : "Submit Request"}
       </button>

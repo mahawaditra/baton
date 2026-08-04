@@ -68,6 +68,19 @@ model LoanSetting {
   updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
   updatedBy            String?  @map("updated_by") @db.Uuid
 
+  signatoryName            String
+  signatoryPhone           String
+  signatoryAddressKtp      String
+  signatoryAddressDomicile String
+  signatoryFaculty         String
+  signatoryYear            String
+  signatorySection         String
+  signatoryKtpNumber       String
+  signatoryImageDriveId    String?
+
+  currentYearFolderId   String?
+  currentYearFolderYear Int?
+
   updatedByAdmin Admin? @relation(fields: [updatedBy], references: [id])
 
   @@map("loan_settings")
@@ -93,6 +106,7 @@ model BorrowingRequest {
   instrumentId            String?     @map("instrument_id") @db.Uuid
   instrument              Instrument? @relation(fields: [instrumentId], references: [id])
   instrumentTypeRequested String      @map("instrument_type_requested")
+  instrumentConfirmed     Boolean     @default(false) @map("instrument_confirmed")
 
   borrowerName   String @map("borrower_name")
   borrowerEmail  String @map("borrower_email")
@@ -266,6 +280,7 @@ model Verification {
 
 enum ActivityAction {
   assign_instrument
+  notify_available
   approve_documents
   reject_documents
   confirm_ready

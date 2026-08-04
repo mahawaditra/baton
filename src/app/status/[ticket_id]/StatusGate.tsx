@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { verifyAccessCode } from "./actions";
+import { getContractPdf, verifyAccessCode } from "./actions";
+import { Stage2Form } from "./Stage2Form";
 
 type RequestData = {
   ticketId: string;
   borrowerName: string;
   status: string;
   instrumentTypeRequested: string;
+  instrumentConfirmed: boolean;
 };
 
 const STEP_MAP: Record<string, number | "exception"> = {
@@ -68,7 +70,7 @@ function ProgressBar({ status }: { status: string }) {
 export function StatusGate({ ticketId }: { ticketId: string }) {
   const [data, setData] = useState<RequestData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [checking, setChecking] = useState<boolean>(true);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     const savedCode = localStorage.getItem(`access_code_${ticketId}`);
@@ -76,7 +78,6 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
       setChecking(false);
       return;
     }
-
     verifyAccessCode(ticketId, savedCode).then((result) => {
       if (result.success) {
         setData(result.request);
@@ -100,17 +101,44 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
     }
   }
 
-  if (checking) {
-    return <p>Checking access code...</p>;
-  }
+  if (checking) return <p>Loading...</p>;
 
   if (data) {
+    if (data.status === "reviewing" && data.instrumentConfirmed) {
+      return <Stage2Form ticketId={data.ticketId} />;
+    }
+
     return (
       <div>
         <h1>Status for {data.borrowerName}</h1>
         <p>Ticket: {data.ticketId}</p>
         <p>Instrument Requested: {data.instrumentTypeRequested}</p>
         <ProgressBar status={data.status} />
+        {[
+          "contract_generated",
+          "documents_uploaded",
+          "ready_to_pickup",
+          "active",
+        ].includes(data.status) && (
+          <button
+            onClick={async () => {
+              const savedCode = localStorage.getItem(`access_code_${ticketId}`);
+              if (!savedCode) return;
+
+              const result = await getContractPdf(ticketId, savedCode);
+              if (result.success) {
+                const link = document.createElement("a");
+                link.href = result.dataUrl;
+                link.download = result.fileName;
+                link.click();
+              } else {
+                alert(result.error);
+              }
+            }}
+          >
+            Download Contract
+          </button>
+        )}
       </div>
     );
   }
