@@ -3,37 +3,39 @@
 import { useState, useEffect } from "react";
 import { getContractPdf, verifyAccessCode } from "./actions";
 import { Stage2Form } from "./Stage2Form";
+import { UploadDocumentsForm } from "./UploadDocumentsForm";
+import { RequestData } from "./types";
+import { AddendumForm } from "./AddendumForm";
 
-type RequestData = {
-  ticketId: string;
-  borrowerName: string;
-  status: string;
-  instrumentTypeRequested: string;
-  instrumentConfirmed: boolean;
-};
-
-const STEP_MAP: Record<string, number | "exception"> = {
-  submitted: 1,
-  reviewing: 1,
-  contract_generated: 2,
-  documents_uploaded: 2,
-  ready_to_pickup: 3,
-  active: 5,
-  returned: 5,
-  rejected: "exception",
-  overdue: "exception",
-};
+function getStep(
+  status: string,
+  hasInitialAddendum: boolean,
+): number | "exception" {
+  if (status === "rejected" || status === "overdue") return "exception";
+  if (status === "submitted" || status === "reviewing") return 1;
+  if (status === "contract_generated" || status === "documents_uploaded")
+    return 2;
+  if (status === "ready_to_pickup") return hasInitialAddendum ? 4 : 3;
+  if (status === "active" || status === "returned") return 5;
+  return 1;
+}
 
 const STEP_LABELS = [
   "Request Submitted",
   "Complete Data & Documents",
   "Instrument Pickup",
-  "Fill Initial Condition",
+  "Fill Addendum",
   "Currently Borrowed",
 ];
 
-function ProgressBar({ status }: { status: string }) {
-  const step = STEP_MAP[status];
+function ProgressBar({
+  status,
+  hasInitialAddendum,
+}: {
+  status: string;
+  hasInitialAddendum: boolean;
+}) {
+  const step = getStep(status, hasInitialAddendum);
 
   if (step === "exception") {
     return (
@@ -72,20 +74,21 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
 
-  useEffect(() => {
+  async function refetch() {
     const savedCode = localStorage.getItem(`access_code_${ticketId}`);
-    if (!savedCode) {
-      setChecking(false);
-      return;
+    if (!savedCode) return;
+
+    const result = await verifyAccessCode(ticketId, savedCode);
+    if (result.success) {
+      setData(result.request);
+    } else {
+      localStorage.removeItem(`access_code_${ticketId}`);
+      setData(null);
     }
-    verifyAccessCode(ticketId, savedCode).then((result) => {
-      if (result.success) {
-        setData(result.request);
-      } else {
-        localStorage.removeItem(`access_code_${ticketId}`);
-      }
-      setChecking(false);
-    });
+  }
+
+  useEffect(() => {
+    refetch().finally(() => setChecking(false));
   }, [ticketId]);
 
   async function handleSubmit(formData: FormData) {
@@ -105,7 +108,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
 
   if (data) {
     if (data.status === "reviewing" && data.instrumentConfirmed) {
-      return <Stage2Form ticketId={data.ticketId} />;
+      return <Stage2Form ticketId={data.ticketId} onSuccess={refetch} />;
     }
 
     return (
@@ -113,13 +116,14 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
         <h1>Status for {data.borrowerName}</h1>
         <p>Ticket: {data.ticketId}</p>
         <p>Instrument Requested: {data.instrumentTypeRequested}</p>
-        <ProgressBar status={data.status} />
-        {[
-          "contract_generated",
-          "documents_uploaded",
-          "ready_to_pickup",
-          "active",
-        ].includes(data.status) && (
+        <ProgressBar
+          status={data.status}
+          hasInitialAddendum={data.hasInitialAddendum}
+        />
+        {data.status === "active" && data.dueDate && (
+          <p>Due Date: {new Date(data.dueDate).toLocaleDateString("id-ID")}</p>
+        )}
+        {data.status === "contract_generated" && (
           <button
             onClick={async () => {
               const savedCode = localStorage.getItem(`access_code_${ticketId}`);
@@ -138,6 +142,12 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
           >
             Download Contract
           </button>
+        )}
+        {data.status === "contract_generated" && (
+          <UploadDocumentsForm ticketId={data.ticketId} />
+        )}
+        {data.status === "ready_to_pickup" && !data.hasInitialAddendum && (
+          <AddendumForm ticketId={data.ticketId} onSuccess={refetch} />
         )}
       </div>
     );

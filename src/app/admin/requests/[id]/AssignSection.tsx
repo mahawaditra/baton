@@ -3,15 +3,18 @@
 import { useState } from "react";
 import { assignInstrument } from "./actions";
 import type { Instrument } from "@/generated/prisma/client";
+import { conditionColor } from "@/lib/constants";
 
 export function AssignSection({
   requestId,
   currentInstrument,
   candidates,
+  disabled = false,
 }: {
   requestId: string;
   currentInstrument: Instrument | null;
   candidates: Instrument[];
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [hovering, setHovering] = useState(false);
@@ -27,6 +30,7 @@ export function AssignSection({
         onClick={() => setOpen(true)}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
+        disabled={disabled}
       >
         {currentInstrument ? (hovering ? "Reassign?" : "Assigned!") : "Assign"}
       </button>
@@ -60,7 +64,13 @@ export function AssignSection({
                   <tr key={inst.id}>
                     <td>{inst.brand}</td>
                     <td>{inst.serialNumber}</td>
-                    <td>{inst.condition}</td>
+                    <td>
+                      <span
+                        className={`rounded px-2 py-1 text-xs ${conditionColor[inst.condition]}`}
+                      >
+                        {inst.condition}
+                      </span>
+                    </td>
                     <td>{inst.location}</td>
                     <td>{inst.notes}</td>
                     <td>

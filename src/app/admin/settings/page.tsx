@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { addAdmin, updateLoanSettings } from "./actions";
+import { CompressedImageInput } from "./CompressedImageInput";
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -82,6 +83,85 @@ export default async function SettingsPage() {
               defaultValue={loanSettings?.bankHolder ?? ""}
               required
             />
+          </label>
+          <h3>Signatory Data (PIHAK PERTAMA)</h3>
+          <label>
+            Name
+            <input
+              name="signatoryName"
+              type="text"
+              defaultValue={loanSettings?.signatoryName ?? ""}
+              required
+            />
+          </label>
+          <label>
+            Phone
+            <input
+              name="signatoryPhone"
+              type="text"
+              defaultValue={loanSettings?.signatoryPhone ?? ""}
+              required
+            />
+          </label>
+          <label>
+            Address (as per KTP)
+            <input
+              name="signatoryAddressKtp"
+              type="text"
+              defaultValue={loanSettings?.signatoryAddressKtp ?? ""}
+              required
+            />
+          </label>
+          <label>
+            Current Address
+            <input
+              name="signatoryAddressDomicile"
+              type="text"
+              defaultValue={loanSettings?.signatoryAddressDomicile ?? ""}
+              required
+            />
+          </label>
+          <label>
+            Faculty/Major
+            <input
+              name="signatoryFaculty"
+              type="text"
+              defaultValue={loanSettings?.signatoryFaculty ?? ""}
+              required
+            />
+          </label>
+          <label>
+            Batch/Year
+            <input
+              name="signatoryYear"
+              type="text"
+              defaultValue={loanSettings?.signatoryYear ?? ""}
+              required
+            />
+          </label>
+          <label>
+            Section/Instrument
+            <input
+              name="signatorySection"
+              type="text"
+              defaultValue={loanSettings?.signatorySection ?? ""}
+              required
+            />
+          </label>
+          <label>
+            KTP Number
+            <input
+              name="signatoryKtpNumber"
+              type="text"
+              defaultValue={loanSettings?.signatoryKtpNumber ?? ""}
+              required
+            />
+          </label>
+          <label>
+            Signature Image{" "}
+            {loanSettings?.signatoryImageDriveId &&
+              "(already uploaded — leave empty to keep current)"}
+            <CompressedImageInput name="signatoryImage" format="image/png" />
           </label>
           <button type="submit">Save Loan Settings</button>
         </form>

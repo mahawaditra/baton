@@ -65,7 +65,7 @@ export async function getOrCreateYearFolder(year: number): Promise<string> {
   return folderId;
 }
 
-async function getOrCreateFolder(
+export async function getOrCreateFolder(
   name: string,
   parentId: string,
 ): Promise<string> {
@@ -135,14 +135,18 @@ export async function uploadFile(
   return res.data.id!;
 }
 
-export async function downloadFileAsBase64(
-  fileId: string,
-  mimeType: string,
-): Promise<string> {
+export async function fetchFileBytes(fileId: string): Promise<Buffer> {
   const res = await drive.files.get(
     { fileId, alt: "media" },
     { responseType: "arraybuffer" },
   );
-  const buffer = Buffer.from(res.data as ArrayBuffer);
+  return Buffer.from(res.data as ArrayBuffer);
+}
+
+export async function downloadFileAsBase64(
+  fileId: string,
+  mimeType: string,
+): Promise<string> {
+  const buffer = await fetchFileBytes(fileId);
   return `data:${mimeType};base64,${buffer.toString("base64")}`;
 }

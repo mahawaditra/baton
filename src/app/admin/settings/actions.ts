@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { getOrCreateFolder, uploadFile } from "@/lib/drive";
+import { driveTimestamp } from "@/lib/format";
 
 export async function addAdmin(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -42,6 +44,23 @@ export async function updateLoanSettings(formData: FormData) {
 
   const existing = await prisma.loanSetting.findFirst();
 
+  let signatoryImageDriveId = existing?.signatoryImageDriveId ?? null;
+
+  const imageFile = formData.get("signatoryImage") as File;
+  if (imageFile?.size) {
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    const assetsFolder = await getOrCreateFolder(
+      "Assets",
+      process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
+    );
+    signatoryImageDriveId = await uploadFile(
+      `Signature_${driveTimestamp()}.png`,
+      imageFile.type,
+      buffer,
+      assetsFolder,
+    );
+  }
+
   const data = {
     dueDate: new Date(formData.get("dueDate") as string),
     depositAmount: Number(formData.get("depositAmount")),
@@ -51,6 +70,18 @@ export async function updateLoanSettings(formData: FormData) {
     bankAccount: formData.get("bankAccount") as string,
     bankHolder: formData.get("bankHolder") as string,
     updatedBy: session.user.id,
+
+    signatoryName: formData.get("signatoryName") as string,
+    signatoryPhone: formData.get("signatoryPhone") as string,
+    signatoryAddressKtp: formData.get("signatoryAddressKtp") as string,
+    signatoryAddressDomicile: formData.get(
+      "signatoryAddressDomicile",
+    ) as string,
+    signatoryFaculty: formData.get("signatoryFaculty") as string,
+    signatoryYear: formData.get("signatoryYear") as string,
+    signatorySection: formData.get("signatorySection") as string,
+    signatoryKtpNumber: formData.get("signatoryKtpNumber") as string,
+    signatoryImageDriveId,
   };
 
   const updated = existing

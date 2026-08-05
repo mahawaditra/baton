@@ -68,18 +68,18 @@ model LoanSetting {
   updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
   updatedBy            String?  @map("updated_by") @db.Uuid
 
-  signatoryName            String
-  signatoryPhone           String
-  signatoryAddressKtp      String
-  signatoryAddressDomicile String
-  signatoryFaculty         String
-  signatoryYear            String
-  signatorySection         String
-  signatoryKtpNumber       String
-  signatoryImageDriveId    String?
+  signatoryName            String  @map("signatory_name")
+  signatoryPhone           String  @map("signatory_phone")
+  signatoryAddressKtp      String  @map("signatory_address_ktp")
+  signatoryAddressDomicile String  @map("signatory_address_domicile")
+  signatoryFaculty         String  @map("signatory_faculty")
+  signatoryYear            String  @map("signatory_year")
+  signatorySection         String  @map("signatory_section")
+  signatoryKtpNumber       String  @map("signatory_ktp_number")
+  signatoryImageDriveId    String? @map("signatory_image_drive_id")
 
-  currentYearFolderId   String?
-  currentYearFolderYear Int?
+  currentYearFolderId   String? @map("current_year_folder_id")
+  currentYearFolderYear Int?    @map("current_year_folder_year")
 
   updatedByAdmin Admin? @relation(fields: [updatedBy], references: [id])
 
@@ -123,7 +123,8 @@ model BorrowingRequest {
   guardianPhone      String? @map("guardian_phone")
   guardianAddressKtp String? @map("guardian_address_ktp")
 
-  depositRefundAmount Int? @map("deposit_refund_amount")
+  depositRefundAmount Int?    @map("deposit_refund_amount")
+  rejectionReason     String? @map("rejection_reason")
 
   status    BorrowingRequestStatus @default(submitted)
   createdAt DateTime               @default(now()) @map("created_at")
@@ -177,6 +178,7 @@ model Document {
 
   type          DocumentType
   driveFileId   String               @map("drive_file_id")
+  mimeType      String               @map("mime_type")
   reviewStatus  DocumentReviewStatus @default(pending) @map("review_status")
   reviewerNotes String?              @map("reviewer_notes")
   uploadedAt    DateTime             @default(now()) @map("uploaded_at")
@@ -203,6 +205,7 @@ model Addendum {
   bodyCondition        String         @map("body_condition")
   accessoriesCondition String?        @map("accessories_condition")
   driveFileIds         String[]       @default([]) @map("drive_file_ids")
+  confirmedTruthful    Boolean        @default(false) @map("confirmed_truthful")
   notes                String?
   submittedAt          DateTime       @default(now()) @map("submitted_at")
 

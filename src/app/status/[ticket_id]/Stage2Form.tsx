@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { submitStage2 } from "./actions";
 
 const initialState = {
@@ -8,13 +8,21 @@ const initialState = {
   error: null,
 };
 
-export function Stage2Form({ ticketId }: { ticketId: string }) {
+export function Stage2Form({
+  ticketId,
+  onSuccess,
+}: {
+  ticketId: string;
+  onSuccess: () => void;
+}) {
   const action = submitStage2.bind(null, ticketId);
   const [state, formAction, isPending] = useActionState(action, initialState);
 
-  if (state.success) {
-    return <p>Contract generated! (Download link coming soon — Piece C)</p>;
-  }
+  useEffect(() => {
+    if (state.success) {
+      onSuccess();
+    }
+  }, [state.success, onSuccess]);
 
   return (
     <form action={formAction}>
