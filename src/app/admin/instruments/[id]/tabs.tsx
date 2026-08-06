@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { formatActivityLog } from "@/lib/format";
 
 export async function RiwayatPeminjam({
   instrumentId,
@@ -54,8 +55,11 @@ export async function RiwayatKondisi({
     <ul>
       {logs.map((log) => (
         <li key={log.id}>
-          {log.admin.name} — {log.createdAt.toLocaleDateString()}
-          <pre>{JSON.stringify(log.metadata, null, 2)}</pre>
+          {log.admin.name} {formatActivityLog(log)} —{" "}
+          {log.createdAt.toLocaleString("id-ID", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}
         </li>
       ))}
     </ul>
@@ -111,7 +115,11 @@ export async function RiwayatAktivitas({
     <ul>
       {logs.map((log) => (
         <li key={log.id}>
-          {log.admin.name} — {log.action} — {log.createdAt.toLocaleString()}
+          {log.admin.name} {formatActivityLog(log)} —{" "}
+          {log.createdAt.toLocaleString("id-ID", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}
         </li>
       ))}
     </ul>
