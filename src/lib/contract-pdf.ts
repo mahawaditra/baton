@@ -99,7 +99,7 @@ export function buildContractHTML(data: ContractData): string {
   ol li { margin-bottom: 10px; text-align: justify; }
   .signature-block { display: flex; justify-content: space-between; margin-top: 40px; }
   .signature-col { width: 45%; text-align: center; }
-  .signature-img { height: 60px; margin: 8px 0; }
+  .signature-img { height: 60px; margin: 8px auto; display: block; }
   .signature-line { height: 60px; margin: 8px 0; }
 </style>
 </head>

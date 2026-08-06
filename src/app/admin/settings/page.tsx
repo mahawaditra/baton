@@ -104,6 +104,15 @@ export default async function SettingsPage() {
             />
           </label>
           <label>
+            LINE ID
+            <input
+              name="signatoryLineId"
+              type="text"
+              defaultValue={loanSettings?.signatoryLineId ?? ""}
+              required
+            />
+          </label>
+          <label>
             Address (as per KTP)
             <input
               name="signatoryAddressKtp"
@@ -131,7 +140,7 @@ export default async function SettingsPage() {
             />
           </label>
           <label>
-            Batch/Year
+            Year
             <input
               name="signatoryYear"
               type="text"

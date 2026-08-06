@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { sendEmail } from "@/lib/mail";
 
 export async function assignInstrument(
   requestId: string,
@@ -71,10 +72,16 @@ export async function confirmAvailable(requestId: string) {
     where: { id: requestId },
     data: { instrumentConfirmed: true },
   });
-  console.log(
-    `[EMAIL STUB] Notify ${request.borrowerEmail}: instrument confirmed, please visit /status/${request.ticketId} to complete Stage 2 and generate your contract.`,
-  );
-
+  await sendEmail({
+    to: request.borrowerEmail,
+    subject: "Instrumen tersedia — lengkapi data kontrak",
+    html: `
+    <p>Halo ${request.borrowerName},</p>
+    <p>Instrumen yang kamu ajukan sekarang tersedia.</p>
+    <p>Silakan lengkapi data kontrak di link berikut:</p>
+    <p><a href="${process.env.BETTER_AUTH_URL}/status/${request.ticketId}">Lanjut ke Tahap 2</a></p>
+  `,
+  });
   await prisma.activityLog.create({
     data: {
       adminId: session.user.id,
@@ -120,9 +127,16 @@ export async function rejectRequest(requestId: string, formData: FormData) {
     });
   });
 
-  console.log(
-    `[EMAIL STUB] Notify ${request.borrowerEmail}: your request has been rejected. Reason: ${reason}`,
-  );
+  await sendEmail({
+    to: request.borrowerEmail,
+    subject: "Pengajuan peminjaman tidak dapat diproses.",
+    html: `
+    <p>Halo ${request.borrowerName},</p>
+    <p>Mohon maaf, pengajuan peminjaman instrumen kamu (tiket ${request.ticketId}) tidak dapat kami proses.</p>
+    <p>Alasan: ${reason}</p>
+    <p>Silakan hubungi staf Logistik OSUI untuk solusi lebih lanjut.</p>
+  `,
+  });
 
   await prisma.activityLog.create({
     data: {
@@ -172,9 +186,19 @@ export async function reviewDocument(
       where: { id: doc.period.requestId },
       data: { status: "contract_generated" },
     });
-    console.log(
-      `[EMAIL STUB] Notify borrower: document ${doc.type} rejected. Notes: ${notes}`,
-    );
+    const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow({
+      where: { id: doc.period.requestId },
+    });
+    await sendEmail({
+      to: requestForEmail.borrowerEmail,
+      subject: "Dokumen ditolak — perlu direvisi",
+      html: `
+      <p>Halo ${requestForEmail.borrowerName},</p>
+      <p>Dokumen ${doc.type} yang kamu upload ada yang perlu direvisi.</p>
+      <p>Catatan admin: ${notes}</p>
+       <p>Silakan upload ulang dokumen di <a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">halaman status kamu</a>.</p>
+      `,
+    });
   }
 
   await prisma.activityLog.create({
@@ -227,9 +251,19 @@ export async function confirmDocumentsReviewed(requestId: string) {
     data: { status: "ready_to_pickup" },
   });
 
-  console.log(
-    `[EMAIL STUB] Notify borrower: all documents approved. Your request is now ready for pickup at Sekre.`,
-  );
+  const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow({
+    where: { id: requestId },
+  });
+  await sendEmail({
+    to: requestForEmail.borrowerEmail,
+    subject: "Dokumen disetujui — siap diambil",
+    html: `
+    <p>Halo ${requestForEmail.borrowerName},</p>
+    <p>Dokumen kamu sudah disetujui dan instrumen sudah siap diambil di Sekre atau Pusgiwa UI!</p>
+    <p>Staf Logistik OSUI akan menghubungi kamu untuk koordinasi waktu pengambilan. Jika dalam waktu dekat belum ada kabar, kamu bisa menghubungi staf Logistik OSUI langsung melalui LINE.</p>
+    <p><a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">Lihat halaman status</a> untuk mengisi addendum setelah menerima instrumen.</p>
+    `,
+  });
 
   await prisma.activityLog.create({
     data: {
@@ -299,6 +333,143 @@ export async function confirmHandover(requestId: string) {
       action: "confirm_handover",
       entityType: "borrowing_request",
       entityId: requestId,
+    },
+  });
+
+  revalidatePath(`/admin/requests/${requestId}`);
+}
+
+export async function confirmExtension(requestId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    throw new Error("Not logged in");
+  }
+
+  const latestPeriod = await prisma.loanPeriod.findFirst({
+    where: { requestId },
+    orderBy: { sequence: "desc" },
+  });
+  if (!latestPeriod || latestPeriod.periodType !== "extension") {
+    throw new Error("No pending extension period found.");
+  }
+
+  const addendum = await prisma.addendum.findFirst({
+    where: { periodId: latestPeriod.id, timing: "initial" },
+  });
+  if (!addendum) {
+    throw new Error("Borrower has not submitted the initial addendum yet.");
+  }
+
+  await prisma.loanPeriod.update({
+    where: { id: latestPeriod.id },
+    data: { startDate: new Date() },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "confirm_extension",
+      entityType: "borrowing_request",
+      entityId: requestId,
+    },
+  });
+
+  revalidatePath(`/admin/requests/${requestId}`);
+}
+
+export async function confirmReturn(requestId: string, formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    throw new Error("Not logged in");
+  }
+
+  const request = await prisma.borrowingRequest.findUniqueOrThrow({
+    where: { id: requestId },
+  });
+  if (request.status !== "active" || !request.instrumentId) {
+    throw new Error("Request is not active.");
+  }
+
+  const latestPeriod = await prisma.loanPeriod.findFirst({
+    where: { requestId },
+    orderBy: { sequence: "desc" },
+  });
+  if (!latestPeriod) {
+    throw new Error("No loan period found for this request.");
+  }
+
+  const finalAddendum = await prisma.addendum.findFirst({
+    where: { periodId: latestPeriod.id, timing: "final" },
+  });
+  if (!finalAddendum) {
+    throw new Error("Borrower has not submitted the final addendum yet.");
+  }
+
+  const condition = formData.get("condition") as
+    | "ok"
+    | "need_repair"
+    | "retired"
+    | "lost";
+
+  const requestedStatus = formData.get("status") as "available" | "unavailable";
+  const location = formData.get("location") as string;
+
+  const status =
+    condition === "retired" || condition === "lost"
+      ? "unavailable"
+      : requestedStatus;
+
+  const settings = await prisma.loanSetting.findFirstOrThrow();
+  const actualReturnDate = new Date();
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const daysLate = Math.floor(
+    (actualReturnDate.getTime() - latestPeriod.dueDate.getTime()) / msPerDay,
+  );
+
+  const depositRefundAmount =
+    daysLate <= 0
+      ? settings.depositAmount
+      : daysLate <= settings.depositGraceDays
+        ? settings.depositPartialAmount
+        : 0;
+
+  await prisma.$transaction([
+    prisma.loanPeriod.update({
+      where: { id: latestPeriod.id },
+      data: { actualReturnDate },
+    }),
+    prisma.borrowingRequest.update({
+      where: { id: requestId },
+      data: { status: "returned", depositRefundAmount },
+    }),
+    prisma.instrument.update({
+      where: { id: request.instrumentId },
+      data: { condition, status, location },
+    }),
+  ]);
+
+  const depositMessage =
+    depositRefundAmount > 0
+      ? `<p>Deposit yang akan dikembalikan: <strong>Rp${depositRefundAmount.toLocaleString("id-ID")}</strong>. Staf Logistik OSUI akan menghubungi kamu untuk proses transfer balik.</p>`
+      : `<p>Berdasarkan tanggal pengembalian, deposit yang kamu setorkan tidak dapat dikembalikan sesuai ketentuan peminjaman.</p>`;
+
+  await sendEmail({
+    to: request.borrowerEmail,
+    subject: "Pengembalian dikonfirmasi — terima kasih!",
+    html: `
+    <p>Halo ${request.borrowerName},</p>
+    <p>Pengembalian instrumen kamu sudah dikonfirmasi. Terima kasih sudah mengembalikan instrumennya!</p>
+    ${depositMessage}
+    `,
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "confirm_return",
+      entityType: "borrowing_request",
+      entityId: requestId,
+      metadata: { condition, status, depositRefundAmount, daysLate },
     },
   });
 

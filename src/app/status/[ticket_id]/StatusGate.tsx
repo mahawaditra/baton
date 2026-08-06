@@ -6,36 +6,40 @@ import { Stage2Form } from "./Stage2Form";
 import { UploadDocumentsForm } from "./UploadDocumentsForm";
 import { RequestData } from "./types";
 import { AddendumForm } from "./AddendumForm";
+import { ExtendForm } from "./ExtendForm";
 
 function getStep(
   status: string,
+  instrumentConfirmed: boolean,
   hasInitialAddendum: boolean,
 ): number | "exception" {
   if (status === "rejected" || status === "overdue") return "exception";
-  if (status === "submitted" || status === "reviewing") return 1;
+  if (status === "submitted") return 1;
+  if (status === "reviewing") return instrumentConfirmed ? 2 : 1; // 👈 dipecah
   if (status === "contract_generated" || status === "documents_uploaded")
     return 2;
-  if (status === "ready_to_pickup") return hasInitialAddendum ? 4 : 3;
-  if (status === "active" || status === "returned") return 5;
+  if (status === "ready_to_pickup") return 3;
+  if (status === "active" || status === "returned") return 4;
   return 1;
 }
 
 const STEP_LABELS = [
   "Request Submitted",
   "Complete Data & Documents",
-  "Instrument Pickup",
-  "Fill Addendum",
+  "Pickup & Fill Addendum",
   "Currently Borrowed",
 ];
 
 function ProgressBar({
   status,
   hasInitialAddendum,
+  instrumentConfirmed,
 }: {
   status: string;
   hasInitialAddendum: boolean;
+  instrumentConfirmed: boolean;
 }) {
-  const step = getStep(status, hasInitialAddendum);
+  const step = getStep(status, instrumentConfirmed, hasInitialAddendum);
 
   if (step === "exception") {
     return (
@@ -53,6 +57,8 @@ function ProgressBar({
         const stepNumber = index + 1;
         const isActive = stepNumber === step;
         const isDone = stepNumber < step;
+        const displayLabel =
+          stepNumber === 4 && status === "returned" ? "Returned" : label;
         return (
           <li
             key={label}
@@ -61,7 +67,7 @@ function ProgressBar({
               opacity: isDone || isActive ? 1 : 0.4,
             }}
           >
-            {stepNumber}. {label}
+            {stepNumber}. {displayLabel}
           </li>
         );
       })}
@@ -73,6 +79,8 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   const [data, setData] = useState<RequestData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
+  const [showExtendForm, setShowExtendForm] = useState(false);
+  const [showReturnForm, setShowReturnForm] = useState(false);
 
   async function refetch() {
     const savedCode = localStorage.getItem(`access_code_${ticketId}`);
@@ -107,10 +115,6 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   if (checking) return <p>Loading...</p>;
 
   if (data) {
-    if (data.status === "reviewing" && data.instrumentConfirmed) {
-      return <Stage2Form ticketId={data.ticketId} onSuccess={refetch} />;
-    }
-
     return (
       <div>
         <h1>Status for {data.borrowerName}</h1>
@@ -119,11 +123,81 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
         <ProgressBar
           status={data.status}
           hasInitialAddendum={data.hasInitialAddendum}
+          instrumentConfirmed={data.instrumentConfirmed}
         />
+        {data.status === "reviewing" && data.instrumentConfirmed && (
+          <Stage2Form ticketId={data.ticketId} onSuccess={refetch} />
+        )}
         {data.status === "active" && data.dueDate && (
           <p>Due Date: {new Date(data.dueDate).toLocaleDateString("id-ID")}</p>
         )}
-        {data.status === "contract_generated" && (
+        {data.canExtend && !showExtendForm && (
+          <button onClick={() => setShowExtendForm(true)}>Perpanjang</button>
+        )}
+        {data.status === "active" &&
+          data.hasInitialAddendum &&
+          !data.hasFinalAddendum &&
+          !showReturnForm && (
+            <button onClick={() => setShowReturnForm(true)}>
+              {data.canExtend ||
+              !data.dueDate ||
+              new Date(data.dueDate) < new Date()
+                ? "Kembalikan"
+                : "Kembalikan Lebih Awal"}
+            </button>
+          )}
+
+        {data.status === "active" && data.hasFinalAddendum && (
+          <p>
+            Addendum pengembalian sudah dikirim. Menunggu admin konfirmasi
+            pengembalian di Sekre.
+          </p>
+        )}
+        {(data.status === "submitted" || data.status === "reviewing") &&
+          !data.instrumentConfirmed && (
+            <p>
+              Admin sedang mereview pengajuan dan mengecek ketersediaan
+              instrumen kamu.
+            </p>
+          )}
+
+        {data.status === "documents_uploaded" && (
+          <p>Dokumen kamu sedang direview admin.</p>
+        )}
+
+        {data.status === "ready_to_pickup" && data.hasInitialAddendum && (
+          <p>Addendum sudah dikirim. Menunggu konfirmasi admin.</p>
+        )}
+
+        {data.isExtensionPeriod &&
+          !data.needsExtensionDocuments &&
+          !data.canFillExtensionAddendum &&
+          !data.hasInitialAddendum && (
+            <p>Dokumen perpanjangan sedang direview admin.</p>
+          )}
+
+        {showReturnForm && (
+          <AddendumForm
+            ticketId={data.ticketId}
+            timing="final"
+            onSuccess={() => {
+              setShowReturnForm(false);
+              refetch();
+            }}
+          />
+        )}
+
+        {showExtendForm && (
+          <ExtendForm
+            data={data}
+            onSuccess={() => {
+              setShowExtendForm(false);
+              refetch();
+            }}
+          />
+        )}
+        {(data.status === "contract_generated" ||
+          data.needsExtensionDocuments) && (
           <button
             onClick={async () => {
               const savedCode = localStorage.getItem(`access_code_${ticketId}`);
@@ -143,10 +217,16 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             Download Contract
           </button>
         )}
-        {data.status === "contract_generated" && (
-          <UploadDocumentsForm ticketId={data.ticketId} />
+        {(data.status === "contract_generated" ||
+          data.needsExtensionDocuments) && (
+          <UploadDocumentsForm
+            ticketId={data.ticketId}
+            isExtension={data.needsExtensionDocuments}
+            onSuccess={refetch}
+          />
         )}
-        {data.status === "ready_to_pickup" && !data.hasInitialAddendum && (
+        {((data.status === "ready_to_pickup" && !data.hasInitialAddendum) ||
+          data.canFillExtensionAddendum) && (
           <AddendumForm ticketId={data.ticketId} onSuccess={refetch} />
         )}
       </div>

@@ -6,4 +6,16 @@ export type RequestData = {
   instrumentConfirmed: boolean;
   hasInitialAddendum: boolean;
   dueDate: Date | null;
+  canExtend: boolean;
+  isExtensionPeriod: boolean;
+  needsExtensionDocuments: boolean;
+  canFillExtensionAddendum: boolean;
+  hasFinalAddendum: boolean;
+  borrowerKtpNumber: string | null;
+  borrowerAddressKtp: string | null;
+  borrowerAddressDomicile: string | null;
+  borrowerFaculty: string | null;
+  guardianName: string | null;
+  guardianPhone: string | null;
+  guardianAddressKtp: string | null;
 };

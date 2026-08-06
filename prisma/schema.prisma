@@ -70,6 +70,7 @@ model LoanSetting {
 
   signatoryName            String  @map("signatory_name")
   signatoryPhone           String  @map("signatory_phone")
+  signatoryLineId          String?  @map("signatory_line_id")
   signatoryAddressKtp      String  @map("signatory_address_ktp")
   signatoryAddressDomicile String  @map("signatory_address_domicile")
   signatoryFaculty         String  @map("signatory_faculty")

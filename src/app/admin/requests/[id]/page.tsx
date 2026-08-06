@@ -3,7 +3,9 @@ import { AssignSection } from "./AssignSection";
 import {
   confirmAvailable,
   confirmDocumentsReviewed,
+  confirmExtension,
   confirmHandover,
+  confirmReturn,
   rejectRequest,
   reviewDocument,
 } from "./actions";
@@ -50,16 +52,25 @@ export default async function RequestDetailPage({
       })
     : [];
 
-  const canAssign = ["submitted", "reviewing"].includes(request.status);
+  const canAssign =
+    ["submitted", "reviewing"].includes(request.status) &&
+    !request.instrumentConfirmed;
   const canNotify =
     request.status === "reviewing" && !request.instrumentConfirmed;
+
+  const isExtension = latestPeriod?.periodType === "extension";
 
   return (
     <div>
       <h1>
         {request.borrowerName} — {request.ticketId}
       </h1>
-      <p>Status: {request.status}</p>
+      <p>
+        Status: {request.status}
+        {request.status === "reviewing" &&
+          request.instrumentConfirmed &&
+          " (Instrument confirmed — menunggu peminjam isi Tahap 2)"}
+      </p>
       {request.status === "active" && latestPeriod?.dueDate && (
         <p>Due Date: {latestPeriod.dueDate.toLocaleDateString("id-ID")}</p>
       )}
@@ -84,13 +95,19 @@ export default async function RequestDetailPage({
           </form>
         </>
       )}
-      {["submitted", "reviewing"].includes(request.status) && (
-        <form action={rejectRequest.bind(null, id)}>
-          <textarea name="reason" placeholder="Reason for rejection" required />
-          <button type="submit">Reject Request</button>
-        </form>
-      )}
-      {request.status === "documents_uploaded" && (
+      {["submitted", "reviewing"].includes(request.status) &&
+        !request.instrumentConfirmed && (
+          <form action={rejectRequest.bind(null, id)}>
+            <textarea
+              name="reason"
+              placeholder="Reason for rejection"
+              required
+            />
+            <button type="submit">Reject Request</button>
+          </form>
+        )}
+      {(request.status === "documents_uploaded" ||
+        (isExtension && documents.length > 0)) && (
         <div>
           <h2>Review Documents</h2>
           {documents.map((doc) => (
@@ -118,17 +135,19 @@ export default async function RequestDetailPage({
             </div>
           ))}
 
-          <form action={confirmDocumentsReviewed.bind(null, id)}>
-            <button
-              type="submit"
-              disabled={
-                documents.length !== 3 ||
-                !documents.every((d) => d.reviewStatus === "approved")
-              }
-            >
-              Confirm Documents & Notify Ready for Pickup
-            </button>
-          </form>
+          {!isExtension && (
+            <form action={confirmDocumentsReviewed.bind(null, id)}>
+              <button
+                type="submit"
+                disabled={
+                  documents.length !== 3 ||
+                  !documents.every((d) => d.reviewStatus === "approved")
+                }
+              >
+                Confirm Documents & Notify Ready for Pickup
+              </button>
+            </form>
+          )}
         </div>
       )}
       {addendums.length > 0 && (
@@ -165,10 +184,49 @@ export default async function RequestDetailPage({
               <button type="submit">Confirm Handover</button>
             </form>
           )}
+          {isExtension && !latestPeriod?.startDate && (
+            <form action={confirmExtension.bind(null, id)}>
+              <button type="submit">Confirm Extension</button>
+            </form>
+          )}
+          {request.status === "active" &&
+            addendums.some((a) => a.timing === "final") && (
+              <form action={confirmReturn.bind(null, id)}>
+                <h3>Confirm Return</h3>
+                <label>
+                  Condition
+                  <select name="condition" required>
+                    <option value="ok">OK</option>
+                    <option value="need_repair">Need Repair</option>
+                    <option value="retired">Retired</option>
+                    <option value="lost">Lost</option>
+                  </select>
+                </label>
+                <label>
+                  Status (ignored if Retired/Lost — forced Unavailable)
+                  <select name="status" required>
+                    <option value="available">Available</option>
+                    <option value="unavailable">Unavailable</option>
+                  </select>
+                </label>
+                <label>
+                  Location
+                  <input
+                    name="location"
+                    type="text"
+                    defaultValue="Sekre"
+                    required
+                  />
+                </label>
+                <button type="submit">Confirm Return</button>
+              </form>
+            )}
         </div>
       )}
-      {request.status === "ready_to_pickup" && addendums.length === 0 && (
-        <p>Waiting for borrower to submit the initial addendum at Sekre.</p>
+      {isExtension && addendums.length === 0 && (
+        <p>
+          Waiting for borrower to submit the addendum for this extension period.
+        </p>
       )}
     </div>
   );

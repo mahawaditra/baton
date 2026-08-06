@@ -73,6 +73,7 @@ export async function updateLoanSettings(formData: FormData) {
 
     signatoryName: formData.get("signatoryName") as string,
     signatoryPhone: formData.get("signatoryPhone") as string,
+    signatoryLineId: formData.get("signatoryLineId") as string,
     signatoryAddressKtp: formData.get("signatoryAddressKtp") as string,
     signatoryAddressDomicile: formData.get(
       "signatoryAddressDomicile",

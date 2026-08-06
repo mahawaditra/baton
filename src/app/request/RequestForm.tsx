@@ -28,8 +28,13 @@ export function RequestForm() {
           Your Access Code: <strong>{state.accessCode}</strong>
         </p>
         <p>
-          Screenshot these — you will need them to check your status. We also
-          recommend noting them down, as this page will not show them again.
+          We've sent a confirmation email to your inbox with your ticket ID and
+          access code — if you don't see it within a few minutes, please check
+          your Spam folder (and "Report not spam" if the option is available).
+        </p>
+        <p>
+          Since this page won't show them again, noting down or screenshot the
+          ticket ID and access code is well advised.
         </p>
         <Link href={`/status/${state.ticketId}`}>Go to my status page →</Link>
       </div>

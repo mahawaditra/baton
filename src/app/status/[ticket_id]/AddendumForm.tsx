@@ -10,12 +10,14 @@ const initialState = {
 
 export function AddendumForm({
   ticketId,
+  timing = "initial",
   onSuccess,
 }: {
   ticketId: string;
+  timing?: "initial" | "final";
   onSuccess: () => void;
 }) {
-  const action = submitAddendum.bind(null, ticketId);
+  const action = submitAddendum.bind(null, ticketId, timing);
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   useEffect(() => {
@@ -25,14 +27,27 @@ export function AddendumForm({
   if (state.success) {
     return (
       <p>
-        Addendum submitted! Your borrowing is now being finalized by the admin
+        {timing === "initial"
+          ? "Addendum submitted! Your borrowing is now being finalized by the admin."
+          : "Addendum submitted! Please bring the instrument to Sekre for the admin to inspect and confirm the return."}
       </p>
     );
   }
 
   return (
     <form action={formAction}>
-      <h3>Initial Condition Addendum</h3>
+      <h3>
+        {timing === "initial"
+          ? "Initial Condition Addendum"
+          : "Final Condition Addendum (Return)"}
+      </h3>
+      {timing === "initial" && (
+        <p>
+          Sebelum atau saat mengisi form ini, pastikan kamu sudah koordinasi
+          jadwal pengambilan instrumen dengan staf Logistik OSUI (bisa dicek
+          lewat email).
+        </p>
+      )}
       {state.error && <p style={{ color: "red" }}>{state.error}</p>}
 
       <label>

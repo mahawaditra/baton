@@ -19,7 +19,17 @@ export default async function DashboardPage() {
   const [pendingCount, activeCount, overdueCount, needRepairCount] =
     await Promise.all([
       prisma.borrowingRequest.count({
-        where: { status: { in: ["submitted", "reviewing"] } },
+        where: {
+          status: {
+            in: [
+              "submitted",
+              "reviewing",
+              "contract_generated",
+              "documents_uploaded",
+              "ready_to_pickup",
+            ],
+          },
+        },
       }),
       prisma.borrowingRequest.count({
         where: { status: "active" },
@@ -41,19 +51,32 @@ export default async function DashboardPage() {
         {
           status: "ready_to_pickup",
           loanPeriods: {
+            some: { addendums: { some: { timing: "initial" } } },
+          },
+        },
+        {
+          status: "active",
+          loanPeriods: {
             some: {
-              addendums: {
-                some: {
-                  timing: "initial",
-                },
-              },
+              periodType: "extension",
+              startDate: null,
+              addendums: { some: { timing: "initial" } },
+            },
+          },
+        },
+        {
+          status: "active",
+          loanPeriods: {
+            some: {
+              actualReturnDate: null,
+              addendums: { some: { timing: "final" } },
             },
           },
         },
       ],
     },
     orderBy: {
-      createdAt: "asc",
+      createdAt: "desc",
     },
     take: 5,
   });
