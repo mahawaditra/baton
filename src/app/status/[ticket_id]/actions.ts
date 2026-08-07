@@ -13,7 +13,7 @@ import {
   headerTemplate,
   footerTemplate,
 } from "@/lib/contract-pdf";
-import puppeteer from "puppeteer";
+import { getBrowser } from "@/lib/contract-pdf";
 import { daysBetween, driveTimestamp } from "@/lib/format";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
@@ -207,7 +207,7 @@ export async function submitStage2(
     dueDate: settings.dueDate,
   });
 
-  const browser = await puppeteer.launch();
+  const browser = await getBrowser();
   let pdfBuffer: Buffer;
 
   try {
@@ -339,7 +339,7 @@ export async function submitExtension(
     dueDate: settings.dueDate,
   });
 
-  const browser = await puppeteer.launch();
+  const browser = await getBrowser();
   let pdfBuffer: Buffer;
 
   try {

@@ -13,6 +13,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.9.1",
+    "@sparticuz/chromium-min": "^149.0.0",
     "@tanstack/react-table": "^8.21.3",
     "better-auth": "^1.6.19",
     "dotenv": "^17.4.2",
@@ -22,6 +23,7 @@
     "nodemailer": "^9.0.4",
     "pg": "^8.22.0",
     "puppeteer": "^25.5.0",
+    "puppeteer-core": "^25.5.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

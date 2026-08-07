@@ -227,3 +227,20 @@ export const footerTemplate = `
     <img src="${footerImage}" style="width: 100%; display: block;" />
   </div>
 `;
+
+const REMOTE_CHROMIUM_URL =
+  "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
+
+export async function getBrowser() {
+  if (process.env.NODE_ENV === "production") {
+    const chromium = (await import("@sparticuz/chromium-min")).default;
+    const puppeteer = (await import("puppeteer-core")).default;
+    return puppeteer.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(REMOTE_CHROMIUM_URL),
+      headless: true,
+    });
+  }
+  const puppeteer = (await import("puppeteer")).default;
+  return puppeteer.launch({ headless: true });
+}
