@@ -65,7 +65,7 @@ export default async function DashboardPage() {
           },
         },
         {
-          status: "active",
+          status: { in: ["active", "overdue"] },
           loanPeriods: {
             some: {
               actualReturnDate: null,

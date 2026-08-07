@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
-import { addAdmin, updateLoanSettings } from "./actions";
+import { updateLoanSettings } from "./actions";
 import { CompressedImageInput } from "./CompressedImageInput";
+import { AddAdminForm } from "./AddAdminForm";
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -179,23 +180,7 @@ export default async function SettingsPage() {
       {isSuperAdmin && (
         <section>
           <h2>Admin Management</h2>
-
-          <form action={addAdmin}>
-            <input
-              name="email"
-              type="email"
-              placeholder="New admin email"
-              required
-            />
-            <input
-              name="name"
-              type="text"
-              placeholder="New admin name"
-              required
-            />
-            <button type="submit">Add Admin</button>
-          </form>
-
+          <AddAdminForm />
           <h3>Admin List</h3>
           <ul>
             {admins.map((admin) => (

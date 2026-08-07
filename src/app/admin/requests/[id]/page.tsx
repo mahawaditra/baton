@@ -71,9 +71,10 @@ export default async function RequestDetailPage({
           request.instrumentConfirmed &&
           " (Instrument confirmed — menunggu peminjam isi Tahap 2)"}
       </p>
-      {request.status === "active" && latestPeriod?.dueDate && (
-        <p>Due Date: {latestPeriod.dueDate.toLocaleDateString("id-ID")}</p>
-      )}
+      {(request.status === "active" || request.status === "overdue") &&
+        latestPeriod?.dueDate && (
+          <p>Due Date: {latestPeriod.dueDate.toLocaleDateString("id-ID")}</p>
+        )}
       <p>Instrument Requested: {request.instrumentTypeRequested}</p>
       <p>
         Email: {request.borrowerEmail} · Phone: {request.borrowerPhone} · LINE:{" "}
@@ -189,7 +190,7 @@ export default async function RequestDetailPage({
               <button type="submit">Confirm Extension</button>
             </form>
           )}
-          {request.status === "active" &&
+          {(request.status === "active" || request.status === "overdue") &&
             addendums.some((a) => a.timing === "final") && (
               <form action={confirmReturn.bind(null, id)}>
                 <h3>Confirm Return</h3>

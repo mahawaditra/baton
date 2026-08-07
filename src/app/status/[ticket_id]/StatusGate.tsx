@@ -134,7 +134,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
         {data.canExtend && !showExtendForm && (
           <button onClick={() => setShowExtendForm(true)}>Perpanjang</button>
         )}
-        {data.status === "active" &&
+        {(data.status === "active" || data.status === "overdue") &&
           data.hasInitialAddendum &&
           !data.hasFinalAddendum &&
           !showReturnForm && (
@@ -147,12 +147,13 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             </button>
           )}
 
-        {data.status === "active" && data.hasFinalAddendum && (
-          <p>
-            Addendum pengembalian sudah dikirim. Menunggu admin konfirmasi
-            pengembalian di Sekre.
-          </p>
-        )}
+        {(data.status === "active" || data.status === "overdue") &&
+          data.hasFinalAddendum && (
+            <p>
+              Addendum pengembalian sudah dikirim. Menunggu admin konfirmasi
+              pengembalian di Sekre.
+            </p>
+          )}
         {(data.status === "submitted" || data.status === "reviewing") &&
           !data.instrumentConfirmed && (
             <p>

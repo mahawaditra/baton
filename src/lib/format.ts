@@ -70,3 +70,18 @@ export function getEntityUrl(
       return null;
   }
 }
+
+export function daysBetween(from: Date, to: Date): number {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const fromMidnight = Date.UTC(
+    from.getUTCFullYear(),
+    from.getUTCMonth(),
+    from.getUTCDate(),
+  );
+  const toMidnight = Date.UTC(
+    to.getUTCFullYear(),
+    to.getUTCMonth(),
+    to.getUTCDate(),
+  );
+  return Math.floor((toMidnight - fromMidnight) / msPerDay);
+}

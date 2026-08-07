@@ -14,7 +14,7 @@ import {
   footerTemplate,
 } from "@/lib/contract-pdf";
 import puppeteer from "puppeteer";
-import { driveTimestamp } from "@/lib/format";
+import { daysBetween, driveTimestamp } from "@/lib/format";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
 
@@ -47,12 +47,8 @@ type ExtensionState = {
 };
 
 function computeCanExtend(status: string, dueDate: Date | null): boolean {
-  if (status !== "active" || !dueDate) {
-    return false;
-  }
-  const now = new Date();
-  const msPerDay = 1000 * 60 * 60 * 24;
-  const daysUntilDue = (dueDate.getTime() - now.getTime()) / msPerDay;
+  if (status !== "active" || !dueDate) return false;
+  const daysUntilDue = daysBetween(new Date(), dueDate);
   return daysUntilDue >= 0 && daysUntilDue <= 30;
 }
 
@@ -567,7 +563,7 @@ export async function submitAddendum(
   }
 
   if (timing === "final") {
-    if (request.status !== "active") {
+    if (request.status !== "active" && request.status !== "overdue") {
       return {
         success: false,
         error: "This request is not eligible for return.",

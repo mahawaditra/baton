@@ -6,24 +6,47 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getOrCreateFolder, uploadFile } from "@/lib/drive";
 import { driveTimestamp } from "@/lib/format";
+import { Prisma } from "@/generated/prisma/client";
 
-export async function addAdmin(formData: FormData) {
+export type AddAdminState = {
+  success: boolean;
+  error: string | null;
+};
+
+export async function addAdmin(
+  prevState: AddAdminState,
+  formData: FormData,
+): Promise<AddAdminState> {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (session?.user.role !== "super_admin") {
-    throw new Error("Only super admin can add new admin");
+    return { success: false, error: "Only super admin can add new admin" };
   }
 
   const email = formData.get("email") as string;
   const name = formData.get("name") as string;
 
   if (!email || !name) {
-    throw new Error("Email and name are required");
+    return { success: false, error: "Email and name are required" };
   }
 
-  const newAdmin = await prisma.admin.create({
-    data: { email, name },
-  });
+  let newAdmin;
+  try {
+    newAdmin = await prisma.admin.create({
+      data: { email, name, emailVerified: true },
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      return {
+        success: false,
+        error: "An admin with this email already exists.",
+      };
+    }
+    throw err;
+  }
 
   await prisma.activityLog.create({
     data: {
@@ -35,6 +58,7 @@ export async function addAdmin(formData: FormData) {
   });
 
   revalidatePath("/admin/settings");
+  return { success: true, error: null };
 }
 
 export async function updateLoanSettings(formData: FormData) {

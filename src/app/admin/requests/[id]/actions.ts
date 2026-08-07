@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/mail";
+import { daysBetween } from "@/lib/format";
 
 export async function assignInstrument(
   requestId: string,
@@ -386,7 +387,10 @@ export async function confirmReturn(requestId: string, formData: FormData) {
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { id: requestId },
   });
-  if (request.status !== "active" || !request.instrumentId) {
+  if (
+    (request.status !== "active" && request.status !== "overdue") ||
+    !request.instrumentId
+  ) {
     throw new Error("Request is not active.");
   }
 
@@ -421,10 +425,7 @@ export async function confirmReturn(requestId: string, formData: FormData) {
 
   const settings = await prisma.loanSetting.findFirstOrThrow();
   const actualReturnDate = new Date();
-  const msPerDay = 1000 * 60 * 60 * 24;
-  const daysLate = Math.floor(
-    (actualReturnDate.getTime() - latestPeriod.dueDate.getTime()) / msPerDay,
-  );
+  const daysLate = daysBetween(latestPeriod.dueDate, actualReturnDate);
 
   const depositRefundAmount =
     daysLate <= 0

@@ -21,6 +21,11 @@ export default function LoginPage() {
     <div>
       <h1>Login Admin BATON</h1>
       <button onClick={handleLogin}>Login with Google</button>
+      <p style={{ fontSize: "14px", color: "#888", marginTop: "16px" }}>
+        Halaman ini khusus staf Logistik OSUI Mahawaditra. Kalau kamu staf
+        Logistik dan belum bisa akses, hubungi Ketua Logistik OSUI untuk
+        didaftarkan sebagai admin.
+      </p>
     </div>
   );
 }

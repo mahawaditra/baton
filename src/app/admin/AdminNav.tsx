@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Dashboard" },
@@ -15,7 +16,13 @@ const NAV_ITEMS = [
 
 export function AdminNav() {
   const pathname = usePathname();
+  const router = useRouter();
   if (pathname === "/admin/login") return null;
+
+  async function handleLogout() {
+    await authClient.signOut();
+    router.push("/admin/login");
+  }
 
   return (
     <nav
@@ -29,6 +36,7 @@ export function AdminNav() {
           </li>
         ))}
       </ul>
+      <button onClick={handleLogout}>Logout</button>
     </nav>
   );
 }
