@@ -40,5 +40,6 @@ export async function updateGood(id: string, formData: FormData) {
   });
 
   revalidatePath(`/admin/goods/${id}`);
+  revalidatePath(`/admin/goods`);
   redirect(`/admin/goods/${id}`);
 }

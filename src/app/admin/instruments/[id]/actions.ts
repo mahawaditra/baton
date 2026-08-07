@@ -61,5 +61,6 @@ export async function updateInstrument(id: string, formData: FormData) {
   });
 
   revalidatePath(`/admin/instruments/${id}`);
+  revalidatePath(`/admin/instruments`);
   redirect(`/admin/instruments/${id}`);
 }
