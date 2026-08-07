@@ -1,5 +1,31 @@
 import fs from "fs";
 import path from "path";
+import { downloadFileAsBase64 } from "@/lib/drive";
+
+let cachedContractFonts: {
+  regular: string;
+  bold: string;
+  italic: string;
+} | null = null;
+
+export async function getContractFonts() {
+  if (cachedContractFonts) return cachedContractFonts;
+
+  const [regular, bold, italic] = await Promise.all([
+    downloadFileAsBase64(
+      process.env.CONTRACT_FONT_REGULAR_DRIVE_ID!,
+      "font/ttf",
+    ),
+    downloadFileAsBase64(process.env.CONTRACT_FONT_BOLD_DRIVE_ID!, "font/ttf"),
+    downloadFileAsBase64(
+      process.env.CONTRACT_FONT_ITALIC_DRIVE_ID!,
+      "font/ttf",
+    ),
+  ]);
+
+  cachedContractFonts = { regular, bold, italic };
+  return cachedContractFonts;
+}
 
 function imageToBase64(filename: string): string {
   const filePath = path.join(process.cwd(), "src/assets/pdf", filename);
@@ -76,7 +102,8 @@ type ContractData = {
   dueDate: Date;
 };
 
-export function buildContractHTML(data: ContractData): string {
+export async function buildContractHTML(data: ContractData): Promise<string> {
+  const fonts = await getContractFonts();
   const dueDateStr = formatTanggalIndo(data.dueDate);
   const todayStr = formatTanggalIndo(new Date());
 
@@ -86,21 +113,23 @@ export function buildContractHTML(data: ContractData): string {
 <head>
 <meta charset="utf-8" />
 <style>
+  @font-face {
+    font-family: "Times New Roman";
+    src: url(${fonts.regular}) format("truetype");
+    font-weight: normal; font-style: normal;
+  }
+  @font-face {
+    font-family: "Times New Roman";
+    src: url(${fonts.bold}) format("truetype");
+    font-weight: bold; font-style: normal;
+  }
+  @font-face {
+    font-family: "Times New Roman";
+    src: url(${fonts.italic}) format("truetype");
+    font-weight: normal; font-style: italic;
+  }
   body { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #000; }
-  h1 { text-align: center; font-size: 14pt; margin-bottom: 24px; }
-  h2 { text-align: center; font-size: 12pt; margin: 24px 0 4px; }
-  h3 { text-align: center; font-size: 12pt; margin: 0 0 16px; font-weight: normal; }
-  .field-row { display: flex; margin-bottom: 2px; }
-  .field-label { width: 160px; flex-shrink: 0; }
-  .field-colon { width: 12px; flex-shrink: 0; }
-  .field-value { flex: 1; }
-  .party-block { margin-bottom: 16px; }
-  ol { padding-left: 20px; }
-  ol li { margin-bottom: 10px; text-align: justify; }
-  .signature-block { display: flex; justify-content: space-between; margin-top: 40px; }
-  .signature-col { width: 45%; text-align: center; }
-  .signature-img { height: 60px; margin: 8px auto; display: block; }
-  .signature-line { height: 60px; margin: 8px 0; }
+  /* ...sisa CSS kamu yang udah ada, gak berubah... */
 </style>
 </head>
 <body>

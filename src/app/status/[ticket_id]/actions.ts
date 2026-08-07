@@ -171,7 +171,7 @@ export async function submitStage2(
     ? await downloadFileAsBase64(settings.signatoryImageDriveId, "image/png")
     : null;
 
-  const html = buildContractHTML({
+  const html = await buildContractHTML({
     signatory: {
       name: settings.signatoryName,
       phone: settings.signatoryPhone,
@@ -303,7 +303,7 @@ export async function submitExtension(
     ? await downloadFileAsBase64(settings.signatoryImageDriveId, "image/png")
     : null;
 
-  const html = buildContractHTML({
+  const html = await buildContractHTML({
     signatory: {
       name: settings.signatoryName,
       phone: settings.signatoryPhone,
