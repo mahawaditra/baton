@@ -1,14 +1,14 @@
 import fs from "fs";
 import path from "path";
 
-function imageToBase64(relativePath: string): string {
-  const filePath = path.join(process.cwd(), relativePath);
+function imageToBase64(filename: string): string {
+  const filePath = path.join(process.cwd(), "src/assets/pdf", filename);
   const buffer = fs.readFileSync(filePath);
   return `data:image/png;base64,${buffer.toString("base64")}`;
 }
 
-const headerImage = imageToBase64("src/assets/pdf/header.png");
-const footerImage = imageToBase64("src/assets/pdf/footer.png");
+const headerImage = imageToBase64("header.png");
+const footerImage = imageToBase64("footer.png");
 
 export const headerTemplate = `<div style="width: 100%; margin: 0 24px;">
     <img src="${headerImage}" style="width: 100%; display: block;" />
