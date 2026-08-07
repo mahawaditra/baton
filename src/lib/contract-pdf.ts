@@ -129,7 +129,20 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
     font-weight: normal; font-style: italic;
   }
   body { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #000; }
-  /* ...sisa CSS kamu yang udah ada, gak berubah... */
+  h1 { text-align: center; font-size: 14pt; margin-bottom: 24px; }
+  h2 { text-align: center; font-size: 12pt; margin: 24px 0 4px; }
+  h3 { text-align: center; font-size: 12pt; margin: 0 0 16px; font-weight: normal; }
+  .field-row { display: flex; margin-bottom: 2px; }
+  .field-label { width: 160px; flex-shrink: 0; }
+  .field-colon { width: 12px; flex-shrink: 0; }
+  .field-value { flex: 1; }
+  .party-block { margin-bottom: 16px; }
+  ol { padding-left: 20px; }
+  ol li { margin-bottom: 10px; text-align: justify; }
+  .signature-block { display: flex; justify-content: space-between; margin-top: 40px; }
+  .signature-col { width: 45%; text-align: center; }
+  .signature-img { height: 60px; margin: 8px auto; display: block; }
+  .signature-line { height: 60px; margin: 8px 0; }
 </style>
 </head>
 <body>
@@ -243,9 +256,11 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
   </div>
 </div>
 
-<p style="text-align: center; margin-top: 24px;">Mengetahui, wali / orang tua PIHAK KEDUA</p>
-<p style="text-align: center; margin-top: 40px;">Materai 10000</p>
-<p style="text-align: center;">(${data.guardian.name})</p>
+<div style="page-break-inside: avoid;">
+  <p style="text-align: center; margin-top: 24px;">Mengetahui, wali / orang tua PIHAK KEDUA</p>
+  <p style="text-align: center; margin-top: 40px;">Materai 10000</p>
+  <p style="text-align: center;">(${data.guardian.name})</p>
+</div>
 
 </body>
 </html>
