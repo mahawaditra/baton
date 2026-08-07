@@ -53,6 +53,11 @@ export async function assignInstrument(
   });
 
   revalidatePath(`/admin/requests/${requestId}`);
+  revalidatePath(`/admin/instruments`);
+  revalidatePath(`/admin/instruments/${instrumentId}`);
+  if (request.instrumentId)
+    revalidatePath(`/admin/instruments/${request.instrumentId}`);
+  revalidatePath(`/admin/dashboard`);
 }
 
 export async function confirmAvailable(requestId: string) {
@@ -150,6 +155,11 @@ export async function rejectRequest(requestId: string, formData: FormData) {
   });
 
   revalidatePath(`/admin/requests/${requestId}`);
+  if (request.instrumentId) {
+    revalidatePath(`/admin/instruments`);
+    revalidatePath(`/admin/instruments/${request.instrumentId}`);
+    revalidatePath(`/admin/dashboard`);
+  }
 }
 
 export async function reviewDocument(
@@ -338,6 +348,9 @@ export async function confirmHandover(requestId: string) {
   });
 
   revalidatePath(`/admin/requests/${requestId}`);
+  revalidatePath(`/admin/instruments`);
+  revalidatePath(`/admin/instruments/${request.instrumentId}`);
+  revalidatePath(`/admin/dashboard`);
 }
 
 export async function confirmExtension(requestId: string) {
@@ -475,4 +488,7 @@ export async function confirmReturn(requestId: string, formData: FormData) {
   });
 
   revalidatePath(`/admin/requests/${requestId}`);
+  revalidatePath(`/admin/instruments`);
+  revalidatePath(`/admin/instruments/${request.instrumentId}`);
+  revalidatePath(`/admin/dashboard`);
 }
