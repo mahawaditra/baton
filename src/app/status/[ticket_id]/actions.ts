@@ -17,6 +17,7 @@ import { getBrowser } from "@/lib/contract-pdf";
 import { daysBetween, driveTimestamp } from "@/lib/format";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
+import { accessCodeLimiter } from "@/lib/rate-limit";
 
 type VerifyResult =
   | { success: true; request: RequestData }
@@ -56,6 +57,13 @@ export async function verifyAccessCode(
   ticketId: string,
   code: string,
 ): Promise<VerifyResult> {
+  const { success } = await accessCodeLimiter.limit(`access-code:${ticketId}`);
+  if (!success) {
+    return {
+      success: false,
+      error: "Too many attempts. Please try again in a few minutes.",
+    };
+  }
   const request = await prisma.borrowingRequest.findUnique({
     where: { ticketId },
     select: {

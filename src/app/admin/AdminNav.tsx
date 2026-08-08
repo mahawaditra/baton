@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/goods", label: "Barang" },
   { href: "/admin/requests", label: "Peminjaman" },
   { href: "/admin/archive", label: "Arsip" },
+  { href: "/admin/reports", label: "Laporan" },
   { href: "/admin/activity", label: "Aktivitas" },
   { href: "/admin/settings", label: "Pengaturan" },
 ];

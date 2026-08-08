@@ -3,12 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { customAlphabet } from "nanoid";
 import { sendEmail } from "@/lib/mail";
-
-const ticketIdGen = customAlphabet(
-  "23456789ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz",
-  7,
-);
-const accessCodeGen = customAlphabet("23456789ABCDEFGHJKMNPQRSTUVWXYZ", 6);
+import { getClientIp, submitRequestLimiter } from "@/lib/rate-limit";
+import { generateTicketId, generateAccessCode } from "@/lib/id-generators";
 
 type State = {
   ticketId: string | null;
@@ -20,6 +16,16 @@ export async function submitRequest(
   prevState: State,
   formData: FormData,
 ): Promise<State> {
+  const ip = await getClientIp();
+  const { success } = await submitRequestLimiter.limit(`submit:${ip}`);
+  if (!success) {
+    return {
+      ticketId: null,
+      accessCode: null,
+      error: "Too many submissions. Try again later.",
+    };
+  }
+
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
@@ -35,8 +41,8 @@ export async function submitRequest(
     };
   }
 
-  const ticketId = ticketIdGen();
-  const accessCode = accessCodeGen();
+  const ticketId = generateTicketId();
+  const accessCode = generateAccessCode();
 
   await prisma.borrowingRequest.create({
     data: {

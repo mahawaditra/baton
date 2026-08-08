@@ -6,6 +6,10 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/mail";
 import { daysBetween } from "@/lib/format";
+import {
+  calculateDepositRefund,
+  determineInstrumentStatusOnReturn,
+} from "@/lib/loan-rules";
 
 export async function assignInstrument(
   requestId: string,
@@ -431,21 +435,18 @@ export async function confirmReturn(requestId: string, formData: FormData) {
   const requestedStatus = formData.get("status") as "available" | "unavailable";
   const location = formData.get("location") as string;
 
-  const status =
-    condition === "retired" || condition === "lost"
-      ? "unavailable"
-      : requestedStatus;
+  const status = determineInstrumentStatusOnReturn(condition, requestedStatus);
 
   const settings = await prisma.loanSetting.findFirstOrThrow();
   const actualReturnDate = new Date();
   const daysLate = daysBetween(latestPeriod.dueDate, actualReturnDate);
 
-  const depositRefundAmount =
-    daysLate <= 0
-      ? settings.depositAmount
-      : daysLate <= settings.depositGraceDays
-        ? settings.depositPartialAmount
-        : 0;
+  const depositRefundAmount = calculateDepositRefund({
+    daysLate,
+    depositAmount: settings.depositAmount,
+    depositGraceDays: settings.depositGraceDays,
+    depositPartialAmount: settings.depositPartialAmount,
+  });
 
   await prisma.$transaction([
     prisma.loanPeriod.update({

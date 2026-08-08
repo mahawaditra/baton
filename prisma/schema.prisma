@@ -38,6 +38,7 @@ model Instrument {
 
   borrowingRequests BorrowingRequest[]
 
+  @@index([status, isLoanable, condition])
   @@map("instruments")
 }
 
@@ -70,7 +71,7 @@ model LoanSetting {
 
   signatoryName            String  @map("signatory_name")
   signatoryPhone           String  @map("signatory_phone")
-  signatoryLineId          String?  @map("signatory_line_id")
+  signatoryLineId          String? @map("signatory_line_id")
   signatoryAddressKtp      String  @map("signatory_address_ktp")
   signatoryAddressDomicile String  @map("signatory_address_domicile")
   signatoryFaculty         String  @map("signatory_faculty")
@@ -133,6 +134,7 @@ model BorrowingRequest {
 
   loanPeriods LoanPeriod[]
 
+  @@index([status])
   @@map("borrowing_requests")
 }
 
@@ -307,6 +309,7 @@ enum EntityType {
   goods
   loan_settings
   admin
+  inventory_snapshot
 }
 
 model ActivityLog {
