@@ -1,3 +1,12 @@
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function driveTimestamp(date = new Date()): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
   const y = date.getFullYear();
@@ -84,4 +93,20 @@ export function daysBetween(from: Date, to: Date): number {
     to.getUTCDate(),
   );
   return Math.floor((toMidnight - fromMidnight) / msPerDay);
+}
+
+export function toJakartaCalendarDate(date: Date): Date {
+  const jakartaOffsetMs = 7 * 60 * 60 * 1000;
+  const shifted = new Date(date.getTime() + jakartaOffsetMs);
+  return new Date(
+    Date.UTC(
+      shifted.getUTCFullYear(),
+      shifted.getUTCMonth(),
+      shifted.getUTCDate(),
+    ),
+  );
+}
+
+export function todayInJakarta(): Date {
+  return toJakartaCalendarDate(new Date());
 }

@@ -2,6 +2,8 @@
 
 import { useActionState, useEffect } from "react";
 import { submitDocuments } from "./actions";
+import { CompressedFileInput } from "@/components/CompressedFileInput";
+import { MAX_UPLOAD_SIZE_LABEL } from "@/lib/file-validation";
 
 const initialState = {
   success: false,
@@ -10,14 +12,16 @@ const initialState = {
 
 export function UploadDocumentsForm({
   ticketId,
+  accessCode,
   isExtension = false,
   onSuccess,
 }: {
   ticketId: string;
+  accessCode: string;
   isExtension?: boolean;
   onSuccess: () => void;
 }) {
-  const action = submitDocuments.bind(null, ticketId);
+  const action = submitDocuments.bind(null, ticketId, accessCode);
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   useEffect(() => {
@@ -34,10 +38,10 @@ export function UploadDocumentsForm({
       {state.error && <p style={{ color: "red" }}>{state.error}</p>}
 
       <label>
-        Signed Contract
-        <input
+        Signed Contract (photos are compressed automatically — PDFs are not,
+        max {MAX_UPLOAD_SIZE_LABEL})
+        <CompressedFileInput
           name="signedContract"
-          type="file"
           accept="image/*,.pdf"
           required
         />
@@ -46,15 +50,19 @@ export function UploadDocumentsForm({
       {!isExtension && (
         <label>
           Deposit Transfer Proof
-          <input name="depositProof" type="file" accept="image/*" required />
+          <CompressedFileInput
+            name="depositProof"
+            accept="image/*"
+            required
+          />
         </label>
       )}
 
       <label>
-        KTP Scan {isExtension && "(optional — only if changed)"}
-        <input
+        KTP Scan {isExtension && "(optional — only if changed)"} (photos are
+        compressed automatically — PDFs are not, max {MAX_UPLOAD_SIZE_LABEL})
+        <CompressedFileInput
           name="ktpScan"
-          type="file"
           accept="image/*,.pdf"
           required={!isExtension}
         />

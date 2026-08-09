@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { downloadFileAsBase64 } from "@/lib/drive";
+import { escapeHtml } from "@/lib/format";
 
 let cachedContractFonts: {
   regular: string;
@@ -96,6 +97,7 @@ type ContractData = {
   instrumentType: string;
   depositAmount: number;
   depositPartialAmount: number;
+  depositGraceDays: number;
   bankName: string;
   bankAccount: string;
   bankHolder: string;
@@ -106,6 +108,37 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
   const fonts = await getContractFonts();
   const dueDateStr = formatTanggalIndo(data.dueDate);
   const todayStr = formatTanggalIndo(new Date());
+
+  const signatory = {
+    name: escapeHtml(data.signatory.name),
+    phone: escapeHtml(data.signatory.phone),
+    addressKtp: escapeHtml(data.signatory.addressKtp),
+    addressDomicile: escapeHtml(data.signatory.addressDomicile),
+    faculty: escapeHtml(data.signatory.faculty),
+    year: escapeHtml(data.signatory.year),
+    section: escapeHtml(data.signatory.section),
+    ktpNumber: escapeHtml(data.signatory.ktpNumber),
+    imageBase64: data.signatory.imageBase64,
+  };
+  const borrower = {
+    name: escapeHtml(data.borrower.name),
+    phone: escapeHtml(data.borrower.phone),
+    addressKtp: escapeHtml(data.borrower.addressKtp),
+    addressDomicile: escapeHtml(data.borrower.addressDomicile),
+    faculty: escapeHtml(data.borrower.faculty),
+    year: escapeHtml(data.borrower.year),
+    ktpNumber: escapeHtml(data.borrower.ktpNumber),
+  };
+  const guardian = {
+    name: escapeHtml(data.guardian.name),
+    phone: escapeHtml(data.guardian.phone),
+    addressKtp: escapeHtml(data.guardian.addressKtp),
+  };
+  const instrumentLabel = escapeHtml(data.instrumentLabel);
+  const instrumentType = escapeHtml(data.instrumentType);
+  const bankName = escapeHtml(data.bankName);
+  const bankAccount = escapeHtml(data.bankAccount);
+  const bankHolder = escapeHtml(data.bankHolder);
 
   return `
 <!DOCTYPE html>
@@ -151,33 +184,33 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
 <p>Pada tanggal ${todayStr}, kami yang bertanda tangan di bawah ini :</p>
 
 <div class="party-block">
-  <div class="field-row"><div class="field-label">Nama</div><div class="field-colon">:</div><div class="field-value">${data.signatory.name}</div></div>
-  <div class="field-row"><div class="field-label">No. Telepon/Ponsel</div><div class="field-colon">:</div><div class="field-value">${data.signatory.phone}</div></div>
-  <div class="field-row"><div class="field-label">Alamat sesuai KTP</div><div class="field-colon">:</div><div class="field-value">${data.signatory.addressKtp}</div></div>
-  <div class="field-row"><div class="field-label">Alamat domisili</div><div class="field-colon">:</div><div class="field-value">${data.signatory.addressDomicile}</div></div>
-  <div class="field-row"><div class="field-label">Fakultas/Jurusan</div><div class="field-colon">:</div><div class="field-value">${data.signatory.faculty}</div></div>
-  <div class="field-row"><div class="field-label">Angkatan UI/OSUI</div><div class="field-colon">:</div><div class="field-value">${data.signatory.year}</div></div>
-  <div class="field-row"><div class="field-label">Section/Instrumen</div><div class="field-colon">:</div><div class="field-value">${data.signatory.section}</div></div>
-  <div class="field-row"><div class="field-label">Nomor KTP</div><div class="field-colon">:</div><div class="field-value">${data.signatory.ktpNumber}</div></div>
+  <div class="field-row"><div class="field-label">Nama</div><div class="field-colon">:</div><div class="field-value">${signatory.name}</div></div>
+  <div class="field-row"><div class="field-label">No. Telepon/Ponsel</div><div class="field-colon">:</div><div class="field-value">${signatory.phone}</div></div>
+  <div class="field-row"><div class="field-label">Alamat sesuai KTP</div><div class="field-colon">:</div><div class="field-value">${signatory.addressKtp}</div></div>
+  <div class="field-row"><div class="field-label">Alamat domisili</div><div class="field-colon">:</div><div class="field-value">${signatory.addressDomicile}</div></div>
+  <div class="field-row"><div class="field-label">Fakultas/Jurusan</div><div class="field-colon">:</div><div class="field-value">${signatory.faculty}</div></div>
+  <div class="field-row"><div class="field-label">Angkatan UI/OSUI</div><div class="field-colon">:</div><div class="field-value">${signatory.year}</div></div>
+  <div class="field-row"><div class="field-label">Section/Instrumen</div><div class="field-colon">:</div><div class="field-value">${signatory.section}</div></div>
+  <div class="field-row"><div class="field-label">Nomor KTP</div><div class="field-colon">:</div><div class="field-value">${signatory.ktpNumber}</div></div>
   <p>Dalam hal ini bertindak untuk dan atas nama OSUI Mahawaditra dalam kapasitasnya sebagai kepala divisi perlengkapan yang selanjutnya disebut sebagai <b>PIHAK PERTAMA</b></p>
 </div>
 
 <div class="party-block">
-  <div class="field-row"><div class="field-label">Nama</div><div class="field-colon">:</div><div class="field-value">${data.borrower.name}</div></div>
-  <div class="field-row"><div class="field-label">No. Telepon/Ponsel</div><div class="field-colon">:</div><div class="field-value">${data.borrower.phone}</div></div>
-  <div class="field-row"><div class="field-label">Alamat sesuai KTP</div><div class="field-colon">:</div><div class="field-value">${data.borrower.addressKtp}</div></div>
-  <div class="field-row"><div class="field-label">Alamat domisili</div><div class="field-colon">:</div><div class="field-value">${data.borrower.addressDomicile}</div></div>
-  <div class="field-row"><div class="field-label">Fakultas/Jurusan</div><div class="field-colon">:</div><div class="field-value">${data.borrower.faculty}</div></div>
-  <div class="field-row"><div class="field-label">Angkatan UI/OSUI</div><div class="field-colon">:</div><div class="field-value">${data.borrower.year}</div></div>
-  <div class="field-row"><div class="field-label">Section/Instrumen</div><div class="field-colon">:</div><div class="field-value">${data.instrumentLabel}</div></div>
-  <div class="field-row"><div class="field-label">Nomor KTP</div><div class="field-colon">:</div><div class="field-value">${data.borrower.ktpNumber}</div></div>
+  <div class="field-row"><div class="field-label">Nama</div><div class="field-colon">:</div><div class="field-value">${borrower.name}</div></div>
+  <div class="field-row"><div class="field-label">No. Telepon/Ponsel</div><div class="field-colon">:</div><div class="field-value">${borrower.phone}</div></div>
+  <div class="field-row"><div class="field-label">Alamat sesuai KTP</div><div class="field-colon">:</div><div class="field-value">${borrower.addressKtp}</div></div>
+  <div class="field-row"><div class="field-label">Alamat domisili</div><div class="field-colon">:</div><div class="field-value">${borrower.addressDomicile}</div></div>
+  <div class="field-row"><div class="field-label">Fakultas/Jurusan</div><div class="field-colon">:</div><div class="field-value">${borrower.faculty}</div></div>
+  <div class="field-row"><div class="field-label">Angkatan UI/OSUI</div><div class="field-colon">:</div><div class="field-value">${borrower.year}</div></div>
+  <div class="field-row"><div class="field-label">Section/Instrumen</div><div class="field-colon">:</div><div class="field-value">${instrumentLabel}</div></div>
+  <div class="field-row"><div class="field-label">Nomor KTP</div><div class="field-colon">:</div><div class="field-value">${borrower.ktpNumber}</div></div>
   <p>Dalam hal ini bertindak untuk dan atas nama sendiri yang selanjutnya disebut sebagai <b>PIHAK KEDUA</b></p>
 </div>
 
 <div class="party-block">
-  <div class="field-row"><div class="field-label">Nama</div><div class="field-colon">:</div><div class="field-value">${data.guardian.name}</div></div>
-  <div class="field-row"><div class="field-label">No. Telepon/Ponsel</div><div class="field-colon">:</div><div class="field-value">${data.guardian.phone}</div></div>
-  <div class="field-row"><div class="field-label">Alamat sesuai KTP</div><div class="field-colon">:</div><div class="field-value">${data.guardian.addressKtp}</div></div>
+  <div class="field-row"><div class="field-label">Nama</div><div class="field-colon">:</div><div class="field-value">${guardian.name}</div></div>
+  <div class="field-row"><div class="field-label">No. Telepon/Ponsel</div><div class="field-colon">:</div><div class="field-value">${guardian.phone}</div></div>
+  <div class="field-row"><div class="field-label">Alamat sesuai KTP</div><div class="field-colon">:</div><div class="field-value">${guardian.addressKtp}</div></div>
   <p>Dalam hal ini bertindak untuk dan atas nama <b>PIHAK KEDUA</b> sebagai wali/orang tua dari <b>PIHAK KEDUA</b>.</p>
 </div>
 
@@ -189,11 +222,11 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
 <h2>PASAL 1</h2>
 <h3>KETENTUAN UMUM</h3>
 <ol>
-  <li>INSTRUMEN adalah alat musik ${data.instrumentType} milik OSUI Mahawaditra dengan ciri-ciri yang akan dijelaskan selanjutnya dalam Addendum Perjanjian.</li>
+  <li>INSTRUMEN adalah alat musik ${instrumentType} milik OSUI Mahawaditra dengan ciri-ciri yang akan dijelaskan selanjutnya dalam Addendum Perjanjian.</li>
   <li>PIHAK PERTAMA mewakili OSUI Mahawaditra adalah kepala divisi perlengkapan OSUI Mahawaditra sebagai penanggung jawab dalam peminjaman INSTRUMEN kepada PIHAK KEDUA.</li>
   <li>PIHAK KEDUA adalah calon anggota aktif/anggota aktif OSUI Mahawaditra yang bermaksud untuk meminjam instrumen milik OSUI Mahawaditra dan disetujui oleh PIHAK PERTAMA.</li>
   <li>DEPOSIT adalah uang sebesar ${formatRupiah(data.depositAmount)} yang diberikan oleh PIHAK KEDUA kepada PIHAK PERTAMA sebelum surat ini ditandatangani sebagai jaminan agar PIHAK KEDUA mengembalikan INSTRUMEN tepat pada waktunya. DEPOSIT akan dikembalikan pada saat INSTRUMEN dikembalikan.</li>
-  <li>DEPOSIT telah ditransfer ke rekening bank ${data.bankName} dengan nomor <b>${data.bankAccount} atas nama ${data.bankHolder}</b>.</li>
+  <li>DEPOSIT telah ditransfer ke rekening bank ${bankName} dengan nomor <b>${bankAccount} atas nama ${bankHolder}</b>.</li>
 </ol>
 
 <h2>PASAL 2</h2>
@@ -204,8 +237,8 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
   <li>Perubahan status keanggotaan sebagaimana dimaksud pada ayat (2) termasuk, namun tidak terbatas pada pengunduran diri, menjadi anggota pasif OSUI Mahawaditra, pemutihan status keanggotaan, dan cuti.</li>
   <li>PIHAK PERTAMA dapat sewaktu-waktu menghentikan masa peminjaman sebelum waktu yang dimaksud pada ayat (1) secara sepihak.</li>
   <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN sebelum atau saat selesainya masa peminjaman pada ayat (1), DEPOSIT akan dikembalikan sebanyak ${formatRupiah(data.depositAmount)}.</li>
-  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN maksimal 14 hari dari selesainya masa peminjaman, DEPOSIT hanya akan dikembalikan sebanyak ${formatRupiah(data.depositPartialAmount)}.</li>
-  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN setelah 14 hari dari selesainya masa peminjaman, DEPOSIT tidak akan dikembalikan.</li>
+  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN maksimal ${data.depositGraceDays} hari dari selesainya masa peminjaman, DEPOSIT hanya akan dikembalikan sebanyak ${formatRupiah(data.depositPartialAmount)}.</li>
+  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN setelah ${data.depositGraceDays} hari dari selesainya masa peminjaman, DEPOSIT tidak akan dikembalikan.</li>
 </ol>
 
 <div style="page-break-before: always;"></div>
@@ -246,20 +279,20 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
 <div class="signature-block">
   <div class="signature-col">
     <p>PIHAK PERTAMA</p>
-    ${data.signatory.imageBase64 ? `<img class="signature-img" src="${data.signatory.imageBase64}" />` : `<div style="height:60px"></div>`}
-    <p>${data.signatory.name}</p>
+    ${signatory.imageBase64 ? `<img class="signature-img" src="${signatory.imageBase64}" />` : `<div style="height:60px"></div>`}
+    <p>${signatory.name}</p>
   </div>
   <div class="signature-col">
     <p>PIHAK KEDUA</p>
     <div class="signature-line"></div>
-    <p>(${data.borrower.name})</p>
+    <p>(${borrower.name})</p>
   </div>
 </div>
 
 <div style="page-break-inside: avoid;">
   <p style="text-align: center; margin-top: 24px;">Mengetahui, wali / orang tua PIHAK KEDUA</p>
   <p style="text-align: center; margin-top: 40px;">Materai 10000</p>
-  <p style="text-align: center;">(${data.guardian.name})</p>
+  <p style="text-align: center;">(${guardian.name})</p>
 </div>
 
 </body>

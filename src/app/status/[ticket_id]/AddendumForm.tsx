@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { submitAddendum } from "./actions";
+import { CompressedFileInput } from "@/components/CompressedFileInput";
 
 const initialState = {
   success: false,
@@ -10,14 +11,16 @@ const initialState = {
 
 export function AddendumForm({
   ticketId,
+  accessCode,
   timing = "initial",
   onSuccess,
 }: {
   ticketId: string;
+  accessCode: string;
   timing?: "initial" | "final";
   onSuccess: () => void;
 }) {
-  const action = submitAddendum.bind(null, ticketId, timing);
+  const action = submitAddendum.bind(null, ticketId, accessCode, timing);
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   useEffect(() => {
@@ -68,7 +71,12 @@ export function AddendumForm({
       </label>
       <label>
         Condition Photos
-        <input name="photos" type="file" accept="image/*" multiple required />
+        <CompressedFileInput
+          name="photos"
+          accept="image/*"
+          multiple
+          required
+        />
       </label>
       <label>
         <input name="confirmedTruthful" type="checkbox" required />I confirm

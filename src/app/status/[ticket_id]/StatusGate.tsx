@@ -77,6 +77,7 @@ function ProgressBar({
 
 export function StatusGate({ ticketId }: { ticketId: string }) {
   const [data, setData] = useState<RequestData | null>(null);
+  const [accessCode, setAccessCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [showExtendForm, setShowExtendForm] = useState(false);
@@ -89,9 +90,11 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
     const result = await verifyAccessCode(ticketId, savedCode);
     if (result.success) {
       setData(result.request);
+      setAccessCode(savedCode);
     } else {
       localStorage.removeItem(`access_code_${ticketId}`);
       setData(null);
+      setAccessCode(null);
     }
   }
 
@@ -106,6 +109,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
     if (result.success) {
       localStorage.setItem(`access_code_${ticketId}`, code);
       setData(result.request);
+      setAccessCode(code);
       setError(null);
     } else {
       setError(result.error);
@@ -114,7 +118,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
 
   if (checking) return <p>Loading...</p>;
 
-  if (data) {
+  if (data && accessCode) {
     return (
       <div>
         <h1>Status for {data.borrowerName}</h1>
@@ -126,7 +130,11 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
           instrumentConfirmed={data.instrumentConfirmed}
         />
         {data.status === "reviewing" && data.instrumentConfirmed && (
-          <Stage2Form ticketId={data.ticketId} onSuccess={refetch} />
+          <Stage2Form
+            ticketId={data.ticketId}
+            accessCode={accessCode}
+            onSuccess={refetch}
+          />
         )}
         {data.status === "active" && data.dueDate && (
           <p>Due Date: {new Date(data.dueDate).toLocaleDateString("id-ID")}</p>
@@ -180,6 +188,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
         {showReturnForm && (
           <AddendumForm
             ticketId={data.ticketId}
+            accessCode={accessCode}
             timing="final"
             onSuccess={() => {
               setShowReturnForm(false);
@@ -191,6 +200,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
         {showExtendForm && (
           <ExtendForm
             data={data}
+            accessCode={accessCode}
             onSuccess={() => {
               setShowExtendForm(false);
               refetch();
@@ -201,10 +211,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
           data.needsExtensionDocuments) && (
           <button
             onClick={async () => {
-              const savedCode = localStorage.getItem(`access_code_${ticketId}`);
-              if (!savedCode) return;
-
-              const result = await getContractPdf(ticketId, savedCode);
+              const result = await getContractPdf(ticketId, accessCode);
               if (result.success) {
                 const link = document.createElement("a");
                 link.href = result.dataUrl;
@@ -222,13 +229,18 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
           data.needsExtensionDocuments) && (
           <UploadDocumentsForm
             ticketId={data.ticketId}
+            accessCode={accessCode}
             isExtension={data.needsExtensionDocuments}
             onSuccess={refetch}
           />
         )}
         {((data.status === "ready_to_pickup" && !data.hasInitialAddendum) ||
           data.canFillExtensionAddendum) && (
-          <AddendumForm ticketId={data.ticketId} onSuccess={refetch} />
+          <AddendumForm
+            ticketId={data.ticketId}
+            accessCode={accessCode}
+            onSuccess={refetch}
+          />
         )}
       </div>
     );

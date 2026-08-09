@@ -9,12 +9,10 @@ export function AssignSection({
   requestId,
   currentInstrument,
   candidates,
-  disabled = false,
 }: {
   requestId: string;
   currentInstrument: Instrument | null;
   candidates: Instrument[];
-  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [hovering, setHovering] = useState(false);
@@ -30,7 +28,6 @@ export function AssignSection({
         onClick={() => setOpen(true)}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
-        disabled={disabled}
       >
         {currentInstrument ? (hovering ? "Reassign?" : "Assigned!") : "Assign"}
       </button>

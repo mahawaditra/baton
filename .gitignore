@@ -44,3 +44,7 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Claude Code tooling — audit/refactor session config, not project docs
+/CLAUDE.md
+/.claude/

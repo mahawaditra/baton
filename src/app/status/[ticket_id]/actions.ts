@@ -14,10 +14,20 @@ import {
   footerTemplate,
 } from "@/lib/contract-pdf";
 import { getBrowser } from "@/lib/contract-pdf";
-import { daysBetween, driveTimestamp } from "@/lib/format";
+import {
+  daysBetween,
+  driveTimestamp,
+  escapeHtml,
+  todayInJakarta,
+} from "@/lib/format";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
 import { accessCodeLimiter } from "@/lib/rate-limit";
+import { z } from "zod";
+import {
+  validateDocumentUpload,
+  validateImageUpload,
+} from "@/lib/file-validation";
 
 type VerifyResult =
   | { success: true; request: RequestData }
@@ -49,21 +59,25 @@ type ExtensionState = {
 
 function computeCanExtend(status: string, dueDate: Date | null): boolean {
   if (status !== "active" || !dueDate) return false;
-  const daysUntilDue = daysBetween(new Date(), dueDate);
+  const daysUntilDue = daysBetween(todayInJakarta(), dueDate);
   return daysUntilDue >= 0 && daysUntilDue <= 30;
+}
+
+async function requireTicketAccess(ticketId: string, accessCode: string) {
+  const request = await prisma.borrowingRequest.findUnique({
+    where: { ticketId },
+  });
+
+  if (!request || request.accessCode !== accessCode) {
+    throw new Error("Invalid access code.");
+  }
+  return request;
 }
 
 export async function verifyAccessCode(
   ticketId: string,
   code: string,
 ): Promise<VerifyResult> {
-  const { success } = await accessCodeLimiter.limit(`access-code:${ticketId}`);
-  if (!success) {
-    return {
-      success: false,
-      error: "Too many attempts. Please try again in a few minutes.",
-    };
-  }
   const request = await prisma.borrowingRequest.findUnique({
     where: { ticketId },
     select: {
@@ -85,7 +99,15 @@ export async function verifyAccessCode(
   });
 
   if (!request || request.accessCode !== code) {
-    return { success: false, error: "Invalid access code." };
+    const { success } = await accessCodeLimiter.limit(
+      `access-code:${ticketId}`,
+    );
+    return {
+      success: false,
+      error: success
+        ? "Invalid access code."
+        : "Too many attempts. Please try again in a few minutes.",
+    };
   }
 
   const latestPeriod = await prisma.loanPeriod.findFirst({
@@ -143,14 +165,58 @@ export async function verifyAccessCode(
   };
 }
 
+const contractDataSchema = z.object({
+  ktpNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{16}$/, "KTP number must be 16 digits"),
+  addressKtp: z.string().trim().min(1, "KTP address is required").max(300),
+  addressDomicile: z
+    .string()
+    .trim()
+    .min(1, "Domicile address is required")
+    .max(300),
+  faculty: z
+    .string()
+    .trim()
+    .max(100, "Faculty/major must be 100 characters or fewer")
+    .regex(
+      /^[^/]+\/[^/]+$/,
+      "Format must be Faculty/Major, e.g. FMIPA/Biologi",
+    ),
+  guardianName: z.string().trim().min(1, "Guardian name is required").max(100),
+  guardianPhone: z.string().trim().min(1, "Guardian phone is required").max(20),
+  guardianAddressKtp: z
+    .string()
+    .trim()
+    .min(1, "Guardian KTP address is required")
+    .max(300),
+});
+
+const addendumDataSchema = z.object({
+  completeness: z.string().trim().min(1, "Completeness is required").max(500),
+  bodyCondition: z
+    .string()
+    .trim()
+    .min(1, "Body condition is required")
+    .max(1000),
+  accessoriesCondition: z.string().trim().max(1000).nullable(),
+  notes: z.string().trim().max(1000).nullable(),
+});
+
 export async function submitStage2(
   ticketId: string,
+  accessCode: string,
   prevState: Stage2State,
   formData: FormData,
 ): Promise<Stage2State> {
-  const request = await prisma.borrowingRequest.findUniqueOrThrow({
-    where: { ticketId },
-  });
+  let request;
+
+  try {
+    request = await requireTicketAccess(ticketId, accessCode);
+  } catch {
+    return { success: false, error: "Invalid access code." };
+  }
 
   if (request.status !== "reviewing" || !request.instrumentConfirmed) {
     return { success: false, error: "This request is not ready for Stage 2." };
@@ -160,13 +226,29 @@ export async function submitStage2(
     return { success: false, error: "No instrument assigned yet." };
   }
 
-  const ktpNumber = formData.get("ktpNumber") as string;
-  const addressKtp = formData.get("addressKtp") as string;
-  const addressDomicile = formData.get("addressDomicile") as string;
-  const faculty = formData.get("faculty") as string;
-  const guardianName = formData.get("guardianName") as string;
-  const guardianPhone = formData.get("guardianPhone") as string;
-  const guardianAddressKtp = formData.get("guardianAddressKtp") as string;
+  const parsed = contractDataSchema.safeParse({
+    ktpNumber: formData.get("ktpNumber"),
+    addressKtp: formData.get("addressKtp"),
+    addressDomicile: formData.get("addressDomicile"),
+    faculty: formData.get("faculty"),
+    guardianName: formData.get("guardianName"),
+    guardianPhone: formData.get("guardianPhone"),
+    guardianAddressKtp: formData.get("guardianAddressKtp"),
+  });
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const {
+    ktpNumber,
+    addressKtp,
+    addressDomicile,
+    faculty,
+    guardianName,
+    guardianPhone,
+    guardianAddressKtp,
+  } = parsed.data;
 
   const [instrument, settings] = await Promise.all([
     prisma.instrument.findUniqueOrThrow({
@@ -209,6 +291,7 @@ export async function submitStage2(
     instrumentType: instrument.type,
     depositAmount: settings.depositAmount,
     depositPartialAmount: settings.depositPartialAmount,
+    depositGraceDays: settings.depositGraceDays,
     bankName: settings.bankName,
     bankAccount: settings.bankAccount,
     bankHolder: settings.bankHolder,
@@ -274,12 +357,17 @@ export async function submitStage2(
 
 export async function submitExtension(
   ticketId: string,
+  accessCode: string,
   prevState: ExtensionState,
   formData: FormData,
 ): Promise<ExtensionState> {
-  const request = await prisma.borrowingRequest.findUniqueOrThrow({
-    where: { ticketId },
-  });
+  let request;
+
+  try {
+    request = await requireTicketAccess(ticketId, accessCode);
+  } catch {
+    return { success: false, error: "Invalid access code." };
+  }
 
   if (request.status !== "active" || !request.instrumentId) {
     return {
@@ -288,13 +376,29 @@ export async function submitExtension(
     };
   }
 
-  const ktpNumber = formData.get("ktpNumber") as string;
-  const addressKtp = formData.get("addressKtp") as string;
-  const addressDomicile = formData.get("addressDomicile") as string;
-  const faculty = formData.get("faculty") as string;
-  const guardianName = formData.get("guardianName") as string;
-  const guardianPhone = formData.get("guardianPhone") as string;
-  const guardianAddressKtp = formData.get("guardianAddressKtp") as string;
+  const parsed = contractDataSchema.safeParse({
+    ktpNumber: formData.get("ktpNumber"),
+    addressKtp: formData.get("addressKtp"),
+    addressDomicile: formData.get("addressDomicile"),
+    faculty: formData.get("faculty"),
+    guardianName: formData.get("guardianName"),
+    guardianPhone: formData.get("guardianPhone"),
+    guardianAddressKtp: formData.get("guardianAddressKtp"),
+  });
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const {
+    ktpNumber,
+    addressKtp,
+    addressDomicile,
+    faculty,
+    guardianName,
+    guardianPhone,
+    guardianAddressKtp,
+  } = parsed.data;
 
   const [instrument, settings, latestPeriod] = await Promise.all([
     prisma.instrument.findUniqueOrThrow({
@@ -341,6 +445,7 @@ export async function submitExtension(
     instrumentType: instrument.type,
     depositAmount: settings.depositAmount,
     depositPartialAmount: settings.depositPartialAmount,
+    depositGraceDays: settings.depositGraceDays,
     bankName: settings.bankName,
     bankAccount: settings.bankAccount,
     bankHolder: settings.bankHolder,
@@ -445,12 +550,17 @@ export async function getContractPdf(
 
 export async function submitDocuments(
   ticketId: string,
+  accessCode: string,
   prevState: UploadState,
   formData: FormData,
 ): Promise<UploadState> {
-  const request = await prisma.borrowingRequest.findUniqueOrThrow({
-    where: { ticketId },
-  });
+  let request;
+
+  try {
+    request = await requireTicketAccess(ticketId, accessCode);
+  } catch {
+    return { success: false, error: "Invalid access code." };
+  }
 
   const latestPeriod = await prisma.loanPeriod.findFirst({
     where: { requestId: request.id },
@@ -500,6 +610,29 @@ export async function submitDocuments(
     );
   }
 
+  const VALIDATORS: Record<
+    "signed_contract" | "deposit_proof" | "ktp_scan",
+    typeof validateDocumentUpload
+  > = {
+    signed_contract: validateDocumentUpload,
+    deposit_proof: validateImageUpload,
+    ktp_scan: validateDocumentUpload,
+  };
+
+  const validatedUploads: {
+    type: "signed_contract" | "deposit_proof" | "ktp_scan";
+    file: File;
+    mimeType: string;
+  }[] = [];
+
+  for (const { type, file } of uploads) {
+    const validation = await VALIDATORS[type](file);
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
+    }
+    validatedUploads.push({ type, file, mimeType: validation.mimeType });
+  }
+
   const year = new Date().getFullYear();
   const folderId = await getBorrowerArchiveFolder(
     year,
@@ -508,12 +641,12 @@ export async function submitDocuments(
   );
 
   const documentsData = [];
-  for (const { type, file } of uploads) {
+  for (const { type, file, mimeType } of validatedUploads) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const ext = file.name.split(".").pop();
     const driveFileId = await uploadFile(
       `${type}_${request.borrowerName}_${driveTimestamp()}.${ext}`,
-      file.type,
+      mimeType,
       buffer,
       folderId,
     );
@@ -521,7 +654,7 @@ export async function submitDocuments(
       periodId: latestPeriod.id,
       type,
       driveFileId,
-      mimeType: file.type,
+      mimeType,
     });
   }
 
@@ -538,12 +671,12 @@ export async function submitDocuments(
   }
 
   await sendEmail({
-    to: "perlengkapan.osui@gmail.com",
+    to: process.env.GMAIL_USER!,
     subject: isExtension
       ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
       : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
     html: `
-    <p>Peminjam ${request.borrowerName} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
+    <p>Peminjam ${escapeHtml(request.borrowerName)} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
     <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
   `,
   });
@@ -553,10 +686,17 @@ export async function submitDocuments(
 
 export async function submitAddendum(
   ticketId: string,
+  accessCode: string,
   timing: "initial" | "final",
   prevState: AddendumState,
   formData: FormData,
 ): Promise<AddendumState> {
+  try {
+    await requireTicketAccess(ticketId, accessCode);
+  } catch {
+    return { success: false, error: "Invalid access code." };
+  }
+
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { ticketId },
     include: { instrument: true },
@@ -623,6 +763,20 @@ export async function submitAddendum(
     };
   }
 
+  const parsed = addendumDataSchema.safeParse({
+    completeness: formData.get("completeness"),
+    bodyCondition: formData.get("bodyCondition"),
+    accessoriesCondition: formData.get("accessoriesCondition") || null,
+    notes: formData.get("notes") || null,
+  });
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { completeness, bodyCondition, accessoriesCondition, notes } =
+    parsed.data;
+
   const year = new Date().getFullYear();
   const archiveFolder = await getBorrowerArchiveFolder(
     year,
@@ -635,16 +789,24 @@ export async function submitAddendum(
   );
 
   const photos = formData.getAll("photos") as File[];
-  const driveFileIds: string[] = [];
 
-  for (const [index, photo] of photos.entries()) {
+  const validatedPhotos: { file: File; mimeType: string }[] = [];
+  for (const photo of photos) {
     if (photo.size === 0) continue;
+    const validation = await validateImageUpload(photo);
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
+    }
+    validatedPhotos.push({ file: photo, mimeType: validation.mimeType });
+  }
 
-    const buffer = Buffer.from(await photo.arrayBuffer());
-    const ext = photo.name.split(".").pop();
+  const driveFileIds: string[] = [];
+  for (const [index, { file, mimeType }] of validatedPhotos.entries()) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const ext = file.name.split(".").pop();
     const driveFileId = await uploadFile(
       `Kondisi_${request.borrowerName}_${driveTimestamp()}_${index + 1}.${ext}`,
-      photo.type,
+      mimeType,
       buffer,
       addendumFolder,
     );
@@ -659,14 +821,12 @@ export async function submitAddendum(
         request.instrument?.type ?? request.instrumentTypeRequested,
       instrumentBrand: request.instrument?.brand,
       instrumentSerial: request.instrument?.serialNumber,
-      completeness: formData.get("completeness") as string,
-      bodyCondition: formData.get("bodyCondition") as string,
-      accessoriesCondition: formData.get("accessoriesCondition") as
-        | string
-        | null,
+      completeness,
+      bodyCondition,
+      accessoriesCondition,
       driveFileIds,
       confirmedTruthful: true,
-      notes: formData.get("notes") as string | null,
+      notes,
     },
   });
 

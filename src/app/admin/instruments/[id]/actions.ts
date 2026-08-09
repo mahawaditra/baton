@@ -5,6 +5,22 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
+
+const updateInstrumentSchema = z.object({
+  brand: z.string().trim().max(100).nullable(),
+  serialNumber: z.string().trim().max(100).nullable(),
+  condition: z.enum(
+    ["ok", "need_repair", "retired", "lost"],
+    "Invalid condition value",
+  ),
+  status: z.enum(
+    ["available", "reserved", "borrowed", "placed", "unavailable"],
+    "Invalid status value",
+  ),
+  location: z.string().trim().min(1, "Location is required").max(100),
+  notes: z.string().trim().max(1000).nullable(),
+});
 
 export async function updateInstrument(id: string, formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -17,11 +33,25 @@ export async function updateInstrument(id: string, formData: FormData) {
     where: { id },
   });
 
+  const parsed = updateInstrumentSchema.safeParse({
+    brand: formData.get("brand") || null,
+    serialNumber: formData.get("serialNumber") || null,
+    condition: formData.get("condition"),
+    status: formData.get("status"),
+    location: formData.get("location"),
+    notes: formData.get("notes") || null,
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message);
+  }
+
+  const { brand, serialNumber, condition, location, notes } = parsed.data;
+  let { status } = parsed.data;
+
   const statusLocked =
     before.status === "reserved" || before.status === "borrowed";
 
-  const condition = formData.get("condition") as string;
-  let status = formData.get("status") as string;
   let isLoanable = formData.get("isLoanable") === "true";
 
   if (condition === "retired" || condition === "lost") {
@@ -37,13 +67,13 @@ export async function updateInstrument(id: string, formData: FormData) {
   const updated = await prisma.instrument.update({
     where: { id },
     data: {
-      brand: formData.get("brand") as string,
-      serialNumber: formData.get("serialNumber") as string,
-      condition: condition as any,
-      status: status as any,
+      brand,
+      serialNumber,
+      condition,
+      status,
       isLoanable,
-      location: formData.get("location") as string,
-      notes: formData.get("notes") as string,
+      location,
+      notes,
     },
   });
 
@@ -62,5 +92,7 @@ export async function updateInstrument(id: string, formData: FormData) {
 
   revalidatePath(`/admin/instruments/${id}`);
   revalidatePath(`/admin/instruments`);
+  revalidatePath(`/admin/dashboard`);
+  revalidatePath(`/admin/activity`);
   redirect(`/admin/instruments/${id}`);
 }

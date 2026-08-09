@@ -1,16 +1,34 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { customAlphabet } from "nanoid";
 import { sendEmail } from "@/lib/mail";
 import { getClientIp, submitRequestLimiter } from "@/lib/rate-limit";
 import { generateTicketId, generateAccessCode } from "@/lib/id-generators";
+import { z } from "zod";
+import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
+import { escapeHtml } from "@/lib/format";
+import * as Sentry from "@sentry/nextjs";
 
 type State = {
   ticketId: string | null;
   accessCode: string | null;
   error: string | null;
 };
+
+const submitRequestSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  email: z.email("Invalid email address"),
+  phone: z.string().trim().min(1, "Phone number is required").max(20),
+  lineId: z.string().trim().min(1, "Line ID is required").max(20),
+  instrumentType: z.enum(
+    REQUESTABLE_INSTRUMENT_TYPES,
+    "Please select a valid instrument type",
+  ),
+  year: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, "Year must be a 4-digit year"),
+});
 
 export async function submitRequest(
   prevState: State,
@@ -26,23 +44,28 @@ export async function submitRequest(
     };
   }
 
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
-  const lineId = formData.get("lineId") as string;
-  const instrumentType = formData.get("instrumentType") as string;
-  const year = formData.get("year") as string;
+  const parsed = submitRequestSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    lineId: formData.get("lineId"),
+    instrumentType: formData.get("instrumentType"),
+    year: formData.get("year"),
+  });
 
-  if (!name || !email || !phone || !lineId || !instrumentType || !year) {
+  if (!parsed.success) {
     return {
       ticketId: null,
       accessCode: null,
-      error: "All fields are required",
+      error: parsed.error.issues[0].message,
     };
   }
 
+  const { name, email, phone, lineId, instrumentType, year } = parsed.data;
+
   const ticketId = generateTicketId();
   const accessCode = generateAccessCode();
+  const safeName = escapeHtml(name);
 
   await prisma.borrowingRequest.create({
     data: {
@@ -57,30 +80,38 @@ export async function submitRequest(
     },
   });
 
-  await sendEmail({
-    to: email,
-    subject: `Pengajuan peminjaman diterima — tiket ${ticketId}`,
-    html: `
-      <p>Halo ${name}!</p>
-      <p>Pengajuan peminjaman instrumen kamu sudah kami terima dan akan direview oleh staf Logistik OSUI.</p>
-      <p>Simpan informasi berikut untuk cek status pengajuan kamu kapan saja:</p>
-      <p>
-        Nomor tiket: <strong>${ticketId}</strong><br/>
-        Kode akses: <strong>${accessCode}</strong>
-      </p>
-      <p><a href="${process.env.BETTER_AUTH_URL}/status/${ticketId}">Cek status pengajuan</a></p>
-    `,
-  });
+  try {
+    await sendEmail({
+      to: email,
+      subject: `Pengajuan peminjaman diterima — tiket ${ticketId}`,
+      html: `
+        <p>Halo ${safeName}!</p>
+        <p>Pengajuan peminjaman instrumen kamu sudah kami terima dan akan direview oleh staf Logistik OSUI.</p>
+        <p>Simpan informasi berikut untuk cek status pengajuan kamu kapan saja:</p>
+        <p>
+          Nomor tiket: <strong>${ticketId}</strong><br/>
+          Kode akses: <strong>${accessCode}</strong>
+        </p>
+        <p><a href="${process.env.BETTER_AUTH_URL}/status/${ticketId}">Cek status pengajuan</a></p>
+      `,
+    });
+  } catch (error) {
+    Sentry.captureException(error);
+  }
 
-  await sendEmail({
-    to: "perlengkapan.osui@gmail.com",
-    subject: `Pengajuan baru masuk — tiket ${ticketId}`,
-    html: `
-      <p>Ada pengajuan peminjaman baru dari ${name}.</p>
-      <p>Instrumen diminati: ${instrumentType}</p>
-      <p>Mohon di-review di laman requests web.</p>
-    `,
-  });
+  try {
+    await sendEmail({
+      to: process.env.GMAIL_USER!,
+      subject: `Pengajuan baru masuk — tiket ${ticketId}`,
+      html: `
+        <p>Ada pengajuan peminjaman baru dari ${safeName}.</p>
+        <p>Instrumen diminati: ${instrumentType}</p>
+        <p>Mohon di-review di laman requests web.</p>
+      `,
+    });
+  } catch (error) {
+    Sentry.captureException(error);
+  }
 
   return {
     ticketId,

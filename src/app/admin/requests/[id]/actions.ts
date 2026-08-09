@@ -3,13 +3,28 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/mail";
-import { daysBetween } from "@/lib/format";
+import { daysBetween, escapeHtml, toJakartaCalendarDate } from "@/lib/format";
 import {
   calculateDepositRefund,
   determineInstrumentStatusOnReturn,
 } from "@/lib/loan-rules";
+import { revalidateRequestViews } from "@/lib/revalidate";
+import { z } from "zod";
+
+const confirmReturnSchema = z.object({
+  condition: z.enum(
+    ["ok", "need_repair", "retired", "lost"],
+    "Invalid condition value",
+  ),
+  status: z.enum(["available", "unavailable"], "Invalid status value"),
+  location: z.string().trim().min(1, "Location is required").max(100),
+});
+
+const documentDecisionSchema = z.enum(
+  ["approved", "rejected"],
+  "Invalid document decision value",
+);
 
 export async function assignInstrument(
   requestId: string,
@@ -25,6 +40,18 @@ export async function assignInstrument(
   });
 
   await prisma.$transaction(async (tx) => {
+    const instrument = await tx.instrument.findUniqueOrThrow({
+      where: { id: instrumentId },
+    });
+
+    if (
+      instrument.status !== "available" ||
+      !instrument.isLoanable ||
+      !["ok", "need_repair"].includes(instrument.condition)
+    ) {
+      throw new Error("This instrument is no longer available to assign.");
+    }
+
     if (request.instrumentId) {
       await tx.instrument.update({
         where: { id: request.instrumentId },
@@ -56,12 +83,9 @@ export async function assignInstrument(
     },
   });
 
-  revalidatePath(`/admin/requests/${requestId}`);
-  revalidatePath(`/admin/instruments`);
-  revalidatePath(`/admin/instruments/${instrumentId}`);
-  if (request.instrumentId)
-    revalidatePath(`/admin/instruments/${request.instrumentId}`);
-  revalidatePath(`/admin/dashboard`);
+  revalidateRequestViews(requestId, {
+    instrumentIds: [instrumentId, request.instrumentId],
+  });
 }
 
 export async function confirmAvailable(requestId: string) {
@@ -86,7 +110,7 @@ export async function confirmAvailable(requestId: string) {
     to: request.borrowerEmail,
     subject: "Instrumen tersedia — lengkapi data kontrak",
     html: `
-    <p>Halo ${request.borrowerName},</p>
+    <p>Halo ${escapeHtml(request.borrowerName)},</p>
     <p>Instrumen yang kamu ajukan sekarang tersedia.</p>
     <p>Silakan lengkapi data kontrak di link berikut:</p>
     <p><a href="${process.env.BETTER_AUTH_URL}/status/${request.ticketId}">Lanjut ke Tahap 2</a></p>
@@ -102,7 +126,7 @@ export async function confirmAvailable(requestId: string) {
     },
   });
 
-  revalidatePath(`/admin/requests/${requestId}`);
+  revalidateRequestViews(requestId);
 }
 
 export async function rejectRequest(requestId: string, formData: FormData) {
@@ -141,9 +165,9 @@ export async function rejectRequest(requestId: string, formData: FormData) {
     to: request.borrowerEmail,
     subject: "Pengajuan peminjaman tidak dapat diproses.",
     html: `
-    <p>Halo ${request.borrowerName},</p>
+    <p>Halo ${escapeHtml(request.borrowerName)},</p>
     <p>Mohon maaf, pengajuan peminjaman instrumen kamu (tiket ${request.ticketId}) tidak dapat kami proses.</p>
-    <p>Alasan: ${reason}</p>
+    <p>Alasan: ${escapeHtml(reason)}</p>
     <p>Silakan hubungi staf Logistik OSUI untuk solusi lebih lanjut.</p>
   `,
   });
@@ -158,17 +182,11 @@ export async function rejectRequest(requestId: string, formData: FormData) {
     },
   });
 
-  revalidatePath(`/admin/requests/${requestId}`);
-  if (request.instrumentId) {
-    revalidatePath(`/admin/instruments`);
-    revalidatePath(`/admin/instruments/${request.instrumentId}`);
-    revalidatePath(`/admin/dashboard`);
-  }
+  revalidateRequestViews(requestId, { instrumentIds: [request.instrumentId] });
 }
 
-export async function reviewDocument(
-  documentId: string,
-  decision: "approved" | "rejected",
+export async function submitDocumentReview(
+  requestId: string,
   formData: FormData,
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -176,58 +194,105 @@ export async function reviewDocument(
     throw new Error("Not logged in");
   }
 
-  const notes = formData.get("notes") as string | null;
-
-  if (decision === "rejected" && !notes) {
-    throw new Error("Rejection notes are required when rejecting a document.");
+  const latestPeriod = await prisma.loanPeriod.findFirst({
+    where: { requestId },
+    orderBy: { sequence: "desc" },
+  });
+  if (!latestPeriod) {
+    throw new Error("No loan period found for this request.");
   }
 
-  const doc = await prisma.document.findUniqueOrThrow({
-    where: { id: documentId },
-    include: { period: true },
+  const documents = await prisma.document.findMany({
+    where: { periodId: latestPeriod.id, reviewStatus: "pending" },
+    distinct: ["type"],
+    orderBy: { uploadedAt: "desc" },
   });
 
-  await prisma.document.update({
-    where: { id: documentId },
-    data: {
-      reviewStatus: decision,
-      reviewerNotes: notes,
-      reviewedAt: new Date(),
-    },
+  if (documents.length === 0) {
+    throw new Error("No pending documents to review.");
+  }
+
+  const decisions = documents.map((doc) => {
+    const parsedDecision = documentDecisionSchema.safeParse(
+      formData.get(`decision_${doc.id}`),
+    );
+    if (!parsedDecision.success) {
+      throw new Error(`Missing decision for ${doc.type}.`);
+    }
+    const decision = parsedDecision.data;
+
+    const notesRaw = formData.get(`notes_${doc.id}`);
+    const notes =
+      typeof notesRaw === "string" && notesRaw.trim() ? notesRaw.trim() : null;
+
+    if (decision === "rejected" && !notes) {
+      throw new Error(`Rejection reason is required for ${doc.type}.`);
+    }
+
+    return { id: doc.id, type: doc.type, decision, notes };
   });
 
-  if (decision === "rejected") {
+  await prisma.$transaction(
+    decisions.map((d) =>
+      prisma.document.update({
+        where: { id: d.id },
+        data: {
+          reviewStatus: d.decision,
+          reviewerNotes: d.notes,
+          reviewedAt: new Date(),
+        },
+      }),
+    ),
+  );
+
+  const rejected = decisions.filter((d) => d.decision === "rejected");
+
+  if (rejected.length > 0) {
     await prisma.borrowingRequest.update({
-      where: { id: doc.period.requestId },
+      where: { id: requestId },
       data: { status: "contract_generated" },
     });
+
     const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow({
-      where: { id: doc.period.requestId },
+      where: { id: requestId },
     });
+
+    const introText =
+      rejected.length === 1
+        ? "Dokumen berikut yang kamu upload perlu direvisi:"
+        : "Beberapa dokumen berikut yang kamu upload perlu direvisi:";
+
     await sendEmail({
       to: requestForEmail.borrowerEmail,
       subject: "Dokumen ditolak — perlu direvisi",
       html: `
-      <p>Halo ${requestForEmail.borrowerName},</p>
-      <p>Dokumen ${doc.type} yang kamu upload ada yang perlu direvisi.</p>
-      <p>Catatan admin: ${notes}</p>
-       <p>Silakan upload ulang dokumen di <a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">halaman status kamu</a>.</p>
+      <p>Halo ${escapeHtml(requestForEmail.borrowerName)},</p>
+      <p>${introText}</p>
+      <ul>
+        ${rejected
+          .map(
+            (d) =>
+              `<li><strong>${escapeHtml(d.type)}</strong>: ${escapeHtml(d.notes!)}</li>`,
+          )
+          .join("")}
+      </ul>
+      <p>Silakan upload ulang dokumen di <a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">halaman status kamu</a>.</p>
       `,
     });
   }
 
-  await prisma.activityLog.create({
-    data: {
+  await prisma.activityLog.createMany({
+    data: decisions.map((d) => ({
       adminId: session.user.id,
       action:
-        decision === "approved" ? "approve_documents" : "reject_documents",
+        d.decision === "approved" ? "approve_documents" : "reject_documents",
       entityType: "borrowing_request",
-      entityId: doc.period.requestId,
-      metadata: { documentId, type: doc.type, notes },
-    },
+      entityId: requestId,
+      metadata: { documentId: d.id, type: d.type, notes: d.notes },
+    })),
   });
 
-  revalidatePath(`/admin/requests/${doc.period.requestId}`);
+  revalidateRequestViews(requestId);
 }
 
 export async function confirmDocumentsReviewed(requestId: string) {
@@ -273,7 +338,7 @@ export async function confirmDocumentsReviewed(requestId: string) {
     to: requestForEmail.borrowerEmail,
     subject: "Dokumen disetujui — siap diambil",
     html: `
-    <p>Halo ${requestForEmail.borrowerName},</p>
+    <p>Halo ${escapeHtml(requestForEmail.borrowerName)},</p>
     <p>Dokumen kamu sudah disetujui dan instrumen sudah siap diambil di Sekre atau Pusgiwa UI!</p>
     <p>Staf Logistik OSUI akan menghubungi kamu untuk koordinasi waktu pengambilan. Jika dalam waktu dekat belum ada kabar, kamu bisa menghubungi staf Logistik OSUI langsung melalui LINE.</p>
     <p><a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">Lihat halaman status</a> untuk mengisi addendum setelah menerima instrumen.</p>
@@ -289,7 +354,7 @@ export async function confirmDocumentsReviewed(requestId: string) {
     },
   });
 
-  revalidatePath(`/admin/requests/${requestId}`);
+  revalidateRequestViews(requestId);
 }
 
 export async function confirmHandover(requestId: string) {
@@ -351,10 +416,7 @@ export async function confirmHandover(requestId: string) {
     },
   });
 
-  revalidatePath(`/admin/requests/${requestId}`);
-  revalidatePath(`/admin/instruments`);
-  revalidatePath(`/admin/instruments/${request.instrumentId}`);
-  revalidatePath(`/admin/dashboard`);
+  revalidateRequestViews(requestId, { instrumentIds: [request.instrumentId] });
 }
 
 export async function confirmExtension(requestId: string) {
@@ -392,7 +454,7 @@ export async function confirmExtension(requestId: string) {
     },
   });
 
-  revalidatePath(`/admin/requests/${requestId}`);
+  revalidateRequestViews(requestId);
 }
 
 export async function confirmReturn(requestId: string, formData: FormData) {
@@ -426,19 +488,22 @@ export async function confirmReturn(requestId: string, formData: FormData) {
     throw new Error("Borrower has not submitted the final addendum yet.");
   }
 
-  const condition = formData.get("condition") as
-    | "ok"
-    | "need_repair"
-    | "retired"
-    | "lost";
+  const parsed = confirmReturnSchema.safeParse({
+    condition: formData.get("condition"),
+    status: formData.get("status"),
+    location: formData.get("location"),
+  });
 
-  const requestedStatus = formData.get("status") as "available" | "unavailable";
-  const location = formData.get("location") as string;
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message);
+  }
+
+  const { condition, status: requestedStatus, location } = parsed.data;
 
   const status = determineInstrumentStatusOnReturn(condition, requestedStatus);
 
   const settings = await prisma.loanSetting.findFirstOrThrow();
-  const actualReturnDate = new Date();
+  const actualReturnDate = toJakartaCalendarDate(finalAddendum.submittedAt);
   const daysLate = daysBetween(latestPeriod.dueDate, actualReturnDate);
 
   const depositRefundAmount = calculateDepositRefund({
@@ -472,7 +537,7 @@ export async function confirmReturn(requestId: string, formData: FormData) {
     to: request.borrowerEmail,
     subject: "Pengembalian dikonfirmasi — terima kasih!",
     html: `
-    <p>Halo ${request.borrowerName},</p>
+    <p>Halo ${escapeHtml(request.borrowerName)},</p>
     <p>Pengembalian instrumen kamu sudah dikonfirmasi. Terima kasih sudah mengembalikan instrumennya!</p>
     ${depositMessage}
     `,
@@ -488,8 +553,8 @@ export async function confirmReturn(requestId: string, formData: FormData) {
     },
   });
 
-  revalidatePath(`/admin/requests/${requestId}`);
-  revalidatePath(`/admin/instruments`);
-  revalidatePath(`/admin/instruments/${request.instrumentId}`);
-  revalidatePath(`/admin/dashboard`);
+  revalidateRequestViews(requestId, {
+    instrumentIds: [request.instrumentId],
+    archive: true,
+  });
 }

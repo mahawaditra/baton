@@ -11,12 +11,14 @@ const initialState = {
 
 export function ExtendForm({
   data,
+  accessCode,
   onSuccess,
 }: {
   data: RequestData;
+  accessCode: string;
   onSuccess: () => void;
 }) {
-  const action = submitExtension.bind(null, data.ticketId);
+  const action = submitExtension.bind(null, data.ticketId, accessCode);
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   useEffect(() => {

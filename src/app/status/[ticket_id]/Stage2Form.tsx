@@ -10,12 +10,14 @@ const initialState = {
 
 export function Stage2Form({
   ticketId,
+  accessCode,
   onSuccess,
 }: {
   ticketId: string;
+  accessCode: string;
   onSuccess: () => void;
 }) {
-  const action = submitStage2.bind(null, ticketId);
+  const action = submitStage2.bind(null, ticketId, accessCode);
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   useEffect(() => {

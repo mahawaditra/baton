@@ -5,24 +5,58 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
+
+const updateGoodSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  brand: z.string().trim().max(100).nullable(),
+  quantity: z.coerce
+    .number("Quantity must be a number")
+    .int()
+    .nonnegative("Quantity cannot be negative"),
+  condition: z.enum(
+    ["ok", "need_repair", "retired", "lost"],
+    "Invalid condition value",
+  ),
+  location: z.string().trim().min(1, "Location is required").max(100),
+  registrationNo: z.string().trim().max(100).nullable(),
+  notes: z.string().trim().max(1000).nullable(),
+});
 
 export async function updateGood(id: string, formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) throw new Error("Not logged in");
 
+  const parsed = updateGoodSchema.safeParse({
+    name: formData.get("name"),
+    brand: formData.get("brand") || null,
+    quantity: formData.get("quantity"),
+    condition: formData.get("condition"),
+    location: formData.get("location"),
+    registrationNo: formData.get("registrationNo") || null,
+    notes: formData.get("notes") || null,
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message);
+  }
+
+  const { name, brand, quantity, condition, location, registrationNo, notes } =
+    parsed.data;
+
   const before = await prisma.good.findUniqueOrThrow({ where: { id } });
 
   const updated = await prisma.good.update({
     where: { id },
     data: {
-      name: formData.get("name") as string,
-      brand: formData.get("brand") as string,
-      quantity: Number(formData.get("quantity")),
-      condition: formData.get("condition") as any,
-      location: formData.get("location") as string,
-      registrationNo: formData.get("registrationNo") as string,
-      notes: formData.get("notes") as string,
+      name,
+      brand,
+      quantity,
+      condition,
+      location,
+      registrationNo,
+      notes,
     },
   });
 
@@ -41,5 +75,6 @@ export async function updateGood(id: string, formData: FormData) {
 
   revalidatePath(`/admin/goods/${id}`);
   revalidatePath(`/admin/goods`);
+  revalidatePath(`/admin/activity`);
   redirect(`/admin/goods/${id}`);
 }

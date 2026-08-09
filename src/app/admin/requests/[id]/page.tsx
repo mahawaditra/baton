@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { AssignSection } from "./AssignSection";
 import {
   confirmAvailable,
@@ -7,7 +8,7 @@ import {
   confirmHandover,
   confirmReturn,
   rejectRequest,
-  reviewDocument,
+  submitDocumentReview,
 } from "./actions";
 
 export default async function RequestDetailPage({
@@ -80,13 +81,12 @@ export default async function RequestDetailPage({
         Email: {request.borrowerEmail} · Phone: {request.borrowerPhone} · LINE:{" "}
         {request.borrowerLineId}
       </p>
-      {canAssign && (
+      {canAssign ? (
         <>
           <AssignSection
             requestId={id}
             currentInstrument={request.instrument}
             candidates={candidates}
-            disabled={!canAssign}
           />
 
           <form action={confirmAvailable.bind(null, id)}>
@@ -95,6 +95,18 @@ export default async function RequestDetailPage({
             </button>
           </form>
         </>
+      ) : (
+        request.instrument && (
+          <p>
+            Instrument:{" "}
+            <Link href={`/admin/instruments/${request.instrument.id}`}>
+              {request.instrument.type}
+              {request.instrument.brand && ` — ${request.instrument.brand}`}
+              {request.instrument.serialNumber &&
+                ` (S/N: ${request.instrument.serialNumber})`}
+            </Link>
+          </p>
+        )
       )}
       {["submitted", "reviewing"].includes(request.status) &&
         !request.instrumentConfirmed && (
@@ -111,30 +123,51 @@ export default async function RequestDetailPage({
         (isExtension && documents.length > 0)) && (
         <div>
           <h2>Review Documents</h2>
-          {documents.map((doc) => (
-            <div key={doc.id}>
-              <a href={`/admin/documents/${doc.id}`} target="_blank">
-                View {doc.type}
-              </a>
-              <span> — {doc.reviewStatus}</span>
-              {doc.reviewStatus === "pending" && (
-                <>
-                  <form action={reviewDocument.bind(null, doc.id, "approved")}>
-                    <button type="submit">Approve</button>
-                  </form>
-                  <form action={reviewDocument.bind(null, doc.id, "rejected")}>
+          <style>{`
+  .reject-notes { display: none; }
+  input[value="rejected"]:checked ~ .reject-notes { display: block; }
+`}</style>
+          <form action={submitDocumentReview.bind(null, id)}>
+            {documents.map((doc) => (
+              <div key={doc.id}>
+                <a href={`/admin/documents/${doc.id}`} target="_blank">
+                  View {doc.type}
+                </a>
+                <span> — {doc.reviewStatus}</span>
+                {doc.reviewStatus === "pending" ? (
+                  <div>
                     <input
-                      name="notes"
-                      placeholder="Reason for rejection"
-                      required
+                      type="radio"
+                      id={`approve_${doc.id}`}
+                      name={`decision_${doc.id}`}
+                      value="approved"
+                      defaultChecked
                     />
-                    <button type="submit">Reject</button>
-                  </form>
-                </>
-              )}
-              {doc.reviewerNotes && <p>Note: {doc.reviewerNotes}</p>}
-            </div>
-          ))}
+                    <label htmlFor={`approve_${doc.id}`}>Approve</label>
+
+                    <input
+                      type="radio"
+                      id={`reject_${doc.id}`}
+                      name={`decision_${doc.id}`}
+                      value="rejected"
+                    />
+                    <label htmlFor={`reject_${doc.id}`}>Reject</label>
+
+                    <div className="reject-notes">
+                      <input
+                        type="text"
+                        name={`notes_${doc.id}`}
+                        placeholder="Reason for rejection"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  doc.reviewerNotes && <p>Note: {doc.reviewerNotes}</p>
+                )}
+              </div>
+            ))}
+            <button type="submit">Submit Review</button>
+          </form>
 
           {!isExtension && (
             <form action={confirmDocumentsReviewed.bind(null, id)}>

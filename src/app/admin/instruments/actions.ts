@@ -78,5 +78,6 @@ export async function exportInventorySnapshot(label: string) {
   });
 
   revalidatePath("/admin/instruments");
+  revalidatePath("/admin/activity");
   return { success: true, driveFileId };
 }

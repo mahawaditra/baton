@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { InstrumentsTable } from "./InstrumentsTable";
-import { exportInventorySnapshot } from "./action";
+import { exportInventorySnapshot } from "./actions";
 
 export default async function InstrumentsPage() {
   const instruments = await prisma.instrument.findMany({
