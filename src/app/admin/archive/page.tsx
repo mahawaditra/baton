@@ -11,6 +11,7 @@ export default async function ArchivePage({
   }>;
 }) {
   const { year, borrower, instrument } = await searchParams;
+  const parsedYear = year && /^\d{4}$/.test(year) ? Number(year) : null;
 
   const allReturned = await prisma.borrowingRequest.findMany({
     where: { status: "returned" },
@@ -23,10 +24,10 @@ export default async function ArchivePage({
   const requests = await prisma.borrowingRequest.findMany({
     where: {
       status: "returned",
-      ...(year && {
+      ...(parsedYear && {
         createdAt: {
-          gte: new Date(`${year}-01-01`),
-          lt: new Date(`${Number(year) + 1}-01-01`),
+          gte: new Date(`${parsedYear}-01-01`),
+          lt: new Date(`${parsedYear + 1}-01-01`),
         },
       }),
       ...(borrower && {

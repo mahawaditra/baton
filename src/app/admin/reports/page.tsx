@@ -8,12 +8,21 @@ type ReportResult = Awaited<ReturnType<typeof generateAnnualReport>>;
 export default function ReportsPage() {
   const [result, setResult] = useState<ReportResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleGenerate() {
     setLoading(true);
-    const res = await generateAnnualReport();
-    setResult(res);
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await generateAnnualReport();
+      setResult(res);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to generate report.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -23,6 +32,7 @@ export default function ReportsPage() {
       <button onClick={handleGenerate} disabled={loading}>
         {loading ? "Membuat laporan..." : "Generate Laporan"}
       </button>
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       {result && (
         <div>

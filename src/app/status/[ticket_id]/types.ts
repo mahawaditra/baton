@@ -5,6 +5,7 @@ export type RequestData = {
   instrumentTypeRequested: string;
   instrumentConfirmed: boolean;
   hasInitialAddendum: boolean;
+  documentsNeedingUpload: string[];
   dueDate: Date | null;
   canExtend: boolean;
   isExtensionPeriod: boolean;

@@ -4,12 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import * as XLSX from "xlsx/xlsx.mjs";
 import {
   getOrCreateYearFolder,
   getOrCreateFolder,
   uploadFile,
 } from "@/lib/drive";
+import { buildXlsxBuffer } from "@/lib/xlsx";
 
 export async function exportInventorySnapshot(label: string) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -34,10 +34,7 @@ export async function exportInventorySnapshot(label: string) {
     Notes: inst.notes ?? "",
   }));
 
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
-  const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+  const buffer = buildXlsxBuffer(rows, "Inventory");
 
   const year = new Date().getFullYear();
   const yearFolder = await getOrCreateYearFolder(year);

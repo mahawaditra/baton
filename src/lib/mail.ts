@@ -9,7 +9,15 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+let cachedFooter: string | null = null;
+
+export function invalidateFooterCache() {
+  cachedFooter = null;
+}
+
 async function buildFooter(): Promise<string> {
+  if (cachedFooter !== null) return cachedFooter;
+
   const settings = await prisma.loanSetting.findFirst();
 
   const contactBlock = settings
@@ -22,7 +30,7 @@ async function buildFooter(): Promise<string> {
     `
     : "";
 
-  return `
+  cachedFooter = `
     <hr style="margin: 24px 0; border: none; border-top: 1px solid #ddd;" />
     ${contactBlock}
     <p style="color: #888888; font-size: 12px; margin-top: 16px;">--</p>
@@ -33,6 +41,7 @@ async function buildFooter(): Promise<string> {
       <p>Kampus UI Depok, 14624</p>
     </div>
   `;
+  return cachedFooter;
 }
 
 export async function sendEmail({

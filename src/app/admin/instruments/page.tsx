@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { InstrumentsTable } from "./InstrumentsTable";
+import { DataTable } from "@/components/DataTable";
+import { columns } from "./columns";
 import { exportInventorySnapshot } from "./actions";
 
 export default async function InstrumentsPage() {
@@ -47,7 +48,7 @@ export default async function InstrumentsPage() {
         ))}
       </ul>
 
-      <InstrumentsTable data={instruments} />
+      <DataTable data={instruments} columns={columns} />
     </div>
   );
 }

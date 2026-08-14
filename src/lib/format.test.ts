@@ -1,6 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { daysBetween } from "./format";
+import { daysBetween, formatActivityLog } from "./format";
 import { toJakartaCalendarDate } from "./format";
+
+function log(action: string, metadata: unknown) {
+  return {
+    action,
+    entityType: "borrowing_request",
+    entityId: "irrelevant",
+    metadata,
+    admin: { name: "Zenka" },
+    createdAt: new Date(),
+  };
+}
 
 describe("daysBetween", () => {
   it("returns 0 for the same day", () => {
@@ -36,5 +47,66 @@ describe("toJakartaCalendarDate", () => {
     expect(toJakartaCalendarDate(new Date("2026-08-01T23:59:00Z"))).toEqual(
       new Date("2026-08-02T00:00:00Z"),
     );
+  });
+});
+
+describe("formatActivityLog", () => {
+  it("lists only the fields that actually changed on update_instrument", () => {
+    const before = { condition: "need_repair", status: "available", location: "Sekre" };
+    const after = { condition: "ok", status: "available", location: "Sekre" };
+    expect(formatActivityLog(log("update_instrument", { before, after }))).toBe(
+      "updated instrument (condition: need_repair → ok)",
+    );
+  });
+
+  it("falls back to a plain message when nothing tracked actually changed", () => {
+    const same = { condition: "ok", status: "available", location: "Sekre" };
+    expect(
+      formatActivityLog(log("update_instrument", { before: same, after: same })),
+    ).toBe("updated instrument");
+  });
+
+  it("includes the reason on reject_request when one was given", () => {
+    expect(
+      formatActivityLog(
+        log("reject_request", { reason: "Data tidak lengkap", releasedInstrumentId: null }),
+      ),
+    ).toBe("rejected request: Data tidak lengkap");
+  });
+
+  it("omits the colon on reject_request when there is no reason", () => {
+    expect(
+      formatActivityLog(
+        log("reject_request", { reason: "", releasedInstrumentId: null }),
+      ),
+    ).toBe("rejected request");
+  });
+
+  it("names the document type on approve_documents", () => {
+    expect(
+      formatActivityLog(
+        log("approve_documents", { documentId: "d1", type: "ktp_scan", notes: null }),
+      ),
+    ).toBe("approved ktp_scan");
+  });
+
+  it("includes the reviewer notes on reject_documents when present", () => {
+    expect(
+      formatActivityLog(
+        log("reject_documents", {
+          documentId: "d1",
+          type: "deposit_proof",
+          notes: "Nominal tidak sesuai",
+        }),
+      ),
+    ).toBe("rejected deposit_proof: Nominal tidak sesuai");
+  });
+
+  it("falls back to a humanized action name for actions with no dedicated message", () => {
+    expect(
+      formatActivityLog(
+        log("export_snapshot", { label: "Post Calang", instrumentCount: 42 }),
+      ),
+    ).toBe("export snapshot");
   });
 });

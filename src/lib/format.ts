@@ -1,3 +1,5 @@
+import type { Instrument, Good, LoanSetting } from "@/generated/prisma/client";
+
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -24,23 +26,73 @@ type ActivityLogLike = {
   createdAt: Date;
 };
 
-function diffFields(
-  before: Record<string, any> | undefined,
-  after: Record<string, any> | undefined,
-  fields: string[],
+type ActivityMetadataByAction =
+  | {
+      action: "assign_instrument";
+      metadata: { instrumentId: string; previousInstrumentId: string | null };
+    }
+  | { action: "notify_available"; metadata: { notifiedEmail: string } }
+  | {
+      action: "approve_documents" | "reject_documents";
+      metadata: { documentId: string; type: string; notes: string | null };
+    }
+  | {
+      action:
+        | "confirm_ready"
+        | "confirm_handover"
+        | "confirm_extension"
+        | "add_admin"
+        | "remove_admin";
+      metadata: null;
+    }
+  | {
+      action: "confirm_return";
+      metadata: {
+        condition: string;
+        status: string;
+        depositRefundAmount: number;
+        daysLate: number;
+      };
+    }
+  | {
+      action: "update_instrument";
+      metadata: { before: Instrument; after: Instrument };
+    }
+  | { action: "update_goods"; metadata: { before: Good; after: Good } }
+  | {
+      action: "update_loan_settings";
+      metadata: { before?: LoanSetting; after: LoanSetting };
+    }
+  | {
+      action: "export_snapshot";
+      metadata: { label: string; instrumentCount: number };
+    }
+  | {
+      action: "generate_annual_report";
+      metadata: { year: number; driveFileId: string };
+    }
+  | {
+      action: "reject_request";
+      metadata: { reason: string; releasedInstrumentId: string | null };
+    };
+
+function diffFields<T extends Record<string, unknown>>(
+  before: T | undefined,
+  after: T | undefined,
+  fields: (keyof T)[],
 ): string[] {
   if (!before || !after) return [];
   return fields
     .filter((f) => before[f] !== after[f])
-    .map((f) => `${f}: ${before[f]} → ${after[f]}`);
+    .map((f) => `${String(f)}: ${before[f]} → ${after[f]}`);
 }
 
 export function formatActivityLog(log: ActivityLogLike): string {
-  const meta = (log.metadata ?? {}) as Record<string, any>;
+  const typed = log as ActivityLogLike & ActivityMetadataByAction;
 
-  switch (log.action) {
+  switch (typed.action) {
     case "update_instrument": {
-      const changes = diffFields(meta.before, meta.after, [
+      const changes = diffFields(typed.metadata.before, typed.metadata.after, [
         "condition",
         "status",
         "location",
@@ -52,17 +104,17 @@ export function formatActivityLog(log: ActivityLogLike): string {
     case "assign_instrument":
       return "assigned an instrument";
     case "reject_request":
-      return `rejected request${meta.reason ? `: ${meta.reason}` : ""}`;
+      return `rejected request${typed.metadata.reason ? `: ${typed.metadata.reason}` : ""}`;
     case "approve_documents":
-      return `approved ${meta.type ?? "a document"}`;
+      return `approved ${typed.metadata.type}`;
     case "reject_documents":
-      return `rejected ${meta.type ?? "a document"}${meta.notes ? `: ${meta.notes}` : ""}`;
+      return `rejected ${typed.metadata.type}${typed.metadata.notes ? `: ${typed.metadata.notes}` : ""}`;
     case "confirm_ready":
       return "confirmed documents, request ready for pickup";
     case "confirm_handover":
       return "confirmed instrument handover";
     default:
-      return log.action.replaceAll("_", " ");
+      return typed.action.replaceAll("_", " ");
   }
 }
 

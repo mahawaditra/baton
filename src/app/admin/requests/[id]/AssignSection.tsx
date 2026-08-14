@@ -16,10 +16,22 @@ export function AssignSection({
 }) {
   const [open, setOpen] = useState(false);
   const [hovering, setHovering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handlePick(instrumentId: string) {
-    await assignInstrument(requestId, instrumentId);
-    setOpen(false);
+    try {
+      const result = await assignInstrument(requestId, instrumentId);
+      if (result.success) {
+        setOpen(false);
+        setError(null);
+      } else {
+        setError(result.error ?? "Failed to assign instrument.");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to assign instrument.",
+      );
+    }
   }
 
   return (
@@ -45,6 +57,7 @@ export function AssignSection({
             }}
           >
             <h2>Select an instrument</h2>
+            {error && <p style={{ color: "red" }}>{error}</p>}
             <table>
               <thead>
                 <tr>

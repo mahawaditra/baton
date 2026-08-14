@@ -187,6 +187,7 @@ model Document {
   uploadedAt    DateTime             @default(now()) @map("uploaded_at")
   reviewedAt    DateTime?            @map("reviewed_at")
 
+  @@unique([periodId, type])
   @@map("documents")
 }
 
@@ -297,6 +298,7 @@ enum ActivityAction {
   update_goods
   update_loan_settings
   export_snapshot
+  generate_annual_report
   reject_request
   add_admin
   remove_admin

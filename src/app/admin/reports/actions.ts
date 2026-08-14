@@ -3,12 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import * as XLSX from "xlsx/xlsx.mjs";
+import { revalidatePath } from "next/cache";
 import {
   getOrCreateYearFolder,
   getOrCreateFolder,
   uploadFile,
 } from "@/lib/drive";
+import { buildXlsxBuffer } from "@/lib/xlsx";
 
 export async function generateAnnualReport() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -66,13 +67,7 @@ export async function generateAnnualReport() {
     },
   ];
 
-  const worksheet = XLSX.utils.json_to_sheet(summaryRows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Summary");
-  const buffer: Buffer = XLSX.write(workbook, {
-    bookType: "xlsx",
-    type: "buffer",
-  });
+  const buffer = buildXlsxBuffer(summaryRows, "Summary");
 
   const yearFolder = await getOrCreateYearFolder(year);
   const reportsFolder = await getOrCreateFolder("Annual Reports", yearFolder);
@@ -84,6 +79,19 @@ export async function generateAnnualReport() {
     buffer,
     reportsFolder,
   );
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "generate_annual_report",
+      entityType: "admin",
+      entityId: session.user.id,
+      metadata: { year, driveFileId },
+    },
+  });
+
+  revalidatePath("/admin/activity");
+  revalidatePath("/admin/dashboard");
 
   return {
     success: true,

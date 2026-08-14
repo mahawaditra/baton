@@ -10,6 +10,7 @@ import {
   rejectRequest,
   submitDocumentReview,
 } from "./actions";
+import { canAssignInstrument, canNotifyBorrower } from "@/lib/loan-rules";
 
 export default async function RequestDetailPage({
   params,
@@ -53,11 +54,14 @@ export default async function RequestDetailPage({
       })
     : [];
 
-  const canAssign =
-    ["submitted", "reviewing"].includes(request.status) &&
-    !request.instrumentConfirmed;
-  const canNotify =
-    request.status === "reviewing" && !request.instrumentConfirmed;
+  const canAssign = canAssignInstrument(
+    request.status,
+    request.instrumentConfirmed,
+  );
+  const canNotify = canNotifyBorrower(
+    request.status,
+    request.instrumentConfirmed,
+  );
 
   const isExtension = latestPeriod?.periodType === "extension";
 
@@ -108,17 +112,12 @@ export default async function RequestDetailPage({
           </p>
         )
       )}
-      {["submitted", "reviewing"].includes(request.status) &&
-        !request.instrumentConfirmed && (
-          <form action={rejectRequest.bind(null, id)}>
-            <textarea
-              name="reason"
-              placeholder="Reason for rejection"
-              required
-            />
-            <button type="submit">Reject Request</button>
-          </form>
-        )}
+      {canAssign && (
+        <form action={rejectRequest.bind(null, id)}>
+          <textarea name="reason" placeholder="Reason for rejection" required />
+          <button type="submit">Reject Request</button>
+        </form>
+      )}
       {(request.status === "documents_uploaded" ||
         (isExtension && documents.length > 0)) && (
         <div>

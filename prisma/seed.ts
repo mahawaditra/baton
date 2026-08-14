@@ -1,5 +1,9 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import {
+  PrismaClient,
+  ItemCondition,
+  InstrumentStatus,
+} from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import * as XLSX from "xlsx/xlsx.mjs";
@@ -63,8 +67,8 @@ async function seedInstruments() {
       type: row.Type,
       brand: row.Brand || null,
       serialNumber: row["Serial Number"] || null,
-      condition: condition as any,
-      status: status as any,
+      condition: condition as ItemCondition,
+      status: status as InstrumentStatus,
       isLoanable,
       location,
       notes: row.Notes || null,
@@ -90,7 +94,7 @@ async function seedGoods() {
     name: row.Name,
     brand: row.Brand || null,
     quantity: row.Quantity || 1,
-    condition: (row.Condition || "ok") as any,
+    condition: (row.Condition || "ok") as ItemCondition,
     location: row.Location || "RB1",
     registrationNo: row["Registration No"] || null,
     notes: row.Notes || null,

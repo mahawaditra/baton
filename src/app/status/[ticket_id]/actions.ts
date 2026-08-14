@@ -14,12 +14,12 @@ import {
   footerTemplate,
 } from "@/lib/contract-pdf";
 import { getBrowser } from "@/lib/contract-pdf";
+import { driveTimestamp, escapeHtml } from "@/lib/format";
 import {
-  daysBetween,
-  driveTimestamp,
-  escapeHtml,
-  todayInJakarta,
-} from "@/lib/format";
+  documentTypesNeedingUpload,
+  computeCanExtend,
+  requiredDocumentTypesForPeriod,
+} from "@/lib/loan-rules";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
 import { accessCodeLimiter } from "@/lib/rate-limit";
@@ -56,12 +56,6 @@ type ExtensionState = {
   success: boolean;
   error: string | null;
 };
-
-function computeCanExtend(status: string, dueDate: Date | null): boolean {
-  if (status !== "active" || !dueDate) return false;
-  const daysUntilDue = daysBetween(todayInJakarta(), dueDate);
-  return daysUntilDue >= 0 && daysUntilDue <= 30;
-}
 
 async function requireTicketAccess(ticketId: string, accessCode: string) {
   const request = await prisma.borrowingRequest.findUnique({
@@ -120,13 +114,6 @@ export async function verifyAccessCode(
       })) > 0
     : false;
 
-  const needsExtensionDocuments =
-    latestPeriod?.periodType === "extension"
-      ? (await prisma.document.count({
-          where: { periodId: latestPeriod.id, type: "signed_contract" },
-        })) === 0
-      : false;
-
   const canFillExtensionAddendum =
     latestPeriod?.periodType === "extension" && !hasInitialAddendum
       ? (await prisma.document.count({
@@ -146,8 +133,31 @@ export async function verifyAccessCode(
 
   const isExtensionPeriod = latestPeriod?.periodType === "extension";
 
+  const existingDocuments = latestPeriod
+    ? await prisma.document.findMany({
+        where: { periodId: latestPeriod.id },
+        distinct: ["type"],
+        orderBy: { uploadedAt: "desc" },
+      })
+    : [];
+
+  const requiredDocumentTypes = requiredDocumentTypesForPeriod(
+    isExtensionPeriod,
+  );
+
+  const documentsNeedingUpload = documentTypesNeedingUpload(
+    requiredDocumentTypes,
+    existingDocuments,
+  );
+
+  const needsExtensionDocuments =
+    isExtensionPeriod && documentsNeedingUpload.includes("signed_contract");
+
+  const hasPendingExtension = isExtensionPeriod && !latestPeriod?.startDate;
+
   const dueDate = latestPeriod?.dueDate ?? null;
-  const canExtend = computeCanExtend(request.status, dueDate);
+  const canExtend =
+    computeCanExtend(request.status, dueDate) && !hasPendingExtension;
 
   const { accessCode, id, ...safeData } = request;
   return {
@@ -161,6 +171,7 @@ export async function verifyAccessCode(
       needsExtensionDocuments,
       canFillExtensionAddendum,
       isExtensionPeriod,
+      documentsNeedingUpload,
     },
   };
 }
@@ -411,6 +422,20 @@ export async function submitExtension(
     }),
   ]);
 
+  if (!computeCanExtend(request.status, latestPeriod.dueDate)) {
+    return {
+      success: false,
+      error: "This request is not within the extension window.",
+    };
+  }
+
+  if (latestPeriod.periodType === "extension" && !latestPeriod.startDate) {
+    return {
+      success: false,
+      error: "An extension for this request is already pending confirmation.",
+    };
+  }
+
   const signatoryImageBase64 = settings.signatoryImageDriveId
     ? await downloadFileAsBase64(settings.signatoryImageDriveId, "image/png")
     : null;
@@ -583,31 +608,45 @@ export async function submitDocuments(
     }
   }
 
-  const signedContract = formData.get("signedContract") as File;
-  if (!signedContract?.size) {
-    return { success: false, error: "Signed contract is required." };
-  }
+  const fileFields: {
+    type: "signed_contract" | "deposit_proof" | "ktp_scan";
+    formKey: string;
+  }[] = [
+    { type: "signed_contract", formKey: "signedContract" },
+    { type: "deposit_proof", formKey: "depositProof" },
+    { type: "ktp_scan", formKey: "ktpScan" },
+  ];
 
   const uploads: {
     type: "signed_contract" | "deposit_proof" | "ktp_scan";
     file: File;
-  }[] = [{ type: "signed_contract", file: signedContract }];
+  }[] = [];
+  for (const { type, formKey } of fileFields) {
+    const file = formData.get(formKey) as File | null;
+    if (file?.size) {
+      uploads.push({ type, file });
+    }
+  }
 
-  if (isExtension) {
-    const ktpScan = formData.get("ktpScan") as File | null;
-    if (ktpScan?.size) {
-      uploads.push({ type: "ktp_scan", file: ktpScan });
-    }
-  } else {
-    const depositProof = formData.get("depositProof") as File;
-    const ktpScan = formData.get("ktpScan") as File;
-    if (!depositProof?.size || !ktpScan?.size) {
-      return { success: false, error: "All 3 documents are required." };
-    }
-    uploads.push(
-      { type: "deposit_proof", file: depositProof },
-      { type: "ktp_scan", file: ktpScan },
-    );
+  const existingDocuments = await prisma.document.findMany({
+    where: { periodId: latestPeriod.id },
+  });
+
+  const requiredTypesNow = requiredDocumentTypesForPeriod(isExtension);
+
+  const stillNeeded = documentTypesNeedingUpload(
+    requiredTypesNow,
+    existingDocuments,
+  );
+
+  const submittedTypes = new Set<string>(uploads.map((u) => u.type));
+  const missing = stillNeeded.filter((t) => !submittedTypes.has(t));
+
+  if (missing.length > 0) {
+    return {
+      success: false,
+      error: `Missing required document(s): ${missing.join(", ")}.`,
+    };
   }
 
   const VALIDATORS: Record<
@@ -633,6 +672,17 @@ export async function submitDocuments(
     validatedUploads.push({ type, file, mimeType: validation.mimeType });
   }
 
+  const typesNeedingUpload = new Set(
+    documentTypesNeedingUpload(
+      validatedUploads.map((u) => u.type),
+      existingDocuments,
+    ),
+  );
+
+  const uploadsToProcess = validatedUploads.filter((u) =>
+    typesNeedingUpload.has(u.type),
+  );
+
   const year = new Date().getFullYear();
   const folderId = await getBorrowerArchiveFolder(
     year,
@@ -640,8 +690,13 @@ export async function submitDocuments(
     request.borrowerName,
   );
 
-  const documentsData = [];
-  for (const { type, file, mimeType } of validatedUploads) {
+  const documentsData: {
+    type: "signed_contract" | "deposit_proof" | "ktp_scan";
+    driveFileId: string;
+    mimeType: string;
+  }[] = [];
+
+  for (const { type, file, mimeType } of uploadsToProcess) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const ext = file.name.split(".").pop();
     const driveFileId = await uploadFile(
@@ -650,19 +705,30 @@ export async function submitDocuments(
       buffer,
       folderId,
     );
-    documentsData.push({
-      periodId: latestPeriod.id,
-      type,
-      driveFileId,
-      mimeType,
-    });
+    documentsData.push({ type, driveFileId, mimeType });
   }
 
+  const documentUpserts = documentsData.map(({ type, driveFileId, mimeType }) =>
+    prisma.document.upsert({
+      where: { periodId_type: { periodId: latestPeriod.id, type } },
+      create: { periodId: latestPeriod.id, type, driveFileId, mimeType },
+      update: {
+        driveFileId,
+        mimeType,
+        reviewStatus: "pending",
+        reviewerNotes: null,
+        reviewedAt: null,
+      },
+    }),
+  );
+
   if (isExtension) {
-    await prisma.document.createMany({ data: documentsData });
+    if (documentUpserts.length > 0) {
+      await prisma.$transaction(documentUpserts);
+    }
   } else {
     await prisma.$transaction([
-      prisma.document.createMany({ data: documentsData }),
+      ...documentUpserts,
       prisma.borrowingRequest.update({
         where: { ticketId },
         data: { status: "documents_uploaded" },
@@ -670,16 +736,18 @@ export async function submitDocuments(
     ]);
   }
 
-  await sendEmail({
-    to: process.env.GMAIL_USER!,
-    subject: isExtension
-      ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
-      : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
-    html: `
-    <p>Peminjam ${escapeHtml(request.borrowerName)} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
-    <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
-  `,
-  });
+  if (documentsData.length > 0) {
+    await sendEmail({
+      to: process.env.GMAIL_USER!,
+      subject: isExtension
+        ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
+        : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
+      html: `
+      <p>Peminjam ${escapeHtml(request.borrowerName)} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
+      <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
+    `,
+    });
+  }
 
   return { success: true, error: null };
 }

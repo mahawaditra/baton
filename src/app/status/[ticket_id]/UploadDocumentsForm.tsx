@@ -14,11 +14,13 @@ export function UploadDocumentsForm({
   ticketId,
   accessCode,
   isExtension = false,
+  documentsNeedingUpload,
   onSuccess,
 }: {
   ticketId: string;
   accessCode: string;
   isExtension?: boolean;
+  documentsNeedingUpload: string[];
   onSuccess: () => void;
 }) {
   const action = submitDocuments.bind(null, ticketId, accessCode);
@@ -32,22 +34,31 @@ export function UploadDocumentsForm({
     return <p>Documents uploaded! Please wait for admin review.</p>;
   }
 
+  const needsSignedContract =
+    isExtension || documentsNeedingUpload.includes("signed_contract");
+  const needsDepositProof =
+    !isExtension && documentsNeedingUpload.includes("deposit_proof");
+  const needsKtpScan =
+    isExtension || documentsNeedingUpload.includes("ktp_scan");
+
   return (
     <form action={formAction}>
       <h3>Upload Required Documents</h3>
       {state.error && <p style={{ color: "red" }}>{state.error}</p>}
 
-      <label>
-        Signed Contract (photos are compressed automatically — PDFs are not,
-        max {MAX_UPLOAD_SIZE_LABEL})
-        <CompressedFileInput
-          name="signedContract"
-          accept="image/*,.pdf"
-          required
-        />
-      </label>
+      {needsSignedContract && (
+        <label>
+          Signed Contract (photos are compressed automatically — PDFs are
+          not, max {MAX_UPLOAD_SIZE_LABEL})
+          <CompressedFileInput
+            name="signedContract"
+            accept="image/*,.pdf"
+            required
+          />
+        </label>
+      )}
 
-      {!isExtension && (
+      {needsDepositProof && (
         <label>
           Deposit Transfer Proof
           <CompressedFileInput
@@ -58,15 +69,18 @@ export function UploadDocumentsForm({
         </label>
       )}
 
-      <label>
-        KTP Scan {isExtension && "(optional — only if changed)"} (photos are
-        compressed automatically — PDFs are not, max {MAX_UPLOAD_SIZE_LABEL})
-        <CompressedFileInput
-          name="ktpScan"
-          accept="image/*,.pdf"
-          required={!isExtension}
-        />
-      </label>
+      {needsKtpScan && (
+        <label>
+          KTP Scan {isExtension && "(optional — only if changed)"} (photos
+          are compressed automatically — PDFs are not, max{" "}
+          {MAX_UPLOAD_SIZE_LABEL})
+          <CompressedFileInput
+            name="ktpScan"
+            accept="image/*,.pdf"
+            required={!isExtension}
+          />
+        </label>
+      )}
 
       <button type="submit" disabled={isPending}>
         {isPending ? "Uploading..." : "Upload Documents"}

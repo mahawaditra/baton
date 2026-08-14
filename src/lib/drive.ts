@@ -13,6 +13,10 @@ oauth2Client.setCredentials({
 
 export const drive = google.drive({ version: "v3", auth: oauth2Client });
 
+function escapeDriveQueryValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
 export async function getOrCreateYearFolder(year: number): Promise<string> {
   const settings = await prisma.loanSetting.findFirst();
 
@@ -35,7 +39,7 @@ export async function getOrCreateYearFolder(year: number): Promise<string> {
   const root = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!;
 
   const existing = await drive.files.list({
-    q: `name='${folderName}' and '${root}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    q: `name='${escapeDriveQueryValue(folderName)}' and '${escapeDriveQueryValue(root)}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id, name)",
   });
 
@@ -70,7 +74,7 @@ export async function getOrCreateFolder(
   parentId: string,
 ): Promise<string> {
   const existing = await drive.files.list({
-    q: `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    q: `name='${escapeDriveQueryValue(name)}' and '${escapeDriveQueryValue(parentId)}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id, name)",
   });
 

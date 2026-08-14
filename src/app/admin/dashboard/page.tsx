@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { formatActivityLog, getEntityUrl } from "@/lib/format";
+import { getRequestActionLabel } from "@/lib/loan-rules";
 
 function SummaryCard({ label, value }: { label: string; value: number }) {
   return (
@@ -42,63 +43,71 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  const needsAction = await prisma.borrowingRequest.findMany({
-    where: {
-      OR: [
-        { status: "submitted" },
-        { status: "reviewing", instrumentConfirmed: false },
-        { status: "documents_uploaded" },
-        {
-          status: "ready_to_pickup",
-          loanPeriods: {
-            some: { addendums: { some: { timing: "initial" } } },
-          },
-        },
-        {
-          status: "active",
-          loanPeriods: {
-            some: {
-              periodType: "extension",
-              startDate: null,
-              addendums: { some: { timing: "initial" } },
+  const [needsAction, recentActivity, activeRequests] = await Promise.all([
+    prisma.borrowingRequest.findMany({
+      where: {
+        OR: [
+          { status: "submitted" },
+          { status: "reviewing", instrumentConfirmed: false },
+          { status: "documents_uploaded" },
+          {
+            status: "ready_to_pickup",
+            loanPeriods: {
+              some: { addendums: { some: { timing: "initial" } } },
             },
           },
-        },
-        {
-          status: { in: ["active", "overdue"] },
-          loanPeriods: {
-            some: {
-              actualReturnDate: null,
-              addendums: { some: { timing: "final" } },
+          {
+            status: "active",
+            loanPeriods: {
+              some: {
+                periodType: "extension",
+                startDate: null,
+                addendums: { some: { timing: "initial" } },
+              },
             },
           },
-        },
-      ],
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 5,
-  });
-
-  const recentActivity = await prisma.activityLog.findMany({
-    include: { admin: true },
-    orderBy: { createdAt: "desc" },
-    take: 5,
-  });
-
-  const activeRequests = await prisma.borrowingRequest.findMany({
-    where: { status: { in: ["active", "overdue"] } },
-    include: {
-      instrument: true,
-      loanPeriods: {
-        orderBy: {
-          sequence: "desc",
-        },
-        take: 1,
+          {
+            status: { in: ["active", "overdue"] },
+            loanPeriods: {
+              some: {
+                actualReturnDate: null,
+                addendums: { some: { timing: "final" } },
+              },
+            },
+          },
+        ],
       },
-    },
-  });
+      include: {
+        loanPeriods: {
+          orderBy: { sequence: "desc" },
+          take: 1,
+          include: { addendums: true },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 5,
+    }),
+    prisma.activityLog.findMany({
+      include: { admin: true },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+
+    prisma.borrowingRequest.findMany({
+      where: { status: { in: ["active", "overdue"] } },
+      include: {
+        instrument: true,
+        loanPeriods: {
+          orderBy: {
+            sequence: "desc",
+          },
+          take: 1,
+        },
+      },
+    }),
+  ]);
 
   const activeRoster = activeRequests
     .map((req) => ({
@@ -111,22 +120,6 @@ export default async function DashboardPage() {
       return a.dueDate.getTime() - b.dueDate.getTime();
     })
     .slice(0, 5);
-
-  function getActionLabel(req: {
-    status: string;
-    instrumentConfirmed: boolean;
-  }): string {
-    if (req.status === "submitted") {
-      return "Needs instrument assignment";
-    }
-    if (req.status === "reviewing" && !req.instrumentConfirmed) {
-      return "Needs confirmation";
-    }
-    if (req.status === "documents_uploaded") {
-      return "Needs document review";
-    }
-    return "Needs handover confirmation";
-  }
 
   return (
     <div>
@@ -150,7 +143,7 @@ export default async function DashboardPage() {
                 <Link href={`/admin/requests/${req.id}`}>
                   {req.borrowerName} — {req.ticketId}
                 </Link>{" "}
-                — {getActionLabel(req)}
+                — {getRequestActionLabel(req)}
               </li>
             ))}
           </ul>
@@ -227,7 +220,7 @@ export default async function DashboardPage() {
             </tbody>
           </table>
         )}
-        <Link href="/admin/requests?status=active">
+        <Link href="/admin/requests?status=active,overdue">
           Lihat semua peminjaman aktif →
         </Link>
       </div>

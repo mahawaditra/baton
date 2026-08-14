@@ -4,14 +4,19 @@ import {
   useReactTable,
   getCoreRowModel,
   flexRender,
+  type ColumnDef,
 } from "@tanstack/react-table";
-import type { Instrument } from "@/generated/prisma/client";
-import { columns } from "./columns";
 
-export function InstrumentsTable({ data }: { data: Instrument[] }) {
+export function DataTable<T>({
+  data,
+  columns,
+}: {
+  data: T[];
+  columns: ColumnDef<T>[];
+}) {
   const table = useReactTable({
-    columns,
     data,
+    columns,
     getCoreRowModel: getCoreRowModel(),
   });
 

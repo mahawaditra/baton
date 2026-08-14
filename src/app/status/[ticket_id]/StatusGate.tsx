@@ -11,11 +11,10 @@ import { ExtendForm } from "./ExtendForm";
 function getStep(
   status: string,
   instrumentConfirmed: boolean,
-  hasInitialAddendum: boolean,
 ): number | "exception" {
   if (status === "rejected" || status === "overdue") return "exception";
   if (status === "submitted") return 1;
-  if (status === "reviewing") return instrumentConfirmed ? 2 : 1; // 👈 dipecah
+  if (status === "reviewing") return instrumentConfirmed ? 2 : 1;
   if (status === "contract_generated" || status === "documents_uploaded")
     return 2;
   if (status === "ready_to_pickup") return 3;
@@ -32,14 +31,12 @@ const STEP_LABELS = [
 
 function ProgressBar({
   status,
-  hasInitialAddendum,
   instrumentConfirmed,
 }: {
   status: string;
-  hasInitialAddendum: boolean;
   instrumentConfirmed: boolean;
 }) {
-  const step = getStep(status, instrumentConfirmed, hasInitialAddendum);
+  const step = getStep(status, instrumentConfirmed);
 
   if (step === "exception") {
     return (
@@ -126,7 +123,6 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
         <p>Instrument Requested: {data.instrumentTypeRequested}</p>
         <ProgressBar
           status={data.status}
-          hasInitialAddendum={data.hasInitialAddendum}
           instrumentConfirmed={data.instrumentConfirmed}
         />
         {data.status === "reviewing" && data.instrumentConfirmed && (
@@ -231,6 +227,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             ticketId={data.ticketId}
             accessCode={accessCode}
             isExtension={data.needsExtensionDocuments}
+            documentsNeedingUpload={data.documentsNeedingUpload}
             onSuccess={refetch}
           />
         )}

@@ -26,7 +26,7 @@ export default async function InstrumentDetailPage({
   const activeRequest =
     instrument.status === "borrowed"
       ? await prisma.borrowingRequest.findFirst({
-          where: { instrumentId: id, status: "active" },
+          where: { instrumentId: id, status: { in: ["active", "overdue"] } },
         })
       : null;
 

@@ -8,6 +8,9 @@ import { daysBetween, escapeHtml, toJakartaCalendarDate } from "@/lib/format";
 import {
   calculateDepositRefund,
   determineInstrumentStatusOnReturn,
+  canAssignInstrument,
+  canNotifyBorrower,
+  REQUIRED_DOCUMENT_TYPES,
 } from "@/lib/loan-rules";
 import { revalidateRequestViews } from "@/lib/revalidate";
 import { z } from "zod";
@@ -29,7 +32,7 @@ const documentDecisionSchema = z.enum(
 export async function assignInstrument(
   requestId: string,
   instrumentId: string,
-) {
+): Promise<{ success: boolean; error?: string }> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     throw new Error("Not logged in");
@@ -39,39 +42,54 @@ export async function assignInstrument(
     where: { id: requestId },
   });
 
-  await prisma.$transaction(async (tx) => {
-    const instrument = await tx.instrument.findUniqueOrThrow({
-      where: { id: instrumentId },
-    });
+  if (!canAssignInstrument(request.status, request.instrumentConfirmed)) {
+    return {
+      success: false,
+      error: "This request can no longer be assigned an instrument.",
+    };
+  }
 
-    if (
-      instrument.status !== "available" ||
-      !instrument.isLoanable ||
-      !["ok", "need_repair"].includes(instrument.condition)
-    ) {
-      throw new Error("This instrument is no longer available to assign.");
-    }
-
-    if (request.instrumentId) {
-      await tx.instrument.update({
-        where: { id: request.instrumentId },
-        data: { status: "available" },
+  try {
+    await prisma.$transaction(async (tx) => {
+      const instrument = await tx.instrument.findUniqueOrThrow({
+        where: { id: instrumentId },
       });
-    }
 
-    await tx.instrument.update({
-      where: { id: instrumentId },
-      data: { status: "reserved" },
-    });
+      if (
+        instrument.status !== "available" ||
+        !instrument.isLoanable ||
+        !["ok", "need_repair"].includes(instrument.condition)
+      ) {
+        throw new Error("This instrument is no longer available to assign.");
+      }
 
-    await tx.borrowingRequest.update({
-      where: { id: requestId },
-      data: {
-        instrumentId,
-        status: request.status === "submitted" ? "reviewing" : request.status,
-      },
+      if (request.instrumentId) {
+        await tx.instrument.update({
+          where: { id: request.instrumentId },
+          data: { status: "available" },
+        });
+      }
+
+      await tx.instrument.update({
+        where: { id: instrumentId },
+        data: { status: "reserved" },
+      });
+
+      await tx.borrowingRequest.update({
+        where: { id: requestId },
+        data: {
+          instrumentId,
+          status: request.status === "submitted" ? "reviewing" : request.status,
+        },
+      });
     });
-  });
+  } catch (err) {
+    return {
+      success: false,
+      error:
+        err instanceof Error ? err.message : "Failed to assign instrument.",
+    };
+  }
 
   await prisma.activityLog.create({
     data: {
@@ -86,6 +104,8 @@ export async function assignInstrument(
   revalidateRequestViews(requestId, {
     instrumentIds: [instrumentId, request.instrumentId],
   });
+
+  return { success: true };
 }
 
 export async function confirmAvailable(requestId: string) {
@@ -97,6 +117,10 @@ export async function confirmAvailable(requestId: string) {
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { id: requestId },
   });
+
+  if (!canNotifyBorrower(request.status, request.instrumentConfirmed)) {
+    throw new Error("This request cannot be notified in its current status.");
+  }
 
   if (!request.instrumentId) {
     throw new Error("Assign an instrument before confirming availability.");
@@ -143,6 +167,10 @@ export async function rejectRequest(requestId: string, formData: FormData) {
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { id: requestId },
   });
+
+  if (!canAssignInstrument(request.status, request.instrumentConfirmed)) {
+    throw new Error("This request can no longer be rejected.");
+  }
 
   await prisma.$transaction(async (tx) => {
     if (request.instrumentId) {
@@ -248,10 +276,12 @@ export async function submitDocumentReview(
   const rejected = decisions.filter((d) => d.decision === "rejected");
 
   if (rejected.length > 0) {
-    await prisma.borrowingRequest.update({
-      where: { id: requestId },
-      data: { status: "contract_generated" },
-    });
+    if (latestPeriod.periodType !== "extension") {
+      await prisma.borrowingRequest.update({
+        where: { id: requestId },
+        data: { status: "contract_generated" },
+      });
+    }
 
     const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow({
       where: { id: requestId },
@@ -317,12 +347,12 @@ export async function confirmDocumentsReviewed(requestId: string) {
   });
 
   const allApproved =
-    documents.length === 3 &&
+    documents.length === REQUIRED_DOCUMENT_TYPES.length &&
     documents.every((d) => d.reviewStatus === "approved");
 
   if (!allApproved) {
     throw new Error(
-      "All 3 required documents must be approved before confirming review.",
+      `All ${REQUIRED_DOCUMENT_TYPES.length} required documents must be approved before confirming review.`,
     );
   }
 

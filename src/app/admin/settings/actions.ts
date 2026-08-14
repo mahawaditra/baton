@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getOrCreateFolder, uploadFile } from "@/lib/drive";
 import { driveTimestamp } from "@/lib/format";
+import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 
@@ -244,6 +245,8 @@ export async function updateLoanSettings(formData: FormData) {
         : { after: updated },
     },
   });
+
+  invalidateFooterCache();
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin/activity");
