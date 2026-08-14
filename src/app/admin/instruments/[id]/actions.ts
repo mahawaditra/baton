@@ -22,7 +22,15 @@ const updateInstrumentSchema = z.object({
   notes: z.string().trim().max(1000).nullable(),
 });
 
-export async function updateInstrument(id: string, formData: FormData) {
+export type UpdateInstrumentState = {
+  error: string | null;
+};
+
+export async function updateInstrument(
+  id: string,
+  prevState: UpdateInstrumentState,
+  formData: FormData,
+): Promise<UpdateInstrumentState> {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
@@ -43,7 +51,7 @@ export async function updateInstrument(id: string, formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message);
+    return { error: parsed.error.issues[0].message };
   }
 
   const { brand, serialNumber, condition, location, notes } = parsed.data;

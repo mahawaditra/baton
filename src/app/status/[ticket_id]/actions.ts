@@ -28,6 +28,7 @@ import {
   validateDocumentUpload,
   validateImageUpload,
 } from "@/lib/file-validation";
+import * as Sentry from "@sentry/nextjs";
 
 type VerifyResult =
   | { success: true; request: RequestData }
@@ -141,9 +142,8 @@ export async function verifyAccessCode(
       })
     : [];
 
-  const requiredDocumentTypes = requiredDocumentTypesForPeriod(
-    isExtensionPeriod,
-  );
+  const requiredDocumentTypes =
+    requiredDocumentTypesForPeriod(isExtensionPeriod);
 
   const documentsNeedingUpload = documentTypesNeedingUpload(
     requiredDocumentTypes,
@@ -737,16 +737,20 @@ export async function submitDocuments(
   }
 
   if (documentsData.length > 0) {
-    await sendEmail({
-      to: process.env.GMAIL_USER!,
-      subject: isExtension
-        ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
-        : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
-      html: `
-      <p>Peminjam ${escapeHtml(request.borrowerName)} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
-      <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
-    `,
-    });
+    try {
+      await sendEmail({
+        to: process.env.GMAIL_USER!,
+        subject: isExtension
+          ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
+          : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
+        html: `
+        <p>Peminjam ${escapeHtml(request.borrowerName)} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
+        <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
+      `,
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+    }
   }
 
   return { success: true, error: null };
@@ -820,6 +824,16 @@ export async function submitAddendum(
           error: "This request is not ready for addendum.",
         };
       }
+    }
+
+    const existingInitial = await prisma.addendum.findFirst({
+      where: { periodId: latestPeriod.id, timing: "initial" },
+    });
+    if (existingInitial) {
+      return {
+        success: false,
+        error: "Initial addendum already submitted for this period.",
+      };
     }
   }
 

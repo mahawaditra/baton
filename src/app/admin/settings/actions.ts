@@ -139,7 +139,15 @@ export async function addAdmin(
   return { success: true, error: null };
 }
 
-export async function updateLoanSettings(formData: FormData) {
+export type UpdateLoanSettingsState = {
+  success: boolean;
+  error: string | null;
+};
+
+export async function updateLoanSettings(
+  prevState: UpdateLoanSettingsState,
+  formData: FormData,
+): Promise<UpdateLoanSettingsState> {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) throw new Error("Not logged in");
@@ -164,7 +172,7 @@ export async function updateLoanSettings(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message);
+    return { success: false, error: parsed.error.issues[0].message };
   }
 
   const {
@@ -250,4 +258,6 @@ export async function updateLoanSettings(formData: FormData) {
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin/activity");
+
+  return { success: true, error: null };
 }

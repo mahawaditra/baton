@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import * as Sentry from "@sentry/nextjs";
 
 export default function LoginPage() {
   const handleLogin = async () => {
@@ -11,7 +12,7 @@ export default function LoginPage() {
       },
       {
         onError: (ctx) => {
-          console.log("Login error:", ctx.error);
+          Sentry.captureException(ctx.error);
         },
       },
     );

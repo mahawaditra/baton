@@ -17,8 +17,10 @@ export function AssignSection({
   const [open, setOpen] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   async function handlePick(instrumentId: string) {
+    setIsAssigning(true);
     try {
       const result = await assignInstrument(requestId, instrumentId);
       if (result.success) {
@@ -31,6 +33,8 @@ export function AssignSection({
       setError(
         err instanceof Error ? err.message : "Failed to assign instrument.",
       );
+    } finally {
+      setIsAssigning(false);
     }
   }
 
@@ -40,6 +44,7 @@ export function AssignSection({
         onClick={() => setOpen(true)}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
+        disabled={isAssigning}
       >
         {currentInstrument ? (hovering ? "Reassign?" : "Assigned!") : "Assign"}
       </button>
@@ -84,15 +89,20 @@ export function AssignSection({
                     <td>{inst.location}</td>
                     <td>{inst.notes}</td>
                     <td>
-                      <button onClick={() => handlePick(inst.id)}>
-                        Assign
+                      <button
+                        onClick={() => handlePick(inst.id)}
+                        disabled={isAssigning}
+                      >
+                        {isAssigning ? "Assigning..." : "Assign"}
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <button onClick={() => setOpen(false)}>Cancel</button>
+            <button onClick={() => setOpen(false)} disabled={isAssigning}>
+              Cancel
+            </button>
           </div>
         </div>
       )}

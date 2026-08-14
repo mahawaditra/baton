@@ -23,7 +23,15 @@ const updateGoodSchema = z.object({
   notes: z.string().trim().max(1000).nullable(),
 });
 
-export async function updateGood(id: string, formData: FormData) {
+export type UpdateGoodState = {
+  error: string | null;
+};
+
+export async function updateGood(
+  id: string,
+  prevState: UpdateGoodState,
+  formData: FormData,
+): Promise<UpdateGoodState> {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) throw new Error("Not logged in");
@@ -39,7 +47,7 @@ export async function updateGood(id: string, formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message);
+    return { error: parsed.error.issues[0].message };
   }
 
   const { name, brand, quantity, condition, location, registrationNo, notes } =

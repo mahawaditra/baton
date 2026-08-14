@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { updateInstrument } from "./actions";
+import { EditInstrumentForm } from "./EditInstrumentForm";
 import {
   RiwayatAddendum,
   RiwayatAktivitas,
@@ -29,8 +29,6 @@ export default async function InstrumentDetailPage({
           where: { instrumentId: id, status: { in: ["active", "overdue"] } },
         })
       : null;
-
-  const updateWithId = updateInstrument.bind(null, id);
 
   const statusLocked =
     instrument.status === "reserved" || instrument.status === "borrowed";
@@ -65,69 +63,7 @@ export default async function InstrumentDetailPage({
           </Link>
         </>
       ) : (
-        <form action={updateWithId}>
-          <input
-            name="brand"
-            defaultValue={instrument.brand ?? ""}
-            placeholder="Brand"
-          />
-          <input
-            name="serialNumber"
-            defaultValue={instrument.serialNumber ?? ""}
-            placeholder="Serial No."
-          />
-
-          <select name="condition" defaultValue={instrument.condition}>
-            <option value="ok">OK</option>
-            <option value="need_repair">Need Repair</option>
-            <option value="retired">Retired</option>
-            <option value="lost">Lost</option>
-          </select>
-
-          <select
-            name="status"
-            defaultValue={instrument.status}
-            disabled={statusLocked}
-          >
-            <option value="available">Available</option>
-            <option value="reserved">Reserved</option>
-            <option value="borrowed">Borrowed</option>
-            <option value="placed">Placed</option>
-            <option value="unavailable">Unavailable</option>
-          </select>
-          {statusLocked && (
-            <p style={{ color: "red" }}>
-              Status cannot be changed while instrument is reserved or borrowed.
-            </p>
-          )}
-
-          <label>
-            <input
-              type="checkbox"
-              name="isLoanable"
-              value="true"
-              defaultChecked={instrument.isLoanable}
-            />
-            Loanable
-          </label>
-          <p style={{ fontSize: "0.85em", color: "#666" }}>
-            Note: setting Condition to Retired or Lost will force this off
-            automatically, regardless of this checkbox.
-          </p>
-
-          <input
-            name="location"
-            defaultValue={instrument.location}
-            placeholder="Location"
-          />
-          <textarea
-            name="notes"
-            defaultValue={instrument.notes ?? ""}
-            placeholder="Notes"
-          />
-
-          <button type="submit">Save</button>
-        </form>
+        <EditInstrumentForm instrument={instrument} statusLocked={statusLocked} />
       )}
       <div>
         <nav>

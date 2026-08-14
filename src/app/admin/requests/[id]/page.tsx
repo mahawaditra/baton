@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AssignSection } from "./AssignSection";
+import { RejectRequestForm } from "./RejectRequestForm";
 import {
   confirmAvailable,
   confirmDocumentsReviewed,
   confirmExtension,
   confirmHandover,
   confirmReturn,
-  rejectRequest,
   submitDocumentReview,
 } from "./actions";
 import { canAssignInstrument, canNotifyBorrower } from "@/lib/loan-rules";
@@ -112,12 +112,7 @@ export default async function RequestDetailPage({
           </p>
         )
       )}
-      {canAssign && (
-        <form action={rejectRequest.bind(null, id)}>
-          <textarea name="reason" placeholder="Reason for rejection" required />
-          <button type="submit">Reject Request</button>
-        </form>
-      )}
+      {canAssign && <RejectRequestForm requestId={id} />}
       {(request.status === "documents_uploaded" ||
         (isExtension && documents.length > 0)) && (
         <div>
