@@ -2,6 +2,9 @@
 
 import { useActionState } from "react";
 import { rejectRequest, RejectRequestState } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const initialState: RejectRequestState = {
   success: false,
@@ -13,12 +16,29 @@ export function RejectRequestForm({ requestId }: { requestId: string }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction}>
-      {state.error && <p style={{ color: "red" }}>{state.error}</p>}
-      <textarea name="reason" placeholder="Reason for rejection" required />
-      <button type="submit" disabled={isPending}>
+    <form action={formAction} className="flex flex-col gap-2">
+      {state.error && (
+        <p className="text-sm text-destructive" aria-live="polite">
+          {state.error}
+        </p>
+      )}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="reason">Reason</Label>
+        <Textarea
+          id="reason"
+          name="reason"
+          placeholder="Reason for rejection"
+          required
+        />
+      </div>
+      <Button
+        type="submit"
+        variant="destructive"
+        disabled={isPending}
+        className="self-start"
+      >
         {isPending ? "Rejecting..." : "Reject Request"}
-      </button>
+      </Button>
     </form>
   );
 }

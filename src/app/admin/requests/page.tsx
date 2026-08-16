@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { DataTable } from "@/components/DataTable";
 import { columns } from "./columns";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { getRequestStatusLabel } from "@/components/RequestStatusBadge";
+import { cn } from "@/lib/utils";
 
 const REQUEST_STATUSES = [
   "submitted",
@@ -32,11 +35,21 @@ export default async function RequestsPage({
   });
 
   return (
-    <div>
-      <h1>Requests</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-3xl font-bold tracking-tight">Requests</h1>
 
-      <nav>
-        <Link href="/admin/requests">all</Link>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/admin/requests"
+          className={cn(
+            buttonVariants({
+              variant: selectedStatuses.length === 0 ? "default" : "outline",
+              size: "sm",
+            }),
+          )}
+        >
+          All
+        </Link>
         {REQUEST_STATUSES.map((s) => {
           const isSelected = selectedStatuses.includes(s);
           const nextStatuses = isSelected
@@ -51,12 +64,18 @@ export default async function RequestsPage({
                   ? `/admin/requests?status=${nextStatuses.join(",")}`
                   : "/admin/requests"
               }
+              className={cn(
+                buttonVariants({
+                  variant: isSelected ? "default" : "outline",
+                  size: "sm",
+                }),
+              )}
             >
-              {isSelected ? `[x] ${s}` : s}
+              {getRequestStatusLabel(s)}
             </Link>
           );
         })}
-      </nav>
+      </div>
 
       <DataTable data={requests} columns={columns} />
     </div>

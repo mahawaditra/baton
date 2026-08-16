@@ -2,46 +2,49 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import type { BorrowingRequest } from "@/generated/prisma/client";
-
-const statusColor: Record<string, string> = {
-  submitted: "bg-gray-100 text-gray-800",
-  reviewing: "bg-yellow-100 text-yellow-800",
-  contract_generated: "bg-yellow-100 text-yellow-800",
-  documents_uploaded: "bg-yellow-100 text-yellow-800",
-  ready_to_pickup: "bg-blue-100 text-blue-800",
-  active: "bg-green-100 text-green-800",
-  returned: "bg-gray-100 text-gray-800",
-  rejected: "bg-red-100 text-red-800",
-  overdue: "bg-orange-100 text-orange-800",
-};
+import { RequestStatusBadge } from "@/components/RequestStatusBadge";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<BorrowingRequest>[] = [
-  { accessorKey: "ticketId", header: "Ticket ID" },
+  {
+    accessorKey: "ticketId",
+    header: "Ticket ID",
+    cell: ({ row }) => (
+      <span className="tabular font-medium">{row.original.ticketId}</span>
+    ),
+  },
   { accessorKey: "borrowerName", header: "Name" },
   { accessorKey: "borrowerYear", header: "Year" },
   { accessorKey: "instrumentTypeRequested", header: "Instrument" },
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => (
-      <span
-        className={`rounded px-2 py-1 text-xs ${statusColor[row.original.status]}`}
-      >
-        {row.original.status}
-      </span>
-    ),
+    cell: ({ row }) => <RequestStatusBadge status={row.original.status} />,
   },
   {
     accessorKey: "createdAt",
     header: "Submitted",
-    cell: ({ row }) => row.original.createdAt.toLocaleDateString("en-GB"),
+    cell: ({ row }) => (
+      <span className="tabular">
+        {row.original.createdAt.toLocaleDateString("en-GB")}
+      </span>
+    ),
   },
   {
     id: "view",
     header: "",
+    enableSorting: false,
     cell: ({ row }) => (
-      <Link href={`/admin/requests/${row.original.id}`}>View →</Link>
+      <Link
+        href={`/admin/requests/${row.original.id}`}
+        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+      >
+        View
+        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+      </Link>
     ),
   },
 ];

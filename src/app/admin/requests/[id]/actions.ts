@@ -253,17 +253,17 @@ export async function submitDocumentReview(
     throw new Error("No loan period found for this request.");
   }
 
-  const documents = await prisma.document.findMany({
+  const pendingDocuments = await prisma.document.findMany({
     where: { periodId: latestPeriod.id, reviewStatus: "pending" },
     distinct: ["type"],
     orderBy: { uploadedAt: "desc" },
   });
 
-  if (documents.length === 0) {
+  if (pendingDocuments.length === 0) {
     throw new Error("No pending documents to review.");
   }
 
-  const decisions = documents.map((doc) => {
+  const decisions = pendingDocuments.map((doc) => {
     const parsedDecision = documentDecisionSchema.safeParse(
       formData.get(`decision_${doc.id}`),
     );
@@ -297,9 +297,10 @@ export async function submitDocumentReview(
   );
 
   const rejected = decisions.filter((d) => d.decision === "rejected");
+  const isExtension = latestPeriod.periodType === "extension";
 
   if (rejected.length > 0) {
-    if (latestPeriod.periodType !== "extension") {
+    if (!isExtension) {
       await prisma.borrowingRequest.update({
         where: { id: requestId },
         data: { status: "contract_generated" },
@@ -336,6 +337,51 @@ export async function submitDocumentReview(
     } catch (error) {
       Sentry.captureException(error);
     }
+  } else if (!isExtension) {
+    const allDocuments = await prisma.document.findMany({
+      where: { periodId: latestPeriod.id },
+      distinct: ["type"],
+      orderBy: { uploadedAt: "desc" },
+    });
+
+    const allApproved =
+      allDocuments.length === REQUIRED_DOCUMENT_TYPES.length &&
+      allDocuments.every((d) => d.reviewStatus === "approved");
+
+    if (allApproved) {
+      await prisma.borrowingRequest.update({
+        where: { id: requestId },
+        data: { status: "ready_to_pickup" },
+      });
+
+      const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow(
+        { where: { id: requestId } },
+      );
+
+      try {
+        await sendEmail({
+          to: requestForEmail.borrowerEmail,
+          subject: "Dokumen disetujui — siap diambil",
+          html: `
+          <p>Halo ${escapeHtml(requestForEmail.borrowerName)},</p>
+          <p>Dokumen kamu sudah disetujui dan instrumen sudah siap diambil di Sekre atau Pusgiwa UI!</p>
+          <p>Staf Logistik OSUI akan menghubungi kamu untuk koordinasi waktu pengambilan. Jika dalam waktu dekat belum ada kabar, kamu bisa menghubungi staf Logistik OSUI langsung melalui LINE.</p>
+          <p><a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">Lihat halaman status</a> untuk mengisi addendum setelah menerima instrumen.</p>
+          `,
+        });
+      } catch (error) {
+        Sentry.captureException(error);
+      }
+
+      await prisma.activityLog.create({
+        data: {
+          adminId: session.user.id,
+          action: "confirm_ready",
+          entityType: "borrowing_request",
+          entityId: requestId,
+        },
+      });
+    }
   }
 
   await prisma.activityLog.createMany({
@@ -347,72 +393,6 @@ export async function submitDocumentReview(
       entityId: requestId,
       metadata: { documentId: d.id, type: d.type, notes: d.notes },
     })),
-  });
-
-  revalidateRequestViews(requestId);
-}
-
-export async function confirmDocumentsReviewed(requestId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
-
-  const latestPeriod = await prisma.loanPeriod.findFirst({
-    where: { requestId },
-    orderBy: { sequence: "desc" },
-  });
-
-  if (!latestPeriod) {
-    throw new Error("No loan period found for this request.");
-  }
-
-  const documents = await prisma.document.findMany({
-    where: { periodId: latestPeriod.id },
-    distinct: ["type"],
-    orderBy: { uploadedAt: "desc" },
-  });
-
-  const allApproved =
-    documents.length === REQUIRED_DOCUMENT_TYPES.length &&
-    documents.every((d) => d.reviewStatus === "approved");
-
-  if (!allApproved) {
-    throw new Error(
-      `All ${REQUIRED_DOCUMENT_TYPES.length} required documents must be approved before confirming review.`,
-    );
-  }
-
-  await prisma.borrowingRequest.update({
-    where: { id: requestId },
-    data: { status: "ready_to_pickup" },
-  });
-
-  const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow({
-    where: { id: requestId },
-  });
-  try {
-    await sendEmail({
-      to: requestForEmail.borrowerEmail,
-      subject: "Dokumen disetujui — siap diambil",
-      html: `
-      <p>Halo ${escapeHtml(requestForEmail.borrowerName)},</p>
-      <p>Dokumen kamu sudah disetujui dan instrumen sudah siap diambil di Sekre atau Pusgiwa UI!</p>
-      <p>Staf Logistik OSUI akan menghubungi kamu untuk koordinasi waktu pengambilan. Jika dalam waktu dekat belum ada kabar, kamu bisa menghubungi staf Logistik OSUI langsung melalui LINE.</p>
-      <p><a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">Lihat halaman status</a> untuk mengisi addendum setelah menerima instrumen.</p>
-      `,
-    });
-  } catch (error) {
-    Sentry.captureException(error);
-  }
-
-  await prisma.activityLog.create({
-    data: {
-      adminId: session.user.id,
-      action: "confirm_ready",
-      entityType: "borrowing_request",
-      entityId: requestId,
-    },
   });
 
   revalidateRequestViews(requestId);

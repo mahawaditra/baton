@@ -2,15 +2,75 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { formatActivityLog, getEntityUrl } from "@/lib/format";
-import { getRequestActionLabel } from "@/lib/loan-rules";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
+import { getRequestActionLabel, requestNeedsAction } from "@/lib/loan-rules";
+import { RequestStatusBadge } from "@/components/RequestStatusBadge";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CircleAlert,
+  Clock,
+  FileText,
+  LucideIcon,
+  Wrench,
+  Inbox,
+  Activity,
+  PackageOpen,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
 
-function SummaryCard({ label, value }: { label: string; value: number }) {
+function waitingOnBorrowerLabel(status: string): string {
+  switch (status) {
+    case "contract_generated":
+      return "Waiting for borrower to upload documents";
+    case "reviewing":
+      return "Waiting for borrower to complete Stage 2";
+    case "ready_to_pickup":
+      return "Waiting for pickup";
+    default:
+      return "Waiting on borrower";
+  }
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  iconClassName,
+}: {
+  label: string;
+  value: number;
+  icon: LucideIcon;
+  iconClassName: string;
+}) {
   return (
-    <div style={{ border: "1px solid #ccc", padding: "16px", flex: 1 }}>
-      <p style={{ fontSize: "0.85em", color: "#666" }}>{label}</p>
-      <p style={{ fontSize: "2em", fontWeight: "bold" }}>{value}</p>
-    </div>
+    <Card>
+      <CardContent className="gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-micro uppercase text-muted-foreground">
+            {label}
+          </div>
+          <span
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-md",
+              iconClassName,
+            )}
+          >
+            <Icon className="h-4 w-4" strokeWidth={1.75} />
+          </span>
+        </div>
+        <div className="tabular text-display">{value}</div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -43,39 +103,18 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  const [needsAction, recentActivity, activeRequests] = await Promise.all([
+  const [pendingRequests, recentActivity, activeRequests] = await Promise.all([
     prisma.borrowingRequest.findMany({
       where: {
-        OR: [
-          { status: "submitted" },
-          { status: "reviewing", instrumentConfirmed: false },
-          { status: "documents_uploaded" },
-          {
-            status: "ready_to_pickup",
-            loanPeriods: {
-              some: { addendums: { some: { timing: "initial" } } },
-            },
-          },
-          {
-            status: "active",
-            loanPeriods: {
-              some: {
-                periodType: "extension",
-                startDate: null,
-                addendums: { some: { timing: "initial" } },
-              },
-            },
-          },
-          {
-            status: { in: ["active", "overdue"] },
-            loanPeriods: {
-              some: {
-                actualReturnDate: null,
-                addendums: { some: { timing: "final" } },
-              },
-            },
-          },
-        ],
+        status: {
+          in: [
+            "submitted",
+            "reviewing",
+            "contract_generated",
+            "documents_uploaded",
+            "ready_to_pickup",
+          ],
+        },
       },
       include: {
         loanPeriods: {
@@ -121,109 +160,218 @@ export default async function DashboardPage() {
     })
     .slice(0, 5);
 
-  return (
-    <div>
-      <h1>Dashboard Admin BATON</h1>
-      <p>Login sebagai: {session?.user.email}</p>
+  const sortedPendingRequests = [...pendingRequests].sort((a, b) => {
+    const aNeeds = requestNeedsAction(a);
+    const bNeeds = requestNeedsAction(b);
+    if (aNeeds === bNeeds) return 0;
+    return aNeeds ? -1 : 1;
+  });
 
-      <div style={{ display: "flex", gap: "16px" }}>
-        <SummaryCard label="Request Pending" value={pendingCount} />
-        <SummaryCard label="Sedang Dipinjam" value={activeCount} />
-        <SummaryCard label="Overdue" value={overdueCount} />
-        <SummaryCard label="Butuh Reparasi" value={needRepairCount} />
-      </div>
+  return (
+    <div className="flex flex-col gap-6">
       <div>
-        <h2>Requests Needing Action</h2>
-        {needsAction.length === 0 ? (
-          <p>Nothing needs your attention right now.</p>
-        ) : (
-          <ul>
-            {needsAction.map((req) => (
-              <li key={req.id}>
-                <Link href={`/admin/requests/${req.id}`}>
-                  {req.borrowerName} — {req.ticketId}
-                </Link>{" "}
-                — {getRequestActionLabel(req)}
-              </li>
-            ))}
-          </ul>
-        )}
-        <Link href="/admin/requests">Lihat semua →</Link>
+        <h1 className="text-h1">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Welcome back, {session?.user.name || session?.user.email}.
+        </p>
       </div>
-      <div>
-        <h2>Recent Activity</h2>
-        {recentActivity.length === 0 ? (
-          <p>No activity yet.</p>
-        ) : (
-          <ul>
-            {recentActivity.map((log) => {
-              const url = getEntityUrl(log.entityType, log.entityId);
-              const text = `${log.admin.name} ${formatActivityLog(log)}`;
-              return (
-                <li key={log.id}>
-                  {url ? <Link href={url}>{text}</Link> : <span>{text}</span>}
-                  {" · "}
-                  {log.createdAt.toLocaleString("id-ID", {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  })}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        <Link href="/admin/activity">Lihat semua →</Link>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Request Pending"
+          value={pendingCount}
+          icon={FileText}
+          iconClassName="bg-gold-soft text-[oklch(0.42_0.09_82)]"
+        />
+        <StatCard
+          label="Sedang Dipinjam"
+          value={activeCount}
+          icon={Clock}
+          iconClassName="bg-plum-soft text-plum"
+        />
+        <StatCard
+          label="Overdue"
+          value={overdueCount}
+          icon={AlertTriangle}
+          iconClassName="bg-destructive-soft text-destructive"
+        />
+        <StatCard
+          label="Butuh Reparasi"
+          value={needRepairCount}
+          icon={Wrench}
+          iconClassName="bg-warning-soft text-[oklch(0.46_0.145_50)]"
+        />
       </div>
-      <div>
-        <h2>Peminjaman Aktif</h2>
-        {activeRoster.length === 0 ? (
-          <p>No active loans right now.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Peminjam</th>
-                <th>Angkatan</th>
-                <th>Instrumen</th>
-                <th>No. Seri</th>
-                <th>LINE ID</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeRoster.map((req) => (
-                <tr key={req.id}>
-                  <td>
-                    <Link href={`/admin/requests/${req.id}`}>
-                      {req.borrowerName}
-                    </Link>
-                  </td>
-                  <td>{req.borrowerYear}</td>
-                  <td>{req.instrument?.type}</td>
-                  <td>{req.instrument?.serialNumber}</td>
-                  <td>{req.borrowerLineId}</td>
-                  <td>
-                    <span
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: "4px",
-                        background:
-                          req.status === "overdue" ? "#fee2e2" : "#dbeafe",
-                        color: req.status === "overdue" ? "#991b1b" : "#1e40af",
-                      }}
-                    >
-                      {req.status.toUpperCase()}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Requests In Progress</CardTitle>
+            <CardAction>
+              <Link
+                href="/admin/requests"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                View all
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </Link>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="gap-0 px-0">
+            {sortedPendingRequests.length === 0 ? (
+              <EmptyState
+                icon={Inbox}
+                size="compact"
+                title="No requests in progress"
+                description="New submissions from the public form will show up here."
+              />
+            ) : (
+              sortedPendingRequests.map((req) => {
+                const needsAction = requestNeedsAction(req);
+                return (
+                  <div
+                    key={req.id}
+                    className="flex items-center gap-4 border-b border-border px-6 py-3.5 last:border-b-0"
+                  >
+                    <span className="tabular w-20 shrink-0 text-xs font-semibold text-muted-foreground">
+                      {req.ticketId}
                     </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <Link href="/admin/requests?status=active,overdue">
-          Lihat semua peminjaman aktif →
-        </Link>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        {needsAction && (
+                          <CircleAlert
+                            className="h-3.5 w-3.5 shrink-0 text-[oklch(0.42_0.09_82)]"
+                            strokeWidth={2}
+                            aria-label="Needs action"
+                          />
+                        )}
+                        <span className="truncate text-sm font-semibold">
+                          {req.borrowerName}
+                        </span>
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {needsAction
+                          ? getRequestActionLabel(req)
+                          : waitingOnBorrowerLabel(req.status)}
+                      </div>
+                    </div>
+                    <RequestStatusBadge status={req.status} />
+                    <Link
+                      href={`/admin/requests/${req.id}`}
+                      className={cn(buttonVariants({ size: "sm" }))}
+                    >
+                      Review
+                    </Link>
+                  </div>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardAction>
+              <Link
+                href="/admin/activity"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                View all
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </Link>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length === 0 ? (
+              <EmptyState
+                icon={Activity}
+                size="compact"
+                title="No activity yet"
+              />
+            ) : (
+              <ActivityTimeline logs={recentActivity} />
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Peminjaman Aktif</CardTitle>
+          <CardAction>
+            <Link
+              href="/admin/requests?status=active,overdue"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              View all
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </Link>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="gap-0 px-0">
+          {activeRoster.length === 0 ? (
+            <EmptyState
+              icon={PackageOpen}
+              size="compact"
+              title="No active loans right now"
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted text-left">
+                    <th className="text-micro px-6 py-2.5 font-semibold uppercase text-muted-foreground">
+                      Peminjam
+                    </th>
+                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
+                      Angkatan
+                    </th>
+                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
+                      Instrumen
+                    </th>
+                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
+                      No. Seri
+                    </th>
+                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
+                      LINE ID
+                    </th>
+                    <th className="text-micro px-6 py-2.5 font-semibold uppercase text-muted-foreground">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeRoster.map((req) => (
+                    <tr
+                      key={req.id}
+                      className="border-b border-border last:border-b-0 hover:bg-muted/40"
+                    >
+                      <td className="px-6 py-3">
+                        <Link
+                          href={`/admin/requests/${req.id}`}
+                          className="font-medium text-navy hover:underline"
+                        >
+                          {req.borrowerName}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">{req.borrowerYear}</td>
+                      <td className="px-4 py-3">{req.instrument?.type}</td>
+                      <td className="tabular px-4 py-3">
+                        {req.instrument?.serialNumber}
+                      </td>
+                      <td className="px-4 py-3">{req.borrowerLineId}</td>
+                      <td className="px-6 py-3">
+                        <RequestStatusBadge status={req.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

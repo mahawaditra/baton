@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { cn } from "@/lib/utils";
 
 async function compressImage(
   file: File,
@@ -30,9 +31,11 @@ async function compressImage(
 
 export function CompressedImageInput({
   name,
+  id,
   format = "image/jpeg",
 }: {
   name: string;
+  id?: string;
   format?: "image/jpeg" | "image/png";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,10 +59,14 @@ export function CompressedImageInput({
   return (
     <input
       ref={inputRef}
+      id={id ?? name}
       name={name}
       type="file"
       accept="image/*"
       onChange={handleChange}
+      className={cn(
+        "h-10 w-full min-w-0 rounded border border-input bg-surface px-2.5 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+      )}
     />
   );
 }

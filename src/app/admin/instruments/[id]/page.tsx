@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { EditInstrumentForm } from "./EditInstrumentForm";
 import {
   RiwayatAddendum,
@@ -6,7 +7,18 @@ import {
   RiwayatKondisi,
   RiwayatPeminjam,
 } from "./tabs";
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { StatusBadge } from "@/components/StatusBadge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+const TABS = [
+  { key: "peminjam", label: "Riwayat Peminjam" },
+  { key: "kondisi", label: "Riwayat Kondisi" },
+  { key: "addendum", label: "Addendum" },
+  { key: "aktivitas", label: "Aktivitas" },
+] as const;
 
 export default async function InstrumentDetailPage({
   params,
@@ -34,54 +46,114 @@ export default async function InstrumentDetailPage({
     instrument.status === "reserved" || instrument.status === "borrowed";
 
   return (
-    <div>
-      <h1>
-        {instrument.type} — {instrument.section}
-      </h1>
-
-      {!isEditing ? (
-        <>
-          <p>Brand: {instrument.brand}</p>
-          <p>Serial No.: {instrument.serialNumber}</p>
-          <p>Condition: {instrument.condition}</p>
-          <p>Status: {instrument.status}</p>
-          <p>Loanable: {instrument.isLoanable ? "Yes" : "No"}</p>
-          <p>Location: {instrument.location}</p>
-          <p>Notes: {instrument.notes}</p>
-
-          {activeRequest && (
-            <p>
-              Active loan:{" "}
-              <Link href={`/admin/requests/${activeRequest.id}`}>
-                View request →
-              </Link>
-            </p>
-          )}
-
-          <Link href={`/admin/instruments/${id}?edit=true`}>
-            <button>Edit Instrument</button>
-          </Link>
-        </>
-      ) : (
-        <EditInstrumentForm instrument={instrument} statusLocked={statusLocked} />
-      )}
+    <div className="flex flex-col gap-6">
       <div>
-        <nav>
-          <Link href={`/admin/instruments/${id}?tab=peminjam`}>
-            Riwayat Peminjam
-          </Link>
-          <Link href={`/admin/instruments/${id}?tab=kondisi`}>
-            Riwayat Kondisi
-          </Link>
-          <Link href={`/admin/instruments/${id}?tab=addendum`}>Addendum</Link>
-          <Link href={`/admin/instruments/${id}?tab=aktivitas`}>Aktivitas</Link>
-        </nav>
-
-        {tab === "peminjam" && <RiwayatPeminjam instrumentId={id} />}
-        {tab === "kondisi" && <RiwayatKondisi instrumentId={id} />}
-        {tab === "addendum" && <RiwayatAddendum instrumentId={id} />}
-        {tab === "aktivitas" && <RiwayatAktivitas instrumentId={id} />}
+        <h1 className="text-3xl font-bold tracking-tight">
+          {instrument.type}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {instrument.section}
+        </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Detail</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!isEditing ? (
+            <div className="flex flex-col gap-4">
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <div>
+                  <dt className="text-muted-foreground">Status</dt>
+                  <dd className="mt-1">
+                    <StatusBadge
+                      status={instrument.status}
+                      condition={instrument.condition}
+                    />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Brand</dt>
+                  <dd className="mt-0.5 font-medium">{instrument.brand}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Serial No.</dt>
+                  <dd className="tabular mt-0.5 font-medium">
+                    {instrument.serialNumber}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Loanable</dt>
+                  <dd className="mt-0.5 font-medium">
+                    {instrument.isLoanable ? "Ya" : "Tidak"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Location</dt>
+                  <dd className="mt-0.5 font-medium">{instrument.location}</dd>
+                </div>
+                <div className="col-span-2">
+                  <dt className="text-muted-foreground">Notes</dt>
+                  <dd className="mt-0.5 font-medium">
+                    {instrument.notes || "—"}
+                  </dd>
+                </div>
+              </dl>
+
+              {activeRequest && (
+                <Link
+                  href={`/admin/requests/${activeRequest.id}`}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "self-start",
+                  )}
+                >
+                  Lihat peminjaman aktif
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </Link>
+              )}
+
+              <Link
+                href={`/admin/instruments/${id}?edit=true`}
+                className={cn(buttonVariants({ size: "sm" }), "self-start")}
+              >
+                Edit Instrument
+              </Link>
+            </div>
+          ) : (
+            <EditInstrumentForm
+              instrument={instrument}
+              statusLocked={statusLocked}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <div className="-mx-6 flex gap-1 border-b border-border px-6">
+          {TABS.map((t) => (
+            <Link
+              key={t.key}
+              href={`/admin/instruments/${id}?tab=${t.key}`}
+              className={cn(
+                "px-5 py-3.5 text-sm",
+                tab === t.key
+                  ? "-mb-px border-b-2 border-navy font-semibold text-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
+        <CardContent className="pt-5">
+          {tab === "peminjam" && <RiwayatPeminjam instrumentId={id} />}
+          {tab === "kondisi" && <RiwayatKondisi instrumentId={id} />}
+          {tab === "addendum" && <RiwayatAddendum instrumentId={id} />}
+          {tab === "aktivitas" && <RiwayatAktivitas instrumentId={id} />}
+        </CardContent>
+      </Card>
     </div>
   );
 }

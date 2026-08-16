@@ -1,5 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { columns } from "./columns";
+import { DataTable } from "@/components/DataTable";
+import { EmptyState } from "@/components/EmptyState";
+import { Input } from "@/components/ui/input";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Archive, ArchiveX, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default async function ArchivePage({
   searchParams,
@@ -49,69 +56,76 @@ export default async function ArchivePage({
     orderBy: { updatedAt: "desc" },
   });
 
-  return (
-    <div>
-      <h1>Archive</h1>
+  const isFiltered = Boolean(parsedYear || borrower || instrument);
 
-      <nav>
-        <Link href="/admin/archive">All Years</Link>
+  return (
+    <div className="flex flex-col gap-6">
+      <h1 className="text-h1">Archive</h1>
+
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/admin/archive"
+          className={cn(
+            buttonVariants({
+              variant: !parsedYear ? "default" : "outline",
+              size: "sm",
+            }),
+          )}
+        >
+          All Years
+        </Link>
         {availableYears.map((y) => (
-          <Link key={y} href={`/admin/archive?year=${y}`}>
+          <Link
+            key={y}
+            href={`/admin/archive?year=${y}`}
+            className={cn(
+              buttonVariants({
+                variant: parsedYear === y ? "default" : "outline",
+                size: "sm",
+              }),
+            )}
+          >
             {y}
           </Link>
         ))}
-      </nav>
+      </div>
 
-      <form>
-        <input
+      <form className="flex flex-wrap items-center gap-2">
+        <Input
           name="borrower"
           placeholder="Search borrower name"
           defaultValue={borrower}
+          className="max-w-xs"
         />
-        <input
+        <Input
           name="instrument"
           placeholder="Search instrument type/serial"
           defaultValue={instrument}
+          className="max-w-xs"
         />
         {year && <input type="hidden" name="year" value={year} />}
-        <button type="submit">Search</button>
+        <Button type="submit" variant="outline" size="sm">
+          <Search className="h-3.5 w-3.5" strokeWidth={1.75} />
+          Search
+        </Button>
       </form>
 
       {requests.length === 0 ? (
-        <p>No archived borrowings found.</p>
+        <EmptyState
+          icon={isFiltered ? ArchiveX : Archive}
+          title={
+            isFiltered
+              ? "No matching archived borrowings"
+              : "No archived borrowings yet"
+          }
+          description={
+            isFiltered
+              ? "Try a different year, borrower name, or instrument."
+              : "Completed borrowings will show up here once returned."
+          }
+        />
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Peminjam</th>
-              <th>Angkatan</th>
-              <th>Instrumen</th>
-              <th>Periode</th>
-              <th>Deposit Refund</th>
-              <th>Lihat →</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((req) => (
-              <tr key={req.id}>
-                <td>{req.borrowerName}</td>
-                <td>{req.borrowerYear}</td>
-                <td>
-                  {req.instrument?.type} ({req.instrument?.serialNumber})
-                </td>
-                <td>{req.loanPeriods.length} periode</td>
-                <td>
-                  {req.depositRefundAmount != null
-                    ? `Rp${req.depositRefundAmount.toLocaleString("id-ID")}`
-                    : "-"}
-                </td>
-                <td>
-                  <Link href={`/admin/requests/${req.id}`}>Lihat →</Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DataTable data={requests} columns={columns} />
       )}
     </div>
   );

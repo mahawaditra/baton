@@ -34,6 +34,27 @@ export function documentTypesNeedingUpload(
   return requiredTypes.filter((t) => !handledTypes.has(t));
 }
 
+export const LOAN_STEP_LABELS = [
+  "Request Submitted",
+  "Complete Data & Documents",
+  "Pickup & Fill Addendum",
+  "Currently Borrowed",
+] as const;
+
+export function getRequestStep(
+  status: string,
+  instrumentConfirmed: boolean,
+): number | "exception" {
+  if (status === "rejected" || status === "overdue") return "exception";
+  if (status === "submitted") return 1;
+  if (status === "reviewing") return instrumentConfirmed ? 2 : 1;
+  if (status === "contract_generated" || status === "documents_uploaded")
+    return 2;
+  if (status === "ready_to_pickup") return 3;
+  if (status === "active" || status === "returned") return 4;
+  return 1;
+}
+
 export function canAssignInstrument(
   status: string,
   instrumentConfirmed: boolean,
@@ -67,6 +88,23 @@ export function requiredDocumentTypesForPeriod(
   isExtension: boolean,
 ): readonly string[] {
   return isExtension ? ["signed_contract"] : REQUIRED_DOCUMENT_TYPES;
+}
+
+export function requestNeedsAction(req: {
+  status: string;
+  instrumentConfirmed: boolean;
+  loanPeriods: { addendums: { timing: string }[] }[];
+}): boolean {
+  if (req.status === "submitted") return true;
+  if (req.status === "reviewing" && !req.instrumentConfirmed) return true;
+  if (req.status === "documents_uploaded") return true;
+  if (
+    req.status === "ready_to_pickup" &&
+    req.loanPeriods[0]?.addendums.some((a) => a.timing === "initial")
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export function getRequestActionLabel(req: {

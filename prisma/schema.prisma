@@ -235,6 +235,7 @@ model Admin {
   inventorySnapshots  InventorySnapshot[]
   sessions            Session[]
   accounts            Account[]
+  annualReports       AnnualReport[]
 
   @@map("admins")
 }
@@ -337,4 +338,16 @@ model InventorySnapshot {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("inventory_snapshots")
+}
+
+model AnnualReport {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  year      Int
+  periodEnd DateTime @map("period_end") @db.Date
+  summary   Json
+  createdBy String   @map("created_by") @db.Uuid
+  creator   Admin    @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("annual_reports")
 }

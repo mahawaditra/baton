@@ -4,6 +4,10 @@ import { useActionState } from "react";
 import type { LoanSetting } from "@/generated/prisma/client";
 import { updateLoanSettings, UpdateLoanSettingsState } from "./actions";
 import { CompressedImageInput } from "./CompressedImageInput";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const initialState: UpdateLoanSettingsState = {
   success: false,
@@ -21,165 +25,223 @@ export function LoanSettingsForm({
   );
 
   return (
-    <form action={formAction}>
-      {state.error && <p style={{ color: "red" }}>{state.error}</p>}
-      {state.success && (
-        <p style={{ color: "green" }}>Loan settings saved.</p>
+    <form action={formAction} className="flex flex-col gap-4">
+      {state.error && (
+        <p className="text-sm text-destructive" aria-live="polite">
+          {state.error}
+        </p>
       )}
-      <label>
-        Due Date
-        <input
-          name="dueDate"
-          type="date"
-          defaultValue={loanSettings?.dueDate?.toISOString().split("T")[0]}
-          required
-        />
-      </label>
-      <label>
-        Deposit Amount (full)
-        <input
-          name="depositAmount"
-          type="number"
-          defaultValue={loanSettings?.depositAmount ?? 100000}
-          required
-        />
-      </label>
-      <label>
-        Deposit Amount (partial)
-        <input
-          name="depositPartialAmount"
-          type="number"
-          defaultValue={loanSettings?.depositPartialAmount ?? 50000}
-          required
-        />
-      </label>
-      <label>
-        Deposit Grace Days
-        <input
-          name="depositGraceDays"
-          type="number"
-          defaultValue={loanSettings?.depositGraceDays ?? 14}
-          required
-        />
-      </label>
-      <label>
-        Bank Name
-        <input
-          name="bankName"
-          type="text"
-          defaultValue={loanSettings?.bankName ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Bank Account Number
-        <input
-          name="bankAccount"
-          type="text"
-          defaultValue={loanSettings?.bankAccount ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Bank Account Holder
-        <input
-          name="bankHolder"
-          type="text"
-          defaultValue={loanSettings?.bankHolder ?? ""}
-          required
-        />
-      </label>
-      <h3>Signatory Data (PIHAK PERTAMA)</h3>
-      <label>
-        Name
-        <input
-          name="signatoryName"
-          type="text"
-          defaultValue={loanSettings?.signatoryName ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Phone
-        <input
-          name="signatoryPhone"
-          type="text"
-          defaultValue={loanSettings?.signatoryPhone ?? ""}
-          required
-        />
-      </label>
-      <label>
-        LINE ID
-        <input
-          name="signatoryLineId"
-          type="text"
-          defaultValue={loanSettings?.signatoryLineId ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Address (as per KTP)
-        <input
-          name="signatoryAddressKtp"
-          type="text"
-          defaultValue={loanSettings?.signatoryAddressKtp ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Current Address
-        <input
-          name="signatoryAddressDomicile"
-          type="text"
-          defaultValue={loanSettings?.signatoryAddressDomicile ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Faculty/Major
-        <input
-          name="signatoryFaculty"
-          type="text"
-          defaultValue={loanSettings?.signatoryFaculty ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Year
-        <input
-          name="signatoryYear"
-          type="text"
-          defaultValue={loanSettings?.signatoryYear ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Section/Instrument
-        <input
-          name="signatorySection"
-          type="text"
-          defaultValue={loanSettings?.signatorySection ?? ""}
-          required
-        />
-      </label>
-      <label>
-        KTP Number
-        <input
-          name="signatoryKtpNumber"
-          type="text"
-          defaultValue={loanSettings?.signatoryKtpNumber ?? ""}
-          required
-        />
-      </label>
-      <label>
-        Signature Image{" "}
-        {loanSettings?.signatoryImageDriveId &&
-          "(already uploaded — leave empty to keep current)"}
-        <CompressedImageInput name="signatoryImage" format="image/png" />
-      </label>
-      <button type="submit" disabled={isPending}>
+      {state.success && (
+        <p
+          className="text-sm font-medium text-[oklch(0.4_0.07_148)]"
+          aria-live="polite"
+        >
+          Loan settings saved.
+        </p>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Loan Rules</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="dueDate">Due Date</Label>
+              <Input
+                id="dueDate"
+                name="dueDate"
+                type="date"
+                defaultValue={
+                  loanSettings?.dueDate?.toISOString().split("T")[0]
+                }
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="depositGraceDays">Deposit Grace Days</Label>
+              <Input
+                id="depositGraceDays"
+                name="depositGraceDays"
+                type="number"
+                defaultValue={loanSettings?.depositGraceDays ?? 14}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="depositAmount">Deposit Amount (full)</Label>
+              <Input
+                id="depositAmount"
+                name="depositAmount"
+                type="number"
+                defaultValue={loanSettings?.depositAmount ?? 100000}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="depositPartialAmount">
+                Deposit Amount (partial)
+              </Label>
+              <Input
+                id="depositPartialAmount"
+                name="depositPartialAmount"
+                type="number"
+                defaultValue={loanSettings?.depositPartialAmount ?? 50000}
+                required
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Bank Account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Input
+                id="bankName"
+                name="bankName"
+                defaultValue={loanSettings?.bankName ?? ""}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="bankAccount">Bank Account Number</Label>
+              <Input
+                id="bankAccount"
+                name="bankAccount"
+                defaultValue={loanSettings?.bankAccount ?? ""}
+                required
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="bankHolder">Bank Account Holder</Label>
+              <Input
+                id="bankHolder"
+                name="bankHolder"
+                defaultValue={loanSettings?.bankHolder ?? ""}
+                required
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Signatory Data (PIHAK PERTAMA)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="signatoryName">Name</Label>
+              <Input
+                id="signatoryName"
+                name="signatoryName"
+                defaultValue={loanSettings?.signatoryName ?? ""}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="signatoryPhone">Phone</Label>
+              <Input
+                id="signatoryPhone"
+                name="signatoryPhone"
+                defaultValue={loanSettings?.signatoryPhone ?? ""}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="signatoryLineId">LINE ID</Label>
+              <Input
+                id="signatoryLineId"
+                name="signatoryLineId"
+                defaultValue={loanSettings?.signatoryLineId ?? ""}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="signatoryKtpNumber">KTP Number</Label>
+              <Input
+                id="signatoryKtpNumber"
+                name="signatoryKtpNumber"
+                defaultValue={loanSettings?.signatoryKtpNumber ?? ""}
+                placeholder="16 digit"
+                required
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="signatoryAddressKtp">Address (as per KTP)</Label>
+              <Input
+                id="signatoryAddressKtp"
+                name="signatoryAddressKtp"
+                defaultValue={loanSettings?.signatoryAddressKtp ?? ""}
+                required
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="signatoryAddressDomicile">Current Address</Label>
+              <Input
+                id="signatoryAddressDomicile"
+                name="signatoryAddressDomicile"
+                defaultValue={loanSettings?.signatoryAddressDomicile ?? ""}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="signatoryFaculty">Faculty/Major</Label>
+              <Input
+                id="signatoryFaculty"
+                name="signatoryFaculty"
+                defaultValue={loanSettings?.signatoryFaculty ?? ""}
+                placeholder="Contoh: FT/Teknik Elektro"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="signatoryYear">Year</Label>
+              <Input
+                id="signatoryYear"
+                name="signatoryYear"
+                defaultValue={loanSettings?.signatoryYear ?? ""}
+                required
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="signatorySection">Section/Instrument</Label>
+              <Input
+                id="signatorySection"
+                name="signatorySection"
+                defaultValue={loanSettings?.signatorySection ?? ""}
+                required
+              />
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="signatoryImage">
+                Signature Image{" "}
+                {loanSettings?.signatoryImageDriveId && (
+                  <span className="font-normal text-muted-foreground">
+                    (already uploaded — leave empty to keep current)
+                  </span>
+                )}
+              </Label>
+              <CompressedImageInput
+                id="signatoryImage"
+                name="signatoryImage"
+                format="image/png"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button type="submit" disabled={isPending} className="self-start">
         {isPending ? "Saving..." : "Save Loan Settings"}
-      </button>
+      </Button>
     </form>
   );
 }

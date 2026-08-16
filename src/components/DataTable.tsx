@@ -1,11 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
+  getSortedRowModel,
   flexRender,
   type ColumnDef,
+  type SortingState,
 } from "@tanstack/react-table";
+import { ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function DataTable<T>({
   data,
@@ -14,39 +19,74 @@ export function DataTable<T>({
   data: T[];
   columns: ColumnDef<T>[];
 }) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+
   const table = useReactTable({
     data,
     columns,
+    state: { sorting },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   return (
-    <table>
-      <thead>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <th key={header.id}>
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext(),
-                )}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map((row) => (
-          <tr key={row.id}>
-            {row.getVisibleCells().map((cell) => (
-              <td key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="rounded-lg border border-border bg-surface">
+      <table className="w-full text-sm">
+        <thead className="sticky top-0 z-10 rounded-t-lg bg-muted">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className="h-10">
+              {headerGroup.headers.map((header) => {
+                const canSort = header.column.getCanSort();
+                const sorted = header.column.getIsSorted();
+                return (
+                  <th
+                    key={header.id}
+                    onClick={
+                      canSort
+                        ? header.column.getToggleSortingHandler()
+                        : undefined
+                    }
+                    className={cn(
+                      "px-4 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
+                      canSort && "cursor-pointer select-none",
+                    )}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                      {canSort &&
+                        (sorted === "asc" ? (
+                          <ArrowUp className="h-3 w-3" />
+                        ) : sorted === "desc" ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ChevronsUpDown className="h-3 w-3 opacity-40" />
+                        ))}
+                    </span>
+                  </th>
+                );
+              })}
+            </tr>
+          ))}
+        </thead>
+        <tbody className="[&>tr:last-child>td:first-child]:rounded-bl-lg [&>tr:last-child>td:last-child]:rounded-br-lg">
+          {table.getRowModel().rows.map((row) => (
+            <tr
+              key={row.id}
+              className="h-14 border-t border-border hover:bg-muted/40"
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className="px-4 py-3">
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
