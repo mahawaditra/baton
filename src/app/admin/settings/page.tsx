@@ -5,6 +5,9 @@ import { LoanSettingsForm } from "./LoanSettingsForm";
 import { AddAdminForm } from "./AddAdminForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck } from "lucide-react";
+import { setAdminActive } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
+import { cn } from "@/lib/utils";
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -39,17 +42,48 @@ export default async function SettingsPage() {
                     className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm"
                   >
                     <div>
-                      <span className="font-medium">{admin.name}</span>{" "}
+                      <span
+                        className={cn(
+                          "font-medium",
+                          !admin.isActive && "text-muted-foreground",
+                        )}
+                      >
+                        {admin.name}
+                      </span>{" "}
                       <span className="text-muted-foreground">
                         ({admin.email})
                       </span>
                     </div>
-                    {admin.role === "super_admin" && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-2 py-0.5 text-[11px] font-semibold text-[oklch(0.42_0.09_82)]">
-                        <ShieldCheck className="h-3 w-3" strokeWidth={2} />
-                        Super Admin
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {admin.role === "super_admin" && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-2 py-0.5 text-micro text-gold-soft-foreground">
+                          <ShieldCheck className="h-3 w-3" strokeWidth={2} />
+                          Super Admin
+                        </span>
+                      )}
+                      {!admin.isActive && (
+                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-micro text-muted-foreground">
+                          Inactive
+                        </span>
+                      )}
+                      {admin.id !== session?.user.id && (
+                        <form
+                          action={setAdminActive.bind(
+                            null,
+                            admin.id,
+                            !admin.isActive,
+                          )}
+                        >
+                          <SubmitButton
+                            variant="outline"
+                            size="xs"
+                            pendingText="..."
+                          >
+                            {admin.isActive ? "Deactivate" : "Activate"}
+                          </SubmitButton>
+                        </form>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

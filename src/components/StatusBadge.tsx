@@ -12,13 +12,13 @@ const STATUS_CONFIG: Record<
   available: {
     label: "Tersedia",
     bg: "bg-success-soft",
-    fg: "text-[oklch(0.4_0.07_148)]",
+    fg: "text-success-soft-foreground",
     dot: "bg-success",
   },
   reserved: {
     label: "Dibooking",
     bg: "bg-gold-soft",
-    fg: "text-[oklch(0.42_0.09_82)]",
+    fg: "text-gold-soft-foreground",
     dot: "bg-gold",
   },
   borrowed: {
@@ -30,7 +30,7 @@ const STATUS_CONFIG: Record<
   placed: {
     label: "Ditempatkan",
     bg: "bg-info-soft",
-    fg: "text-[oklch(0.4_0.08_240)]",
+    fg: "text-info-soft-foreground",
     dot: "bg-info",
   },
   unavailable: {
@@ -50,7 +50,7 @@ const CONDITION_CONFIG: Partial<
   need_repair: {
     label: "Perlu servis",
     icon: Wrench,
-    className: "bg-warning-soft text-[oklch(0.46_0.145_50)]",
+    className: "bg-warning-soft text-warning-soft-foreground",
   },
   retired: {
     label: "Pensiun",
@@ -102,7 +102,7 @@ export function StatusBadge({
     <span className="inline-flex items-center gap-1.5">
       <span
         className={cn(
-          "inline-flex h-[22px] items-center gap-1.5 px-2 text-[11px] font-semibold tracking-wide uppercase",
+          "inline-flex h-[22px] items-center gap-1.5 px-2 text-micro uppercase",
           variant === "pill" ? "rounded-full" : "rounded-sm",
           statusConfig.bg,
           statusConfig.fg,

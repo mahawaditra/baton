@@ -85,17 +85,25 @@
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
 
+  --color-gold-soft-foreground: var(--gold-soft-foreground);
+
+  --color-hero-bg: var(--hero-bg);
+  --color-hero-fg: var(--hero-fg);
+
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-success-foreground: var(--success-foreground);
+  --color-success-soft-foreground: var(--success-soft-foreground);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-soft: var(--destructive-soft);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-info-soft-foreground: var(--info-soft-foreground);
 
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -127,6 +135,7 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-popover: var(--shadow-popover);
   --shadow-focus: var(--shadow-focus);
+  --shadow-hero-btn: var(--shadow-hero-btn);
 }
 
 :root {
@@ -138,6 +147,9 @@
   --gold: oklch(0.735 0.108 82);
   --gold-hover: oklch(0.7 0.115 82);
   --gold-soft: oklch(0.93 0.045 82);
+  --gold-soft-foreground: oklch(0.42 0.09 82);
+  --hero-bg: oklch(0.278 0.052 264);
+  --hero-fg: oklch(0.97 0.01 85);
 
   --background: oklch(0.97 0.01 85);
   --surface: oklch(0.988 0.006 85);
@@ -153,14 +165,17 @@
   --success: oklch(0.595 0.088 148);
   --success-soft: oklch(0.94 0.035 148);
   --success-foreground: oklch(0.988 0.006 85);
+  --success-soft-foreground: oklch(0.4 0.07 148);
   --warning: oklch(0.7 0.15 50);
   --warning-soft: oklch(0.945 0.055 50);
   --warning-foreground: oklch(0.225 0.024 275);
+  --warning-soft-foreground: oklch(0.46 0.145 50);
   --destructive: oklch(0.585 0.145 35);
   --destructive-soft: oklch(0.94 0.038 35);
   --destructive-foreground: oklch(0.988 0.006 85);
   --info: oklch(0.56 0.08 240);
   --info-soft: oklch(0.94 0.03 240);
+  --info-soft-foreground: oklch(0.4 0.08 240);
 
   --card: var(--surface);
   --card-foreground: var(--foreground);
@@ -209,6 +224,7 @@
     0 2px 6px oklch(0.278 0.052 264 / 0.05);
   --shadow-popover: 0 12px 32px oklch(0.278 0.052 264 / 0.14);
   --shadow-focus: 0 0 0 3px oklch(0.735 0.108 82 / 0.35);
+  --shadow-hero-btn: 0 8px 24px oklch(0.185 0.028 285 / 0.35);
 }
 
 .dark {
@@ -230,15 +246,22 @@
   --gold: oklch(0.78 0.115 82);
   --gold-hover: oklch(0.82 0.12 82);
   --gold-soft: oklch(0.34 0.075 82);
+  --gold-soft-foreground: oklch(0.78 0.115 82);
+  --hero-bg: oklch(0.195 0.032 285);
+  --hero-fg: oklch(0.945 0.01 85);
+  --shadow-hero-btn: 0 8px 24px oklch(0.1 0.02 285 / 0.55);
 
   --success: oklch(0.72 0.1 148);
   --success-soft: oklch(0.295 0.045 148);
+  --success-soft-foreground: oklch(0.72 0.1 148);
   --warning: oklch(0.76 0.15 50);
   --warning-soft: oklch(0.32 0.065 50);
+  --warning-soft-foreground: oklch(0.76 0.15 50);
   --destructive: oklch(0.68 0.15 35);
   --destructive-soft: oklch(0.33 0.07 35);
   --info: oklch(0.72 0.085 240);
   --info-soft: oklch(0.3 0.045 240);
+  --info-soft-foreground: oklch(0.72 0.085 240);
 
   --card: var(--surface);
   --card-foreground: var(--foreground);
@@ -288,6 +311,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:autofill {
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface) inset;
+  box-shadow: 0 0 0px 1000px var(--surface) inset;
+  caret-color: var(--foreground);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 :where(button, [role="button"], a, input, select, textarea):focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
@@ -302,4 +336,126 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+@keyframes marquee-l {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-r {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.marquee-track > span {
+  flex-shrink: 0;
+  padding-right: 32px;
+}
+
+.marquee-l {
+  animation: marquee-l 40s linear infinite;
+}
+
+.marquee-r {
+  animation: marquee-r 40s linear infinite;
+}
+
+[data-sonner-toast] {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  transition:
+    transform 0.2s,
+    opacity 0.2s,
+    height 0.2s,
+    box-shadow 0.2s;
+}
+
+[data-sonner-toast] [data-icon] {
+  display: flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  color: var(--muted-foreground);
+  order: 1;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  background: var(--destructive-soft);
+  color: var(--destructive);
+}
+
+[data-sonner-toast] [data-content] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  order: 2;
+}
+
+[data-sonner-toast] [data-title] {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--foreground);
+}
+
+[data-sonner-toast] [data-description] {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted-foreground);
+}
+
+[data-sonner-toast] [data-close-button] {
+  position: static;
+  height: 24px;
+  width: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  order: 3;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: var(--surface-2);
 }

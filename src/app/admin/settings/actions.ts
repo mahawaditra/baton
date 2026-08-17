@@ -10,6 +10,11 @@ import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 
+const addAdminSchema = z.object({
+  email: z.email("Invalid email address"),
+  name: z.string().trim().min(1, "Name is required").max(100),
+});
+
 const updateLoanSettingsSchema = z
   .object({
     dueDate: z.iso.date("Invalid due date"),
@@ -80,14 +85,14 @@ const updateLoanSettingsSchema = z
       .regex(/^\d{16}$/, "Signatory KTP number must be 16 digits"),
   })
   .refine((data) => data.depositPartialAmount < data.depositAmount, {
-    message:
-      "Partial deposit amount must be less than the full deposit amount",
+    message: "Partial deposit amount must be less than the full deposit amount",
     path: ["depositPartialAmount"],
   });
 
 export type AddAdminState = {
   success: boolean;
   error: string | null;
+  generalError: string | null;
 };
 
 export async function addAdmin(
@@ -97,15 +102,27 @@ export async function addAdmin(
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (session?.user.role !== "super_admin") {
-    return { success: false, error: "Only super admin can add new admin" };
+    return {
+      success: false,
+      error: null,
+      generalError: "Only super admin can add new admin",
+    };
   }
 
-  const email = formData.get("email") as string;
-  const name = formData.get("name") as string;
+  const parsed = addAdminSchema.safeParse({
+    email: formData.get("email"),
+    name: formData.get("name"),
+  });
 
-  if (!email || !name) {
-    return { success: false, error: "Email and name are required" };
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0].message,
+      generalError: null,
+    };
   }
+
+  const { email, name } = parsed.data;
 
   let newAdmin;
   try {
@@ -120,6 +137,7 @@ export async function addAdmin(
       return {
         success: false,
         error: "An admin with this email already exists.",
+        generalError: null,
       };
     }
     throw err;
@@ -136,7 +154,7 @@ export async function addAdmin(
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin/activity");
-  return { success: true, error: null };
+  return { success: true, error: null, generalError: null };
 }
 
 export type UpdateLoanSettingsState = {
@@ -260,4 +278,33 @@ export async function updateLoanSettings(
   revalidatePath("/admin/activity");
 
   return { success: true, error: null };
+}
+
+export async function setAdminActive(adminId: string, isActive: boolean) {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (session?.user.role !== "super_admin") {
+    throw new Error("Only super admin can do this.");
+  }
+
+  if (session.user.id === adminId) {
+    throw new Error("You can't deactivate your own account.");
+  }
+
+  await prisma.admin.update({
+    where: { id: adminId },
+    data: { isActive },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: isActive ? "reactivate_admin" : "deactivate_admin",
+      entityType: "admin",
+      entityId: adminId,
+    },
+  });
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/activity");
 }

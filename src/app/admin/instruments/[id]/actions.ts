@@ -54,11 +54,15 @@ export async function updateInstrument(
     return { error: parsed.error.issues[0].message };
   }
 
-  const { brand, serialNumber, condition, location, notes } = parsed.data;
-  let { status } = parsed.data;
+  const { brand, serialNumber, location, notes } = parsed.data;
+  let { status, condition } = parsed.data;
 
   const statusLocked =
     before.status === "reserved" || before.status === "borrowed";
+
+  if (statusLocked) {
+    condition = before.condition;
+  }
 
   let isLoanable = formData.get("isLoanable") === "true";
 

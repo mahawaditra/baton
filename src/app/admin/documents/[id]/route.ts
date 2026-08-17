@@ -3,6 +3,12 @@ import { fetchFileBytes } from "@/lib/drive";
 import { ALLOWED_UPLOAD_MIME_TYPES } from "@/lib/file-validation";
 import { auth } from "@/lib/auth";
 
+const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+};
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -24,11 +30,14 @@ export async function GET(
     ? doc.mimeType
     : "application/octet-stream";
 
+  const extension = EXTENSION_BY_MIME_TYPE[contentType];
+  const filename = `${doc.type}-${doc.id}${extension ? `.${extension}` : ""}`;
+
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": contentType,
       "X-Content-Type-Options": "nosniff",
-      "Content-Disposition": `inline; filename="${doc.type}-${doc.id}"`,
+      "Content-Disposition": `inline; filename="${filename}"`,
     },
   });
 }

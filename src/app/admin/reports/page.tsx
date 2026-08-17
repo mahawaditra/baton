@@ -38,23 +38,13 @@ export default async function ReportsPage() {
             <CardTitle>Export Snapshot</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <form
-              action={async (formData: FormData) => {
-                "use server";
-                const label = formData.get("label") as string;
-                await exportInventorySnapshot(
-                  label ||
-                    `Snapshot ${new Date().toLocaleDateString("id-ID")}`,
-                );
-              }}
-              className="flex items-end gap-3"
-            >
+            <form action={exportInventorySnapshot} className="flex items-end gap-3">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor="label">Label</Label>
                 <Input
                   id="label"
                   name="label"
-                  placeholder="Label (misal: Post Calang 2026)"
+                  placeholder="Label (e.g. Post Calang 2026)"
                 />
               </div>
               <Button type="submit">Export Snapshot</Button>
@@ -70,8 +60,8 @@ export default async function ReportsPage() {
                       className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
                     >
                       <span className="text-muted-foreground">
-                        {s.label} — oleh {s.creator.name} —{" "}
-                        {s.createdAt.toLocaleDateString("id-ID")}
+                        {s.label} — by {s.creator.name} —{" "}
+                        {s.createdAt.toLocaleDateString("en-GB")}
                       </span>
                       <a
                         href={`https://drive.google.com/file/d/${s.driveFileId}/view`}
@@ -86,7 +76,7 @@ export default async function ReportsPage() {
                           className="h-3.5 w-3.5"
                           strokeWidth={1.75}
                         />
-                        Buka di Drive
+                        Open in Drive
                       </a>
                     </li>
                   ))}

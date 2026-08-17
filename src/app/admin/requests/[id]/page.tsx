@@ -2,10 +2,12 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AssignSection } from "./AssignSection";
 import { NotifyAndRejectPanel } from "./NotifyAndRejectPanel";
+import { CancelRequestPanel } from "./CancelRequestPanel";
 import { DocumentReviewSection } from "./DocumentReviewSection";
 import { confirmExtension, confirmHandover, confirmReturn } from "./actions";
 import {
   canAssignInstrument,
+  canCancelRequest,
   canNotifyBorrower,
   getRequestStep,
   LOAN_STEP_LABELS,
@@ -24,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, ImageIcon } from "lucide-react";
+import { AlertTriangle, ImageIcon, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default async function RequestDetailPage({
@@ -78,6 +80,8 @@ export default async function RequestDetailPage({
     request.instrumentConfirmed,
   );
 
+  const canCancel = canCancelRequest(request.status);
+
   const isExtension = latestPeriod?.periodType === "extension";
 
   const step = getRequestStep(request.status, request.instrumentConfirmed);
@@ -94,7 +98,7 @@ export default async function RequestDetailPage({
             Submitted {request.createdAt.toLocaleDateString("en-GB")}
           </span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-h1">
           {request.borrowerName}{" "}
           <span className="tabular text-muted-foreground">
             — {request.ticketId}
@@ -109,18 +113,48 @@ export default async function RequestDetailPage({
       </div>
 
       {step === "exception" ? (
-        <div className="flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive-soft/40 p-4 text-sm">
-          <AlertTriangle
-            className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-            strokeWidth={1.75}
-          />
+        <div
+          className={cn(
+            "flex items-start gap-3 rounded-md border p-4 text-sm",
+            request.status === "cancelled"
+              ? "border-border bg-muted/40"
+              : "border-destructive/40 bg-destructive-soft/40",
+          )}
+        >
+          {request.status === "cancelled" ? (
+            <Ban
+              className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          ) : (
+            <AlertTriangle
+              className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+              strokeWidth={1.75}
+            />
+          )}
           <div>
-            <div className="font-semibold text-destructive">
-              {request.status === "rejected" ? "Request Rejected" : "Overdue"}
+            <div
+              className={cn(
+                "font-semibold",
+                request.status === "cancelled"
+                  ? "text-foreground"
+                  : "text-destructive",
+              )}
+            >
+              {request.status === "rejected"
+                ? "Request Rejected"
+                : request.status === "cancelled"
+                  ? "Request Cancelled"
+                  : "Overdue"}
             </div>
             {request.status === "rejected" && request.rejectionReason && (
               <div className="mt-0.5 text-foreground-2">
                 {request.rejectionReason}
+              </div>
+            )}
+            {request.status === "cancelled" && request.cancellationReason && (
+              <div className="mt-0.5 text-foreground-2">
+                {request.cancellationReason}
               </div>
             )}
             {request.status === "overdue" && (
@@ -148,9 +182,7 @@ export default async function RequestDetailPage({
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
                   <dt className="text-muted-foreground">Year</dt>
-                  <dd className="mt-0.5 font-medium">
-                    {request.borrowerYear}
-                  </dd>
+                  <dd className="mt-0.5 font-medium">{request.borrowerYear}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Email</dt>
@@ -214,6 +246,7 @@ export default async function RequestDetailPage({
               </Card>
             )
           )}
+          {canCancel && <CancelRequestPanel requestId={id} />}
         </div>
       </div>
 
@@ -263,9 +296,7 @@ export default async function RequestDetailPage({
                     </div>
                     {a.notes && (
                       <div>
-                        <dt className="text-xs text-muted-foreground">
-                          Notes
-                        </dt>
+                        <dt className="text-xs text-muted-foreground">Notes</dt>
                         <dd className="mt-0.5">{a.notes}</dd>
                       </div>
                     )}
@@ -279,7 +310,9 @@ export default async function RequestDetailPage({
                         href={`/admin/drive-files/${fileId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                        )}
                       >
                         <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
                         {a.driveFileIds.length > 1
@@ -359,7 +392,10 @@ export default async function RequestDetailPage({
                       required
                     />
                   </div>
-                  <SubmitButton pendingText="Confirming..." className="self-start">
+                  <SubmitButton
+                    pendingText="Confirming..."
+                    className="self-start"
+                  >
                     Confirm Return
                   </SubmitButton>
                 </form>
@@ -370,8 +406,7 @@ export default async function RequestDetailPage({
 
       {isExtension && addendums.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Waiting for borrower to submit the addendum for this extension
-          period.
+          Waiting for borrower to submit the addendum for this extension period.
         </p>
       )}
     </div>

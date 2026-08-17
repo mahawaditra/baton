@@ -60,7 +60,11 @@ export function EditInstrumentForm({
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="condition">Condition</Label>
-          <Select name="condition" defaultValue={instrument.condition}>
+          <Select
+            name="condition"
+            defaultValue={instrument.condition}
+            disabled={statusLocked}
+          >
             <SelectTrigger id="condition" className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -71,6 +75,12 @@ export function EditInstrumentForm({
               <SelectItem value="lost">Lost</SelectItem>
             </SelectContent>
           </Select>
+          {statusLocked && (
+            <p className="text-xs text-destructive">
+              Condition cannot be changed while instrument is reserved or
+              borrowed.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">

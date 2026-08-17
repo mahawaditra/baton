@@ -27,7 +27,7 @@ export default async function GoodDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">{good.name}</h1>
+        <h1 className="text-h1">{good.name}</h1>
         {good.brand && (
           <p className="mt-1 text-sm text-muted-foreground">{good.brand}</p>
         )}

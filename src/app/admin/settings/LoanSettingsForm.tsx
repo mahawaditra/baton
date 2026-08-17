@@ -33,103 +33,105 @@ export function LoanSettingsForm({
       )}
       {state.success && (
         <p
-          className="text-sm font-medium text-[oklch(0.4_0.07_148)]"
+          className="text-sm font-medium text-success-soft-foreground"
           aria-live="polite"
         >
           Loan settings saved.
         </p>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Loan Rules</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                name="dueDate"
-                type="date"
-                defaultValue={
-                  loanSettings?.dueDate?.toISOString().split("T")[0]
-                }
-                required
-              />
+      <div className="grid grid-cols-2 gap-4 items-start">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loan Rules</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  name="dueDate"
+                  type="date"
+                  defaultValue={
+                    loanSettings?.dueDate?.toISOString().split("T")[0]
+                  }
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="depositGraceDays">Deposit Grace Days</Label>
+                <Input
+                  id="depositGraceDays"
+                  name="depositGraceDays"
+                  type="number"
+                  defaultValue={loanSettings?.depositGraceDays ?? 14}
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="depositAmount">Deposit Amount (full)</Label>
+                <Input
+                  id="depositAmount"
+                  name="depositAmount"
+                  type="number"
+                  defaultValue={loanSettings?.depositAmount ?? 100000}
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="depositPartialAmount">
+                  Deposit Amount (partial)
+                </Label>
+                <Input
+                  id="depositPartialAmount"
+                  name="depositPartialAmount"
+                  type="number"
+                  defaultValue={loanSettings?.depositPartialAmount ?? 50000}
+                  required
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="depositGraceDays">Deposit Grace Days</Label>
-              <Input
-                id="depositGraceDays"
-                name="depositGraceDays"
-                type="number"
-                defaultValue={loanSettings?.depositGraceDays ?? 14}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="depositAmount">Deposit Amount (full)</Label>
-              <Input
-                id="depositAmount"
-                name="depositAmount"
-                type="number"
-                defaultValue={loanSettings?.depositAmount ?? 100000}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="depositPartialAmount">
-                Deposit Amount (partial)
-              </Label>
-              <Input
-                id="depositPartialAmount"
-                name="depositPartialAmount"
-                type="number"
-                defaultValue={loanSettings?.depositPartialAmount ?? 50000}
-                required
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Bank Account</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="bankName">Bank Name</Label>
-              <Input
-                id="bankName"
-                name="bankName"
-                defaultValue={loanSettings?.bankName ?? ""}
-                required
-              />
+        <Card>
+          <CardHeader>
+            <CardTitle>Bank Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="bankName">Bank Name</Label>
+                <Input
+                  id="bankName"
+                  name="bankName"
+                  defaultValue={loanSettings?.bankName ?? ""}
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="bankAccount">Bank Account Number</Label>
+                <Input
+                  id="bankAccount"
+                  name="bankAccount"
+                  defaultValue={loanSettings?.bankAccount ?? ""}
+                  required
+                />
+              </div>
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label htmlFor="bankHolder">Bank Account Holder</Label>
+                <Input
+                  id="bankHolder"
+                  name="bankHolder"
+                  defaultValue={loanSettings?.bankHolder ?? ""}
+                  required
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="bankAccount">Bank Account Number</Label>
-              <Input
-                id="bankAccount"
-                name="bankAccount"
-                defaultValue={loanSettings?.bankAccount ?? ""}
-                required
-              />
-            </div>
-            <div className="col-span-2 flex flex-col gap-1.5">
-              <Label htmlFor="bankHolder">Bank Account Holder</Label>
-              <Input
-                id="bankHolder"
-                name="bankHolder"
-                defaultValue={loanSettings?.bankHolder ?? ""}
-                required
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

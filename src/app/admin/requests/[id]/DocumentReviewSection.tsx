@@ -14,13 +14,13 @@ import { cn } from "@/lib/utils";
 function formatDocType(type: string) {
   return type
     .split("_")
-    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .map((word) => (word === "ktp" ? "KTP" : word[0].toUpperCase() + word.slice(1)))
     .join(" ");
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  approved: "bg-success-soft text-[oklch(0.4_0.07_148)]",
-  pending: "bg-gold-soft text-[oklch(0.42_0.09_82)]",
+  approved: "bg-success-soft text-success-soft-foreground",
+  pending: "bg-gold-soft text-gold-soft-foreground",
   rejected: "bg-destructive-soft text-destructive",
 };
 
@@ -106,7 +106,7 @@ export function DocumentReviewSection({
                   </a>
                   <span
                     className={cn(
-                      "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase",
+                      "shrink-0 rounded-full px-2.5 py-1 text-micro uppercase",
                       style,
                     )}
                   >
@@ -128,7 +128,7 @@ export function DocumentReviewSection({
                     />
                     <label
                       htmlFor={`approve_${doc.id}`}
-                      className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/approve:border-success peer-checked/approve:bg-success-soft peer-checked/approve:text-[oklch(0.4_0.07_148)]"
+                      className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/approve:border-success peer-checked/approve:bg-success-soft peer-checked/approve:text-success-soft-foreground"
                     >
                       <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
                       Approve

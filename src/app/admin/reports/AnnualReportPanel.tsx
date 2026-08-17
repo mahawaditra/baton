@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { z } from "zod";
 import { previewAnnualReport, saveAnnualReport } from "./actions";
 import {
   AlertDialog,
@@ -19,6 +20,15 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 type SummaryRow = { Metric: string; Value: number };
 type PreviewResult = Awaited<ReturnType<typeof previewAnnualReport>>;
+
+const summaryRowsSchema = z.array(
+  z.object({ Metric: z.string(), Value: z.number() }),
+);
+
+function parseSummary(summary: unknown): SummaryRow[] {
+  const parsed = summaryRowsSchema.safeParse(summary);
+  return parsed.success ? parsed.data : [];
+}
 
 type RecentReport = {
   id: string;
@@ -91,38 +101,39 @@ export function AnnualReportPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Laporan Tahunan</CardTitle>
+        <CardTitle>Annual Report</CardTitle>
       </CardHeader>
       <CardContent className="gap-4">
         <p className="text-sm text-muted-foreground">
-          Ringkasan dari 1 Januari tahun ini sampai sekarang. Klik Generate buat
-          lihat sekilas — belum tersimpan sampai kamu klik Save.
+          Summary from January 1st of this year through now. Click Generate
+          for a preview — nothing is saved until you click Save.
         </p>
 
         <div className="flex items-center gap-2">
           <Button onClick={handleGenerate} disabled={loading} variant="outline">
-            {loading ? "Membuat laporan..." : "Generate Laporan"}
+            {loading ? "Generating report..." : "Generate Report"}
           </Button>
 
           {preview && (
             <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <AlertDialogTrigger render={<Button disabled={saving} />}>
-                {saving ? "Menyimpan..." : "Save to History"}
+                {saving ? "Saving..." : "Save to History"}
               </AlertDialogTrigger>
               <AlertDialogContent className="sm:max-w-[480px]">
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Simpan laporan ini ke riwayat?
+                    Save this report to history?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Ini akan membuat laporan baru dari 1 Januari {preview.year}{" "}
-                    sampai hari ini ke riwayat. Aksi ini gak bisa dibatalkan.
+                    This will create a new report from January 1st,{" "}
+                    {preview.year} through today and add it to history. This
+                    action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleSave} disabled={saving}>
-                    {saving ? "Menyimpan..." : "Create Report"}
+                    {saving ? "Saving..." : "Create Report"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -163,15 +174,15 @@ export function AnnualReportPanel({
                         />
                       )}
                       <span>
-                        Laporan {r.year} (s.d.{" "}
-                        {new Date(r.periodEnd).toLocaleDateString("id-ID")}) —
-                        oleh {r.creator.name} —{" "}
-                        {r.createdAt.toLocaleDateString("id-ID")}
+                        Report {r.year} (through{" "}
+                        {new Date(r.periodEnd).toLocaleDateString("en-GB")}) —
+                        by {r.creator.name} —{" "}
+                        {r.createdAt.toLocaleDateString("en-GB")}
                       </span>
                     </button>
                     {isExpanded && (
                       <div className="mt-1.5 mb-1">
-                        <SummaryTable rows={r.summary as SummaryRow[]} />
+                        <SummaryTable rows={parseSummary(r.summary)} />
                       </div>
                     )}
                   </div>

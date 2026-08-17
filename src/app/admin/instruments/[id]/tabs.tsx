@@ -3,6 +3,15 @@ import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { Users, History, ClipboardList, Activity } from "lucide-react";
+import type { ActivityAction } from "@/generated/prisma/client";
+
+const INSTRUMENT_RELEVANT_REQUEST_ACTIONS: ActivityAction[] = [
+  "assign_instrument",
+  "reject_request",
+  "cancel_request",
+  "confirm_handover",
+  "confirm_return",
+];
 
 export async function RiwayatPeminjam({
   instrumentId,
@@ -20,7 +29,7 @@ export async function RiwayatPeminjam({
       <EmptyState
         icon={Users}
         size="compact"
-        title="Belum ada riwayat peminjaman"
+        title="No borrowing history yet"
       />
     );
   }
@@ -68,7 +77,7 @@ export async function RiwayatKondisi({
       <EmptyState
         icon={History}
         size="compact"
-        title="Belum ada perubahan kondisi tercatat"
+        title="No condition changes recorded yet"
       />
     );
   }
@@ -91,7 +100,7 @@ export async function RiwayatAddendum({
       <EmptyState
         icon={ClipboardList}
         size="compact"
-        title="Belum ada addendum"
+        title="No addendums yet"
       />
     );
   }
@@ -118,10 +127,22 @@ export async function RiwayatAktivitas({
 }: {
   instrumentId: string;
 }) {
+  const relatedRequests = await prisma.borrowingRequest.findMany({
+    where: { instrumentId },
+    select: { id: true, ticketId: true },
+  });
+  const ticketTags = new Map(relatedRequests.map((r) => [r.id, r.ticketId]));
+
   const logs = await prisma.activityLog.findMany({
     where: {
-      entityType: "instrument",
-      entityId: instrumentId,
+      OR: [
+        { entityType: "instrument", entityId: instrumentId },
+        {
+          entityType: "borrowing_request",
+          entityId: { in: relatedRequests.map((r) => r.id) },
+          action: { in: INSTRUMENT_RELEVANT_REQUEST_ACTIONS },
+        },
+      ],
     },
     include: { admin: true },
     orderBy: { createdAt: "desc" },
@@ -129,9 +150,9 @@ export async function RiwayatAktivitas({
 
   if (logs.length === 0) {
     return (
-      <EmptyState icon={Activity} size="compact" title="Belum ada aktivitas" />
+      <EmptyState icon={Activity} size="compact" title="No activity yet" />
     );
   }
 
-  return <ActivityTimeline logs={logs} linkEntities={false} />;
+  return <ActivityTimeline logs={logs} tags={ticketTags} />;
 }

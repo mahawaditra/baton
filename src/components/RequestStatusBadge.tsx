@@ -8,31 +8,31 @@ const REQUEST_STATUS_CONFIG: Record<
   submitted: {
     label: "Diajukan",
     bg: "bg-gold-soft",
-    fg: "text-[oklch(0.42_0.09_82)]",
+    fg: "text-gold-soft-foreground",
     dot: "bg-gold",
   },
   reviewing: {
     label: "Ditinjau",
     bg: "bg-gold-soft",
-    fg: "text-[oklch(0.42_0.09_82)]",
+    fg: "text-gold-soft-foreground",
     dot: "bg-gold",
   },
   contract_generated: {
     label: "Kontrak Terbit",
     bg: "bg-gold-soft",
-    fg: "text-[oklch(0.42_0.09_82)]",
+    fg: "text-gold-soft-foreground",
     dot: "bg-gold",
   },
   documents_uploaded: {
     label: "Dokumen Masuk",
     bg: "bg-gold-soft",
-    fg: "text-[oklch(0.42_0.09_82)]",
+    fg: "text-gold-soft-foreground",
     dot: "bg-gold",
   },
   ready_to_pickup: {
     label: "Siap Diambil",
     bg: "bg-success-soft",
-    fg: "text-[oklch(0.4_0.07_148)]",
+    fg: "text-success-soft-foreground",
     dot: "bg-success",
   },
   active: {
@@ -59,6 +59,12 @@ const REQUEST_STATUS_CONFIG: Record<
     fg: "text-destructive",
     dot: "bg-destructive",
   },
+  cancelled: {
+    label: "Dibatalkan",
+    bg: "bg-muted",
+    fg: "text-foreground-2",
+    dot: "bg-foreground-2",
+  },
 };
 
 export function RequestStatusBadge({
@@ -72,7 +78,7 @@ export function RequestStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-[22px] items-center gap-1.5 px-2 text-[11px] font-semibold tracking-wide uppercase",
+        "inline-flex h-[22px] items-center gap-1.5 px-2 text-micro uppercase",
         variant === "pill" ? "rounded-full" : "rounded-sm",
         config.bg,
         config.fg,

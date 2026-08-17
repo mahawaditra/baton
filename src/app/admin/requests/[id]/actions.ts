@@ -9,7 +9,9 @@ import {
   calculateDepositRefund,
   determineInstrumentStatusOnReturn,
   canAssignInstrument,
+  canCancelRequest,
   canNotifyBorrower,
+  getDocumentTypeLabel,
   REQUIRED_DOCUMENT_TYPES,
 } from "@/lib/loan-rules";
 import { revalidateRequestViews } from "@/lib/revalidate";
@@ -161,6 +163,7 @@ export async function confirmAvailable(requestId: string) {
 export type RejectRequestState = {
   success: boolean;
   error: string | null;
+  generalError: string | null;
 };
 
 export async function rejectRequest(
@@ -175,7 +178,11 @@ export async function rejectRequest(
 
   const reason = formData.get("reason") as string;
   if (!reason) {
-    return { success: false, error: "Rejection reason is required." };
+    return {
+      success: false,
+      error: "Rejection reason is required.",
+      generalError: null,
+    };
   }
 
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
@@ -185,7 +192,8 @@ export async function rejectRequest(
   if (!canAssignInstrument(request.status, request.instrumentConfirmed)) {
     return {
       success: false,
-      error: "This request can no longer be rejected.",
+      error: null,
+      generalError: "This request can no longer be rejected.",
     };
   }
 
@@ -233,7 +241,76 @@ export async function rejectRequest(
 
   revalidateRequestViews(requestId, { instrumentIds: [request.instrumentId] });
 
-  return { success: true, error: null };
+  return { success: true, error: null, generalError: null };
+}
+
+export type CancelRequestState = {
+  success: boolean;
+  error: string | null;
+  generalError: string | null;
+};
+
+export async function cancelRequest(
+  requestId: string,
+  prevState: CancelRequestState,
+  formData: FormData,
+): Promise<CancelRequestState> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    throw new Error("Not logged in");
+  }
+
+  const reason = formData.get("reason") as string;
+  if (!reason) {
+    return {
+      success: false,
+      error: "Cancellation reason is required.",
+      generalError: null,
+    };
+  }
+
+  const request = await prisma.borrowingRequest.findUniqueOrThrow({
+    where: { id: requestId },
+  });
+
+  if (!canCancelRequest(request.status)) {
+    return {
+      success: false,
+      error: null,
+      generalError: "This request can no longer be cancelled.",
+    };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (request.instrumentId) {
+      await tx.instrument.update({
+        where: { id: request.instrumentId },
+        data: { status: "available" },
+      });
+    }
+
+    await tx.borrowingRequest.update({
+      where: { id: requestId },
+      data: {
+        status: "cancelled",
+        cancellationReason: reason,
+      },
+    });
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "cancel_request",
+      entityType: "borrowing_request",
+      entityId: requestId,
+      metadata: { reason, releasedInstrumentId: request.instrumentId },
+    },
+  });
+
+  revalidateRequestViews(requestId, { instrumentIds: [request.instrumentId] });
+
+  return { success: true, error: null, generalError: null };
 }
 
 export async function submitDocumentReview(
@@ -327,7 +404,7 @@ export async function submitDocumentReview(
           ${rejected
             .map(
               (d) =>
-                `<li><strong>${escapeHtml(d.type)}</strong>: ${escapeHtml(d.notes!)}</li>`,
+                `<li><strong>${escapeHtml(getDocumentTypeLabel(d.type))}</strong>: ${escapeHtml(d.notes!)}</li>`,
             )
             .join("")}
         </ul>
@@ -354,9 +431,9 @@ export async function submitDocumentReview(
         data: { status: "ready_to_pickup" },
       });
 
-      const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow(
-        { where: { id: requestId } },
-      );
+      const requestForEmail = await prisma.borrowingRequest.findUniqueOrThrow({
+        where: { id: requestId },
+      });
 
       try {
         await sendEmail({

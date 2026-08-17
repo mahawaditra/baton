@@ -17,26 +17,26 @@ import { cn } from "@/lib/utils";
 
 const NAV_GROUPS = [
   {
-    label: "Operasional",
+    label: "Operations",
     items: [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
       {
         href: "/admin/requests",
-        label: "Peminjaman",
+        label: "Requests",
         icon: FileText,
         showBadge: true,
       },
-      { href: "/admin/instruments", label: "Instrumen", icon: Boxes },
-      { href: "/admin/goods", label: "Barang", icon: Package },
-      { href: "/admin/activity", label: "Aktivitas", icon: Activity },
-      { href: "/admin/reports", label: "Laporan", icon: FileBarChart },
+      { href: "/admin/instruments", label: "Instruments", icon: Boxes },
+      { href: "/admin/goods", label: "Goods", icon: Package },
+      { href: "/admin/activity", label: "Activity", icon: Activity },
+      { href: "/admin/reports", label: "Reports", icon: FileBarChart },
     ],
   },
   {
-    label: "Sistem",
+    label: "System",
     items: [
-      { href: "/admin/archive", label: "Arsip", icon: Archive },
-      { href: "/admin/settings", label: "Pengaturan", icon: Settings },
+      { href: "/admin/archive", label: "Archive", icon: Archive },
+      { href: "/admin/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
@@ -71,6 +71,7 @@ export function AdminNav({
 
   async function handleLogout() {
     await authClient.signOut();
+    router.refresh();
     router.push("/admin/login");
   }
 
@@ -110,7 +111,7 @@ export function AdminNav({
                     <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
                     {item.label}
                     {item.showBadge && pendingCount > 0 && (
-                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1.5 text-[11px] font-semibold text-background">
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1.5 text-micro text-background">
                         {pendingCount}
                       </span>
                     )}

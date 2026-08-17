@@ -11,7 +11,7 @@ export default async function AdminLayout({
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session) {
+  if (!session || !session.user.isActive) {
     return <>{children}</>;
   }
 

@@ -98,6 +98,7 @@ enum BorrowingRequestStatus {
   returned
   rejected
   overdue
+  cancelled
 }
 
 model BorrowingRequest {
@@ -127,6 +128,7 @@ model BorrowingRequest {
 
   depositRefundAmount Int?    @map("deposit_refund_amount")
   rejectionReason     String? @map("rejection_reason")
+  cancellationReason  String? @map("cancellation_reason")
 
   status    BorrowingRequestStatus @default(submitted)
   createdAt DateTime               @default(now()) @map("created_at")
@@ -227,6 +229,7 @@ model Admin {
   name          String
   role          AdminRole @default(admin)
   emailVerified Boolean   @default(false) @map("email_verified")
+  isActive      Boolean   @default(true) @map("is_active")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
 
@@ -301,8 +304,12 @@ enum ActivityAction {
   export_snapshot
   generate_annual_report
   reject_request
+  cancel_request
   add_admin
-  remove_admin
+  create_instrument
+  create_goods
+  deactivate_admin
+  reactivate_admin
 }
 
 enum EntityType {

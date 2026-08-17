@@ -13,6 +13,7 @@ const REQUEST_STATUSES = [
   "active",
   "rejected",
   "overdue",
+  "cancelled",
 ] as const;
 
 export default async function RequestsPage({
@@ -36,7 +37,7 @@ export default async function RequestsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold tracking-tight">Requests</h1>
+      <h1 className="text-h1">Requests</h1>
 
       <div className="flex flex-wrap gap-2">
         <Link

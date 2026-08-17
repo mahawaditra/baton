@@ -2,10 +2,16 @@
 
 import { useActionState, useEffect } from "react";
 import { submitStage2 } from "./actions";
+import { toastError } from "@/lib/toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const initialState = {
   success: false,
   error: null,
+  generalError: null,
 };
 
 export function Stage2Form({
@@ -26,49 +32,111 @@ export function Stage2Form({
     }
   }, [state.success, onSuccess]);
 
+  useEffect(() => {
+    if (state.generalError) toastError(state.generalError);
+  }, [state.generalError]);
+
   return (
-    <form action={formAction}>
-      <h2>Complete your contract data</h2>
-      {state.error && <p style={{ color: "red" }}>{state.error}</p>}
+    <Card>
+      <CardHeader>
+        <CardTitle>Lengkapi data kontrak kamu</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form action={formAction} className="flex flex-col gap-4">
+          {state.error && (
+            <p className="text-sm text-destructive" aria-live="polite">
+              {state.error}
+            </p>
+          )}
 
-      <input name="ktpNumber" type="text" placeholder="KTP Number" required />
-      <input
-        name="addressKtp"
-        type="text"
-        placeholder="Address (as per KTP)"
-        required
-      />
-      <input
-        name="addressDomicile"
-        type="text"
-        placeholder="Current Address"
-        required
-      />
-      <input name="faculty" type="text" placeholder="Faculty/Major" required />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ktpNumber" required>
+              Nomor KTP
+            </Label>
+            <Input
+              id="ktpNumber"
+              name="ktpNumber"
+              type="text"
+              inputMode="numeric"
+              placeholder="16 digit"
+              className="tabular"
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="addressKtp" required>
+              Alamat (sesuai KTP)
+            </Label>
+            <Input id="addressKtp" name="addressKtp" type="text" required />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="addressDomicile" required>
+              Alamat Domisili
+            </Label>
+            <Input
+              id="addressDomicile"
+              name="addressDomicile"
+              type="text"
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="faculty" required>
+              Fakultas/Jurusan
+            </Label>
+            <Input
+              id="faculty"
+              name="faculty"
+              type="text"
+              placeholder="mis. FMIPA/Biologi"
+              required
+            />
+          </div>
 
-      <h3>Guardian (Wali) Information</h3>
-      <input
-        name="guardianName"
-        type="text"
-        placeholder="Guardian Name"
-        required
-      />
-      <input
-        name="guardianPhone"
-        type="text"
-        placeholder="Guardian Phone"
-        required
-      />
-      <input
-        name="guardianAddressKtp"
-        type="text"
-        placeholder="Guardian Address (as per KTP)"
-        required
-      />
+          <div className="mt-2 flex flex-col gap-4 border-t border-border pt-4">
+            <h3 className="text-title text-foreground">Data Wali</h3>
 
-      <button type="submit" disabled={isPending}>
-        {isPending ? "Generating..." : "Generate Contract"}
-      </button>
-    </form>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="guardianName" required>
+                Nama Wali
+              </Label>
+              <Input
+                id="guardianName"
+                name="guardianName"
+                type="text"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="guardianPhone" required>
+                Nomor HP Wali
+              </Label>
+              <Input
+                id="guardianPhone"
+                name="guardianPhone"
+                type="tel"
+                className="tabular"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="guardianAddressKtp" required>
+                Alamat Wali (sesuai KTP)
+              </Label>
+              <Input
+                id="guardianAddressKtp"
+                name="guardianAddressKtp"
+                type="text"
+                required
+              />
+            </div>
+          </div>
+
+          <Button type="submit" disabled={isPending} className="self-start">
+            {isPending ? "Memproses..." : "Buat Kontrak"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

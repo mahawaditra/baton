@@ -41,21 +41,25 @@ type DownloadResult =
 type Stage2State = {
   success: boolean;
   error: string | null;
+  generalError: string | null;
 };
 
 type UploadState = {
   success: boolean;
   error: string | null;
+  generalError: string | null;
 };
 
 type AddendumState = {
   success: boolean;
   error: string | null;
+  generalError: string | null;
 };
 
 type ExtensionState = {
   success: boolean;
   error: string | null;
+  generalError: string | null;
 };
 
 async function requireTicketAccess(ticketId: string, accessCode: string) {
@@ -64,7 +68,7 @@ async function requireTicketAccess(ticketId: string, accessCode: string) {
   });
 
   if (!request || request.accessCode !== accessCode) {
-    throw new Error("Invalid access code.");
+    throw new Error("Kode akses salah.");
   }
   return request;
 }
@@ -81,6 +85,9 @@ export async function verifyAccessCode(
       accessCode: true,
       borrowerName: true,
       status: true,
+      createdAt: true,
+      rejectionReason: true,
+      cancellationReason: true,
       instrumentTypeRequested: true,
       instrumentConfirmed: true,
       borrowerKtpNumber: true,
@@ -100,8 +107,8 @@ export async function verifyAccessCode(
     return {
       success: false,
       error: success
-        ? "Invalid access code."
-        : "Too many attempts. Please try again in a few minutes.",
+        ? "Kode akses salah."
+        : "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
     };
   }
 
@@ -150,6 +157,10 @@ export async function verifyAccessCode(
     existingDocuments,
   );
 
+  const uploadedDocumentTypes = existingDocuments
+    .filter((d) => d.reviewStatus !== "rejected")
+    .map((d) => d.type);
+
   const needsExtensionDocuments =
     isExtensionPeriod && documentsNeedingUpload.includes("signed_contract");
 
@@ -171,7 +182,7 @@ export async function verifyAccessCode(
       needsExtensionDocuments,
       canFillExtensionAddendum,
       isExtensionPeriod,
-      documentsNeedingUpload,
+      uploadedDocumentTypes,
     },
   };
 }
@@ -180,36 +191,36 @@ const contractDataSchema = z.object({
   ktpNumber: z
     .string()
     .trim()
-    .regex(/^\d{16}$/, "KTP number must be 16 digits"),
-  addressKtp: z.string().trim().min(1, "KTP address is required").max(300),
+    .regex(/^\d{16}$/, "Nomor KTP harus 16 digit"),
+  addressKtp: z.string().trim().min(1, "Alamat KTP wajib diisi").max(300),
   addressDomicile: z
     .string()
     .trim()
-    .min(1, "Domicile address is required")
+    .min(1, "Alamat domisili wajib diisi")
     .max(300),
   faculty: z
     .string()
     .trim()
-    .max(100, "Faculty/major must be 100 characters or fewer")
+    .max(100, "Fakultas/jurusan maksimal 100 karakter")
     .regex(
       /^[^/]+\/[^/]+$/,
-      "Format must be Faculty/Major, e.g. FMIPA/Biologi",
+      "Format harus Fakultas/Jurusan, mis. FMIPA/Biologi",
     ),
-  guardianName: z.string().trim().min(1, "Guardian name is required").max(100),
-  guardianPhone: z.string().trim().min(1, "Guardian phone is required").max(20),
+  guardianName: z.string().trim().min(1, "Nama wali wajib diisi").max(100),
+  guardianPhone: z.string().trim().min(1, "Nomor HP wali wajib diisi").max(20),
   guardianAddressKtp: z
     .string()
     .trim()
-    .min(1, "Guardian KTP address is required")
+    .min(1, "Alamat KTP wali wajib diisi")
     .max(300),
 });
 
 const addendumDataSchema = z.object({
-  completeness: z.string().trim().min(1, "Completeness is required").max(500),
+  completeness: z.string().trim().min(1, "Kelengkapan wajib diisi").max(500),
   bodyCondition: z
     .string()
     .trim()
-    .min(1, "Body condition is required")
+    .min(1, "Kondisi badan alat wajib diisi")
     .max(1000),
   accessoriesCondition: z.string().trim().max(1000).nullable(),
   notes: z.string().trim().max(1000).nullable(),
@@ -226,15 +237,27 @@ export async function submitStage2(
   try {
     request = await requireTicketAccess(ticketId, accessCode);
   } catch {
-    return { success: false, error: "Invalid access code." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Kode akses salah.",
+    };
   }
 
   if (request.status !== "reviewing" || !request.instrumentConfirmed) {
-    return { success: false, error: "This request is not ready for Stage 2." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Pengajuan ini belum siap untuk Tahap 2.",
+    };
   }
 
   if (!request.instrumentId) {
-    return { success: false, error: "No instrument assigned yet." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Instrumen belum ditugaskan.",
+    };
   }
 
   const parsed = contractDataSchema.safeParse({
@@ -248,7 +271,11 @@ export async function submitStage2(
   });
 
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0].message };
+    return {
+      success: false,
+      error: parsed.error.issues[0].message,
+      generalError: null,
+    };
   }
 
   const {
@@ -338,32 +365,49 @@ export async function submitStage2(
     folderId,
   );
 
-  await prisma.$transaction([
-    prisma.borrowingRequest.update({
-      where: { ticketId },
-      data: {
-        borrowerKtpNumber: ktpNumber,
-        borrowerAddressKtp: addressKtp,
-        borrowerAddressDomicile: addressDomicile,
-        borrowerFaculty: faculty,
-        guardianName,
-        guardianPhone,
-        guardianAddressKtp,
-        status: "contract_generated",
-      },
-    }),
-    prisma.loanPeriod.create({
-      data: {
-        requestId: request.id,
-        periodType: "initial",
-        sequence: 1,
-        dueDate: settings.dueDate,
-        contractDriveFileId: driveFileId,
-      },
-    }),
-  ]);
+  try {
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.borrowingRequest.findUniqueOrThrow({
+        where: { ticketId },
+      });
 
-  return { success: true, error: null };
+      if (current.status !== "reviewing") {
+        throw new Error("Pengajuan ini sudah diproses di tab/perangkat lain.");
+      }
+
+      await tx.borrowingRequest.update({
+        where: { ticketId },
+        data: {
+          borrowerKtpNumber: ktpNumber,
+          borrowerAddressKtp: addressKtp,
+          borrowerAddressDomicile: addressDomicile,
+          borrowerFaculty: faculty,
+          guardianName,
+          guardianPhone,
+          guardianAddressKtp,
+          status: "contract_generated",
+        },
+      });
+
+      await tx.loanPeriod.create({
+        data: {
+          requestId: request.id,
+          periodType: "initial",
+          sequence: 1,
+          dueDate: settings.dueDate,
+          contractDriveFileId: driveFileId,
+        },
+      });
+    });
+  } catch {
+    return {
+      success: false,
+      error: null,
+      generalError: "Pengajuan ini sudah diproses di tab/perangkat lain.",
+    };
+  }
+
+  return { success: true, error: null, generalError: null };
 }
 
 export async function submitExtension(
@@ -377,13 +421,18 @@ export async function submitExtension(
   try {
     request = await requireTicketAccess(ticketId, accessCode);
   } catch {
-    return { success: false, error: "Invalid access code." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Kode akses salah.",
+    };
   }
 
   if (request.status !== "active" || !request.instrumentId) {
     return {
       success: false,
-      error: "This request is not eligible for extension.",
+      error: null,
+      generalError: "Pengajuan ini tidak bisa diperpanjang.",
     };
   }
 
@@ -398,7 +447,11 @@ export async function submitExtension(
   });
 
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0].message };
+    return {
+      success: false,
+      error: parsed.error.issues[0].message,
+      generalError: null,
+    };
   }
 
   const {
@@ -425,14 +478,17 @@ export async function submitExtension(
   if (!computeCanExtend(request.status, latestPeriod.dueDate)) {
     return {
       success: false,
-      error: "This request is not within the extension window.",
+      error: null,
+      generalError: "Belum masuk periode waktu perpanjangan.",
     };
   }
 
   if (latestPeriod.periodType === "extension" && !latestPeriod.startDate) {
     return {
       success: false,
-      error: "An extension for this request is already pending confirmation.",
+      error: null,
+      generalError:
+        "Perpanjangan untuk pengajuan ini masih menunggu konfirmasi admin.",
     };
   }
 
@@ -531,7 +587,7 @@ export async function submitExtension(
     }),
   ]);
 
-  return { success: true, error: null };
+  return { success: true, error: null, generalError: null };
 }
 
 export async function getContractPdf(
@@ -544,7 +600,7 @@ export async function getContractPdf(
   });
 
   if (!request || request.accessCode !== accessCode) {
-    return { success: false, error: "Invalid access code." };
+    return { success: false, error: "Kode akses salah." };
   }
 
   const period = await prisma.loanPeriod.findFirst({
@@ -553,7 +609,7 @@ export async function getContractPdf(
   });
 
   if (!period?.contractDriveFileId) {
-    return { success: false, error: "Contract PDF not found." };
+    return { success: false, error: "PDF kontrak tidak ditemukan." };
   }
 
   const dataUrl = await downloadFileAsBase64(
@@ -573,9 +629,19 @@ export async function getContractPdf(
   };
 }
 
-export async function submitDocuments(
+const UPLOAD_VALIDATORS: Record<
+  "signed_contract" | "deposit_proof" | "ktp_scan",
+  typeof validateDocumentUpload
+> = {
+  signed_contract: validateDocumentUpload,
+  deposit_proof: validateImageUpload,
+  ktp_scan: validateDocumentUpload,
+};
+
+export async function submitDocument(
   ticketId: string,
   accessCode: string,
+  documentType: "signed_contract" | "deposit_proof" | "ktp_scan",
   prevState: UploadState,
   formData: FormData,
 ): Promise<UploadState> {
@@ -584,7 +650,11 @@ export async function submitDocuments(
   try {
     request = await requireTicketAccess(ticketId, accessCode);
   } catch {
-    return { success: false, error: "Invalid access code." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Kode akses salah.",
+    };
   }
 
   const latestPeriod = await prisma.loanPeriod.findFirst({
@@ -593,95 +663,42 @@ export async function submitDocuments(
   });
 
   if (!latestPeriod) {
-    return { success: false, error: "No loan period found." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Periode peminjaman tidak ditemukan.",
+    };
   }
 
   const isExtension = latestPeriod.periodType === "extension";
 
   if (isExtension) {
     if (request.status !== "active") {
-      return { success: false, error: "Not ready for document upload." };
+      return {
+        success: false,
+        error: null,
+        generalError: "Belum siap untuk upload dokumen.",
+      };
     }
   } else {
     if (request.status !== "contract_generated") {
-      return { success: false, error: "Not ready for document upload." };
+      return {
+        success: false,
+        error: null,
+        generalError: "Belum siap untuk upload dokumen.",
+      };
     }
   }
 
-  const fileFields: {
-    type: "signed_contract" | "deposit_proof" | "ktp_scan";
-    formKey: string;
-  }[] = [
-    { type: "signed_contract", formKey: "signedContract" },
-    { type: "deposit_proof", formKey: "depositProof" },
-    { type: "ktp_scan", formKey: "ktpScan" },
-  ];
-
-  const uploads: {
-    type: "signed_contract" | "deposit_proof" | "ktp_scan";
-    file: File;
-  }[] = [];
-  for (const { type, formKey } of fileFields) {
-    const file = formData.get(formKey) as File | null;
-    if (file?.size) {
-      uploads.push({ type, file });
-    }
+  const file = formData.get("file") as File | null;
+  if (!file?.size) {
+    return { success: false, error: "Silakan pilih file.", generalError: null };
   }
 
-  const existingDocuments = await prisma.document.findMany({
-    where: { periodId: latestPeriod.id },
-  });
-
-  const requiredTypesNow = requiredDocumentTypesForPeriod(isExtension);
-
-  const stillNeeded = documentTypesNeedingUpload(
-    requiredTypesNow,
-    existingDocuments,
-  );
-
-  const submittedTypes = new Set<string>(uploads.map((u) => u.type));
-  const missing = stillNeeded.filter((t) => !submittedTypes.has(t));
-
-  if (missing.length > 0) {
-    return {
-      success: false,
-      error: `Missing required document(s): ${missing.join(", ")}.`,
-    };
+  const validation = await UPLOAD_VALIDATORS[documentType](file);
+  if (!validation.valid) {
+    return { success: false, error: validation.error, generalError: null };
   }
-
-  const VALIDATORS: Record<
-    "signed_contract" | "deposit_proof" | "ktp_scan",
-    typeof validateDocumentUpload
-  > = {
-    signed_contract: validateDocumentUpload,
-    deposit_proof: validateImageUpload,
-    ktp_scan: validateDocumentUpload,
-  };
-
-  const validatedUploads: {
-    type: "signed_contract" | "deposit_proof" | "ktp_scan";
-    file: File;
-    mimeType: string;
-  }[] = [];
-
-  for (const { type, file } of uploads) {
-    const validation = await VALIDATORS[type](file);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
-    }
-    validatedUploads.push({ type, file, mimeType: validation.mimeType });
-  }
-
-  const typesNeedingUpload = new Set(
-    documentTypesNeedingUpload(
-      validatedUploads.map((u) => u.type),
-      existingDocuments,
-    ),
-  );
-
-  const uploadsToProcess = validatedUploads.filter((u) =>
-    typesNeedingUpload.has(u.type),
-  );
 
   const year = new Date().getFullYear();
   const folderId = await getBorrowerArchiveFolder(
@@ -690,53 +707,57 @@ export async function submitDocuments(
     request.borrowerName,
   );
 
-  const documentsData: {
-    type: "signed_contract" | "deposit_proof" | "ktp_scan";
-    driveFileId: string;
-    mimeType: string;
-  }[] = [];
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const ext = file.name.split(".").pop();
+  const driveFileId = await uploadFile(
+    `${documentType}_${request.borrowerName}_${driveTimestamp()}.${ext}`,
+    validation.mimeType,
+    buffer,
+    folderId,
+  );
 
-  for (const { type, file, mimeType } of uploadsToProcess) {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = file.name.split(".").pop();
-    const driveFileId = await uploadFile(
-      `${type}_${request.borrowerName}_${driveTimestamp()}.${ext}`,
-      mimeType,
-      buffer,
-      folderId,
-    );
-    documentsData.push({ type, driveFileId, mimeType });
-  }
+  const requiredTypesNow = requiredDocumentTypesForPeriod(isExtension);
 
-  const documentUpserts = documentsData.map(({ type, driveFileId, mimeType }) =>
-    prisma.document.upsert({
-      where: { periodId_type: { periodId: latestPeriod.id, type } },
-      create: { periodId: latestPeriod.id, type, driveFileId, mimeType },
+  const nowComplete = await prisma.$transaction(async (tx) => {
+    await tx.document.upsert({
+      where: {
+        periodId_type: { periodId: latestPeriod.id, type: documentType },
+      },
+      create: {
+        periodId: latestPeriod.id,
+        type: documentType,
+        driveFileId,
+        mimeType: validation.mimeType,
+      },
       update: {
         driveFileId,
-        mimeType,
+        mimeType: validation.mimeType,
         reviewStatus: "pending",
         reviewerNotes: null,
         reviewedAt: null,
       },
-    }),
-  );
+    });
 
-  if (isExtension) {
-    if (documentUpserts.length > 0) {
-      await prisma.$transaction(documentUpserts);
-    }
-  } else {
-    await prisma.$transaction([
-      ...documentUpserts,
-      prisma.borrowingRequest.update({
+    const allDocuments = await tx.document.findMany({
+      where: { periodId: latestPeriod.id },
+    });
+    const stillNeeded = documentTypesNeedingUpload(
+      requiredTypesNow,
+      allDocuments,
+    );
+    const complete = stillNeeded.length === 0;
+
+    if (complete && !isExtension) {
+      await tx.borrowingRequest.update({
         where: { ticketId },
         data: { status: "documents_uploaded" },
-      }),
-    ]);
-  }
+      });
+    }
 
-  if (documentsData.length > 0) {
+    return complete;
+  });
+
+  if (nowComplete) {
     try {
       await sendEmail({
         to: process.env.GMAIL_USER!,
@@ -753,7 +774,7 @@ export async function submitDocuments(
     }
   }
 
-  return { success: true, error: null };
+  return { success: true, error: null, generalError: null };
 }
 
 export async function submitAddendum(
@@ -766,7 +787,11 @@ export async function submitAddendum(
   try {
     await requireTicketAccess(ticketId, accessCode);
   } catch {
-    return { success: false, error: "Invalid access code." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Kode akses salah.",
+    };
   }
 
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
@@ -779,14 +804,19 @@ export async function submitAddendum(
     orderBy: { sequence: "desc" },
   });
   if (!latestPeriod) {
-    return { success: false, error: "No loan period found." };
+    return {
+      success: false,
+      error: null,
+      generalError: "Periode peminjaman tidak ditemukan.",
+    };
   }
 
   if (timing === "final") {
     if (request.status !== "active" && request.status !== "overdue") {
       return {
         success: false,
-        error: "This request is not eligible for return.",
+        error: null,
+        generalError: "Pengajuan ini tidak bisa dikembalikan.",
       };
     }
     const existingFinal = await prisma.addendum.findFirst({
@@ -795,7 +825,8 @@ export async function submitAddendum(
     if (existingFinal) {
       return {
         success: false,
-        error: "Final addendum already submitted for this period.",
+        error: null,
+        generalError: "Addendum akhir untuk periode ini sudah pernah dikirim.",
       };
     }
   } else {
@@ -805,7 +836,8 @@ export async function submitAddendum(
       if (request.status !== "active") {
         return {
           success: false,
-          error: "This request is not ready for addendum.",
+          error: null,
+          generalError: "Pengajuan ini belum siap untuk addendum.",
         };
       }
       const signedContract = await prisma.document.findFirst({
@@ -814,14 +846,16 @@ export async function submitAddendum(
       if (!signedContract || signedContract.reviewStatus !== "approved") {
         return {
           success: false,
-          error: "Your signed contract is still being reviewed.",
+          error: null,
+          generalError: "Kontrak yang kamu tanda tangani masih direview admin.",
         };
       }
     } else {
       if (request.status !== "ready_to_pickup") {
         return {
           success: false,
-          error: "This request is not ready for addendum.",
+          error: null,
+          generalError: "Pengajuan ini belum siap untuk addendum.",
         };
       }
     }
@@ -832,7 +866,8 @@ export async function submitAddendum(
     if (existingInitial) {
       return {
         success: false,
-        error: "Initial addendum already submitted for this period.",
+        error: null,
+        generalError: "Addendum awal untuk periode ini sudah pernah dikirim.",
       };
     }
   }
@@ -841,7 +876,8 @@ export async function submitAddendum(
   if (!confirmedTruthful) {
     return {
       success: false,
-      error: "You must confirm the condition data is truthful.",
+      error: "Kamu harus mengonfirmasi bahwa data kondisi ini benar.",
+      generalError: null,
     };
   }
 
@@ -853,7 +889,11 @@ export async function submitAddendum(
   });
 
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0].message };
+    return {
+      success: false,
+      error: parsed.error.issues[0].message,
+      generalError: null,
+    };
   }
 
   const { completeness, bodyCondition, accessoriesCondition, notes } =
@@ -877,7 +917,7 @@ export async function submitAddendum(
     if (photo.size === 0) continue;
     const validation = await validateImageUpload(photo);
     if (!validation.valid) {
-      return { success: false, error: validation.error };
+      return { success: false, error: validation.error, generalError: null };
     }
     validatedPhotos.push({ file: photo, mimeType: validation.mimeType });
   }
@@ -912,5 +952,5 @@ export async function submitAddendum(
     },
   });
 
-  return { success: true, error: null };
+  return { success: true, error: null, generalError: null };
 }

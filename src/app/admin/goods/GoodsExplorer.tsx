@@ -21,7 +21,13 @@ function toggle(set: Set<string>, value: string) {
   return next;
 }
 
-export function GoodsExplorer({ goods }: { goods: Good[] }) {
+export function GoodsExplorer({
+  goods,
+  action,
+}: {
+  goods: Good[];
+  action?: React.ReactNode;
+}) {
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState<Set<string>>(new Set());
 
@@ -60,7 +66,7 @@ export function GoodsExplorer({ goods }: { goods: Good[] }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Cari nama, merk, lokasi, no. registrasi…"
+          placeholder="Search name, brand, location, registration no…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -71,6 +77,7 @@ export function GoodsExplorer({ goods }: { goods: Good[] }) {
           selected={locationFilter}
           onToggle={(value) => setLocationFilter((prev) => toggle(prev, value))}
         />
+        {action && <div className="ml-auto">{action}</div>}
       </div>
 
       <div className="text-xs text-muted-foreground">
@@ -81,8 +88,8 @@ export function GoodsExplorer({ goods }: { goods: Good[] }) {
         goods.length === 0 ? (
           <EmptyState
             icon={Package}
-            title="Belum ada barang"
-            description="Barang yang ditambahkan admin akan muncul di sini."
+            title="No goods yet"
+            description="Goods added by admin will appear here."
           />
         ) : (
           <EmptyState

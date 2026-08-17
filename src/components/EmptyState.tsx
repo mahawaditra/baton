@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 const TONE_STYLE: Record<string, string> = {
   neutral: "bg-muted text-muted-foreground",
-  search: "bg-gold-soft text-[oklch(0.42_0.09_82)]",
-  success: "bg-success-soft text-[oklch(0.4_0.07_148)]",
+  search: "bg-gold-soft text-gold-soft-foreground",
+  success: "bg-success-soft text-success-soft-foreground",
   error: "bg-destructive-soft text-[oklch(0.5_0.14_35)]",
 };
 

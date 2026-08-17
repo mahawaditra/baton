@@ -6,7 +6,7 @@ export const ALLOWED_UPLOAD_MIME_TYPES = [
 
 type AllowedMimeType = (typeof ALLOWED_UPLOAD_MIME_TYPES)[number];
 
-const MAX_UPLOAD_SIZE_BYTES = 1300 * 1024;
+export const MAX_UPLOAD_SIZE_BYTES = 4 * 1024 * 1024 - 20 * 1024;
 
 export const MAX_UPLOAD_SIZE_LABEL = `${(MAX_UPLOAD_SIZE_BYTES / (1024 * 1024)).toFixed(1)}MB`;
 
@@ -41,16 +41,19 @@ async function validateFile(
   typeLabel: string,
 ): Promise<FileValidationResult> {
   if (!file || file.size === 0) {
-    return { valid: false, error: "File is required." };
+    return { valid: false, error: "File wajib dipilih." };
   }
 
   if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-    return { valid: false, error: `File must be ${MAX_UPLOAD_SIZE_LABEL} or smaller.` };
+    return {
+      valid: false,
+      error: `Ukuran file maksimal ${MAX_UPLOAD_SIZE_LABEL}.`,
+    };
   }
 
   const realType = await detectRealMimeType(file);
   if (!realType || !allowedTypes.includes(realType)) {
-    return { valid: false, error: `File must be ${typeLabel}.` };
+    return { valid: false, error: `File harus berupa ${typeLabel}.` };
   }
 
   return { valid: true, mimeType: realType };
@@ -59,7 +62,7 @@ async function validateFile(
 export function validateImageUpload(
   file: File | null,
 ): Promise<FileValidationResult> {
-  return validateFile(file, ["image/jpeg", "image/png"], "a JPEG or PNG image");
+  return validateFile(file, ["image/jpeg", "image/png"], "gambar JPEG atau PNG");
 }
 
 export function validateDocumentUpload(
@@ -68,6 +71,6 @@ export function validateDocumentUpload(
   return validateFile(
     file,
     ALLOWED_UPLOAD_MIME_TYPES,
-    "a JPEG, PNG, or PDF file",
+    "file JPEG, PNG, atau PDF",
   );
 }

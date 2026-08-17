@@ -3,10 +3,16 @@
 import { useActionState, useEffect } from "react";
 import { submitExtension } from "./actions";
 import { RequestData } from "./types";
+import { toastError } from "@/lib/toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const initialState = {
   success: false,
   error: null,
+  generalError: null,
 };
 
 export function ExtendForm({
@@ -27,67 +33,125 @@ export function ExtendForm({
     }
   }, [state.success, onSuccess]);
 
+  useEffect(() => {
+    if (state.generalError) toastError(state.generalError);
+  }, [state.generalError]);
+
   return (
-    <form action={formAction}>
-      <h2>Extend your borrowing period</h2>
-      <p>Please recheck your data below — edit if anything has changed.</p>
-      {state.error && <p style={{ color: "red" }}>{state.error}</p>}
+    <Card>
+      <CardHeader>
+        <CardTitle>Perpanjang masa peminjaman</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-4 text-caption text-muted-foreground">
+          Cek ulang data kamu di bawah — ubah kalau ada yang berubah.
+        </p>
 
-      <input
-        name="ktpNumber"
-        type="text"
-        placeholder="KTP Number"
-        defaultValue={data.borrowerKtpNumber ?? ""}
-        required
-      />
-      <input
-        name="addressKtp"
-        type="text"
-        placeholder="Address (as per KTP)"
-        defaultValue={data.borrowerAddressKtp ?? ""}
-        required
-      />
-      <input
-        name="addressDomicile"
-        type="text"
-        placeholder="Current Address"
-        defaultValue={data.borrowerAddressDomicile ?? ""}
-        required
-      />
-      <input
-        name="faculty"
-        type="text"
-        placeholder="Faculty/Major"
-        defaultValue={data.borrowerFaculty ?? ""}
-        required
-      />
+        <form action={formAction} className="flex flex-col gap-4">
+          {state.error && (
+            <p className="text-sm text-destructive" aria-live="polite">
+              {state.error}
+            </p>
+          )}
 
-      <h3>Guardian (Wali) Information</h3>
-      <input
-        name="guardianName"
-        type="text"
-        placeholder="Guardian Name"
-        defaultValue={data.guardianName ?? ""}
-        required
-      />
-      <input
-        name="guardianPhone"
-        type="text"
-        placeholder="Guardian Phone"
-        defaultValue={data.guardianPhone ?? ""}
-        required
-      />
-      <input
-        name="guardianAddressKtp"
-        type="text"
-        placeholder="Guardian Address (as per KTP)"
-        defaultValue={data.guardianAddressKtp ?? ""}
-        required
-      />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ext-ktpNumber" required>
+              Nomor KTP
+            </Label>
+            <Input
+              id="ext-ktpNumber"
+              name="ktpNumber"
+              type="text"
+              inputMode="numeric"
+              className="tabular"
+              defaultValue={data.borrowerKtpNumber ?? ""}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ext-addressKtp" required>
+              Alamat (sesuai KTP)
+            </Label>
+            <Input
+              id="ext-addressKtp"
+              name="addressKtp"
+              type="text"
+              defaultValue={data.borrowerAddressKtp ?? ""}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ext-addressDomicile" required>
+              Alamat Domisili
+            </Label>
+            <Input
+              id="ext-addressDomicile"
+              name="addressDomicile"
+              type="text"
+              defaultValue={data.borrowerAddressDomicile ?? ""}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ext-faculty" required>
+              Fakultas/Jurusan
+            </Label>
+            <Input
+              id="ext-faculty"
+              name="faculty"
+              type="text"
+              defaultValue={data.borrowerFaculty ?? ""}
+              required
+            />
+          </div>
 
-      <button type="submit" disabled={isPending}>
-        {isPending ? "Generating..." : "Generate Extension Contract"}
-      </button>
-    </form>
+          <div className="mt-2 flex flex-col gap-4 border-t border-border pt-4">
+            <h3 className="text-title text-foreground">Data Wali</h3>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="ext-guardianName" required>
+                Nama Wali
+              </Label>
+              <Input
+                id="ext-guardianName"
+                name="guardianName"
+                type="text"
+                defaultValue={data.guardianName ?? ""}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="ext-guardianPhone" required>
+                Nomor HP Wali
+              </Label>
+              <Input
+                id="ext-guardianPhone"
+                name="guardianPhone"
+                type="tel"
+                className="tabular"
+                defaultValue={data.guardianPhone ?? ""}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="ext-guardianAddressKtp" required>
+                Alamat Wali (sesuai KTP)
+              </Label>
+              <Input
+                id="ext-guardianAddressKtp"
+                name="guardianAddressKtp"
+                type="text"
+                defaultValue={data.guardianAddressKtp ?? ""}
+                required
+              />
+            </div>
+          </div>
+
+          <Button type="submit" disabled={isPending} className="self-start">
+            {isPending ? "Memproses..." : "Buat Kontrak Perpanjangan"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

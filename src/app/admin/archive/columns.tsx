@@ -17,11 +17,11 @@ export type ArchivedRequest = BorrowingRequest & {
 };
 
 export const columns: ColumnDef<ArchivedRequest>[] = [
-  { accessorKey: "borrowerName", header: "Peminjam" },
-  { accessorKey: "borrowerYear", header: "Angkatan" },
+  { accessorKey: "borrowerName", header: "Borrower" },
+  { accessorKey: "borrowerYear", header: "Year" },
   {
     id: "instrument",
-    header: "Instrumen",
+    header: "Instrument",
     accessorFn: (row) => row.instrument?.type ?? "",
     cell: ({ row }) => (
       <span>
@@ -34,9 +34,10 @@ export const columns: ColumnDef<ArchivedRequest>[] = [
   },
   {
     id: "periode",
-    header: "Periode",
+    header: "Period",
     accessorFn: (row) => row.loanPeriods.length,
-    cell: ({ row }) => `${row.original.loanPeriods.length} periode`,
+    cell: ({ row }) =>
+      `${row.original.loanPeriods.length} period${row.original.loanPeriods.length !== 1 ? "s" : ""}`,
   },
   {
     accessorKey: "depositRefundAmount",

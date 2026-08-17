@@ -1,11 +1,16 @@
+import type { BorrowingRequestStatus } from "@/generated/prisma/client";
+
 export type RequestData = {
   ticketId: string;
   borrowerName: string;
-  status: string;
+  status: BorrowingRequestStatus;
+  createdAt: Date;
+  rejectionReason: string | null;
+  cancellationReason: string | null;
   instrumentTypeRequested: string;
   instrumentConfirmed: boolean;
   hasInitialAddendum: boolean;
-  documentsNeedingUpload: string[];
+  uploadedDocumentTypes: string[];
   dueDate: Date | null;
   canExtend: boolean;
   isExtensionPeriod: boolean;

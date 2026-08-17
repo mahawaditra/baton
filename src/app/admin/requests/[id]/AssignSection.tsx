@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Instrument } from "@/generated/prisma/client";
 import { assignInstrument } from "./actions";
 import { ConditionIndicator, getConditionLabel } from "@/components/StatusBadge";
+import { toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 export function AssignSection({
@@ -15,19 +16,17 @@ export function AssignSection({
   currentInstrument: Instrument | null;
   candidates: Instrument[];
 }) {
-  const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
   async function handlePick(instrumentId: string) {
     setPendingId(instrumentId);
-    setError(null);
     try {
       const result = await assignInstrument(requestId, instrumentId);
       if (!result.success) {
-        setError(result.error ?? "Failed to assign instrument.");
+        toastError(result.error ?? "Failed to assign instrument.");
       }
     } catch (err) {
-      setError(
+      toastError(
         err instanceof Error ? err.message : "Failed to assign instrument.",
       );
     } finally {
@@ -37,12 +36,6 @@ export function AssignSection({
 
   return (
     <div className="flex flex-col gap-2">
-      {error && (
-        <p className="text-sm text-destructive" aria-live="polite">
-          {error}
-        </p>
-      )}
-
       {currentInstrument && (
         <div className="flex items-center gap-3 rounded-md border border-navy bg-gold-soft/35 p-3">
           <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-navy">

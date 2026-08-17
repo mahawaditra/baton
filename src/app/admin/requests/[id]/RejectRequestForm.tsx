@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { rejectRequest, RejectRequestState } from "./actions";
+import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,11 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 const initialState: RejectRequestState = {
   success: false,
   error: null,
+  generalError: null,
 };
 
 export function RejectRequestForm({ requestId }: { requestId: string }) {
   const action = rejectRequest.bind(null, requestId);
   const [state, formAction, isPending] = useActionState(action, initialState);
+
+  useEffect(() => {
+    if (state.generalError) toastError(state.generalError);
+  }, [state.generalError]);
 
   return (
     <form action={formAction} className="flex flex-col gap-2">

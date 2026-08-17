@@ -23,8 +23,10 @@ function toggle(set: Set<string>, value: string) {
 
 export function InstrumentsExplorer({
   instruments,
+  action,
 }: {
   instruments: Instrument[];
+  action?: React.ReactNode;
 }) {
   const [search, setSearch] = useState("");
   const [sectionFilter, setSectionFilter] = useState<Set<string>>(new Set());
@@ -75,7 +77,7 @@ export function InstrumentsExplorer({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Cari section, tipe, merk, nomor seri, lokasi…"
+          placeholder="Search section, type, brand, serial number, location…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -92,6 +94,7 @@ export function InstrumentsExplorer({
           selected={typeFilter}
           onToggle={(value) => setTypeFilter((prev) => toggle(prev, value))}
         />
+        {action && <div className="ml-auto">{action}</div>}
       </div>
 
       <div className="text-xs text-muted-foreground">
@@ -102,8 +105,8 @@ export function InstrumentsExplorer({
         instruments.length === 0 ? (
           <EmptyState
             icon={Boxes}
-            title="Belum ada instrumen"
-            description="Instrumen yang ditambahkan admin akan muncul di sini."
+            title="No instruments yet"
+            description="Instruments added by admin will appear here."
           />
         ) : (
           <EmptyState

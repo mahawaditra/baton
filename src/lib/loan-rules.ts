@@ -35,17 +35,18 @@ export function documentTypesNeedingUpload(
 }
 
 export const LOAN_STEP_LABELS = [
-  "Request Submitted",
-  "Complete Data & Documents",
-  "Pickup & Fill Addendum",
-  "Currently Borrowed",
+  "Pengajuan Dikirim",
+  "Lengkapi Data & Dokumen",
+  "Ambil & Isi Addendum",
+  "Sedang Dipinjam",
 ] as const;
 
 export function getRequestStep(
   status: string,
   instrumentConfirmed: boolean,
 ): number | "exception" {
-  if (status === "rejected" || status === "overdue") return "exception";
+  if (status === "rejected" || status === "overdue" || status === "cancelled")
+    return "exception";
   if (status === "submitted") return 1;
   if (status === "reviewing") return instrumentConfirmed ? 2 : 1;
   if (status === "contract_generated" || status === "documents_uploaded")
@@ -69,6 +70,18 @@ export function canNotifyBorrower(
   return status === "reviewing" && !instrumentConfirmed;
 }
 
+const CANCELLABLE_STATUSES = [
+  "submitted",
+  "reviewing",
+  "contract_generated",
+  "documents_uploaded",
+  "ready_to_pickup",
+];
+
+export function canCancelRequest(status: string): boolean {
+  return CANCELLABLE_STATUSES.includes(status);
+}
+
 export function computeCanExtend(
   status: string,
   dueDate: Date | null,
@@ -88,6 +101,16 @@ export function requiredDocumentTypesForPeriod(
   isExtension: boolean,
 ): readonly string[] {
   return isExtension ? ["signed_contract"] : REQUIRED_DOCUMENT_TYPES;
+}
+
+export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  signed_contract: "Kontrak yang Ditandatangani",
+  deposit_proof: "Bukti Transfer Deposit",
+  ktp_scan: "Scan KTP",
+};
+
+export function getDocumentTypeLabel(type: string): string {
+  return DOCUMENT_TYPE_LABELS[type] ?? type;
 }
 
 export function requestNeedsAction(req: {

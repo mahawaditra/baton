@@ -5,9 +5,12 @@ import {
   documentTypesNeedingUpload,
   canAssignInstrument,
   canNotifyBorrower,
+  canCancelRequest,
   computeCanExtend,
   requiredDocumentTypesForPeriod,
   getRequestActionLabel,
+  getRequestStep,
+  getDocumentTypeLabel,
 } from "./loan-rules";
 import { todayInJakarta } from "./format";
 
@@ -97,6 +100,75 @@ describe("canAssignInstrument", () => {
   it("blocks once the request has moved past reviewing", () => {
     expect(canAssignInstrument("active", false)).toBe(false);
     expect(canAssignInstrument("ready_to_pickup", false)).toBe(false);
+  });
+});
+
+describe("getRequestStep", () => {
+  it("treats rejected, overdue, and cancelled as exceptions regardless of instrumentConfirmed", () => {
+    expect(getRequestStep("rejected", false)).toBe("exception");
+    expect(getRequestStep("overdue", true)).toBe("exception");
+    expect(getRequestStep("cancelled", false)).toBe("exception");
+  });
+
+  it("puts submitted at step 1", () => {
+    expect(getRequestStep("submitted", false)).toBe(1);
+  });
+
+  it("splits reviewing between step 1 and step 2 based on instrumentConfirmed", () => {
+    expect(getRequestStep("reviewing", false)).toBe(1);
+    expect(getRequestStep("reviewing", true)).toBe(2);
+  });
+
+  it("puts contract_generated and documents_uploaded at step 2", () => {
+    expect(getRequestStep("contract_generated", true)).toBe(2);
+    expect(getRequestStep("documents_uploaded", true)).toBe(2);
+  });
+
+  it("puts ready_to_pickup at step 3", () => {
+    expect(getRequestStep("ready_to_pickup", true)).toBe(3);
+  });
+
+  it("puts active and returned at step 4", () => {
+    expect(getRequestStep("active", true)).toBe(4);
+    expect(getRequestStep("returned", true)).toBe(4);
+  });
+
+  it("falls back to step 1 for an unrecognized status", () => {
+    expect(getRequestStep("something_unexpected", false)).toBe(1);
+  });
+});
+
+describe("canCancelRequest", () => {
+  it("allows cancelling before the borrower has taken the instrument", () => {
+    expect(canCancelRequest("submitted")).toBe(true);
+    expect(canCancelRequest("reviewing")).toBe(true);
+    expect(canCancelRequest("contract_generated")).toBe(true);
+    expect(canCancelRequest("documents_uploaded")).toBe(true);
+    expect(canCancelRequest("ready_to_pickup")).toBe(true);
+  });
+
+  it("blocks cancelling once the loan is active or already resolved", () => {
+    expect(canCancelRequest("active")).toBe(false);
+    expect(canCancelRequest("overdue")).toBe(false);
+    expect(canCancelRequest("returned")).toBe(false);
+    expect(canCancelRequest("rejected")).toBe(false);
+    expect(canCancelRequest("cancelled")).toBe(false);
+  });
+});
+
+describe("getDocumentTypeLabel", () => {
+  it("returns the human-readable label for known document types", () => {
+    expect(getDocumentTypeLabel("signed_contract")).toBe(
+      "Kontrak yang Ditandatangani",
+    );
+    expect(getDocumentTypeLabel("deposit_proof")).toBe(
+      "Bukti Transfer Deposit",
+    );
+    expect(getDocumentTypeLabel("ktp_scan")).toBe("Scan KTP");
+  });
+
+  it("falls back to the raw type for an unknown document type", () => {
+    expect(getDocumentTypeLabel("some_new_type")).toBe("some_new_type");
   });
 });
 

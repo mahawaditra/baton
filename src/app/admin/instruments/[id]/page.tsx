@@ -14,10 +14,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { key: "peminjam", label: "Riwayat Peminjam" },
-  { key: "kondisi", label: "Riwayat Kondisi" },
+  { key: "peminjam", label: "Borrower History" },
+  { key: "kondisi", label: "Condition History" },
   { key: "addendum", label: "Addendum" },
-  { key: "aktivitas", label: "Aktivitas" },
+  { key: "aktivitas", label: "Activity" },
 ] as const;
 
 export default async function InstrumentDetailPage({
@@ -48,9 +48,7 @@ export default async function InstrumentDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {instrument.type}
-        </h1>
+        <h1 className="text-h1">{instrument.type}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {instrument.section}
         </p>

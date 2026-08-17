@@ -13,21 +13,22 @@ type State = {
   ticketId: string | null;
   accessCode: string | null;
   error: string | null;
+  generalError: string | null;
 };
 
 const submitRequestSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100),
-  email: z.email("Invalid email address"),
-  phone: z.string().trim().min(1, "Phone number is required").max(20),
-  lineId: z.string().trim().min(1, "Line ID is required").max(20),
+  name: z.string().trim().min(1, "Nama wajib diisi").max(100),
+  email: z.email("Alamat email tidak valid"),
+  phone: z.string().trim().min(1, "Nomor HP wajib diisi").max(20),
+  lineId: z.string().trim().min(1, "ID LINE wajib diisi").max(20),
   instrumentType: z.enum(
     REQUESTABLE_INSTRUMENT_TYPES,
-    "Please select a valid instrument type",
+    "Pilih jenis instrumen yang valid",
   ),
   year: z
     .string()
     .trim()
-    .regex(/^\d{4}$/, "Year must be a 4-digit year"),
+    .regex(/^\d{4}$/, "Angkatan harus 4 digit angka"),
 });
 
 export async function submitRequest(
@@ -40,7 +41,8 @@ export async function submitRequest(
     return {
       ticketId: null,
       accessCode: null,
-      error: "Too many submissions. Try again later.",
+      error: null,
+      generalError: "Terlalu banyak pengajuan. Coba lagi nanti.",
     };
   }
 
@@ -58,6 +60,7 @@ export async function submitRequest(
       ticketId: null,
       accessCode: null,
       error: parsed.error.issues[0].message,
+      generalError: null,
     };
   }
 
@@ -117,5 +120,6 @@ export async function submitRequest(
     ticketId,
     accessCode,
     error: null,
+    generalError: null,
   };
 }

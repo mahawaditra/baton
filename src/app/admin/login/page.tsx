@@ -51,7 +51,7 @@ export default function LoginPage() {
         onError: (ctx) => {
           Sentry.captureException(ctx.error);
           setError(
-            "Gagal login. Coba lagi, atau hubungi Ketua Logistik kalau masalah berlanjut.",
+            "Login failed. Try again, or contact the Logistics Lead if the problem persists.",
           );
           setIsPending(false);
         },
@@ -71,9 +71,10 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Masuk ke BATON</CardTitle>
+          <CardTitle>Sign in to BATON</CardTitle>
           <CardDescription>
-            Login pakai akun Google staf Logistik OSUI Mahawaditra.
+            Sign in with your OSUI Mahawaditra Logistics staff Google
+            account.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -89,15 +90,15 @@ export default function LoginPage() {
             className="w-full"
           >
             <GoogleIcon />
-            {isPending ? "Membuka Google..." : "Masuk dengan Google"}
+            {isPending ? "Opening Google..." : "Sign in with Google"}
           </Button>
         </CardContent>
       </Card>
 
       <p className="max-w-sm text-center text-caption text-muted-foreground">
-        Halaman ini khusus staf Logistik OSUI Mahawaditra. Kalau kamu staf
-        Logistik dan belum bisa akses, hubungi Ketua Logistik OSUI untuk
-        didaftarkan sebagai admin.
+        This page is for OSUI Mahawaditra Logistics staff only. If you&apos;re
+        Logistics staff and can&apos;t access it yet, contact the OSUI
+        Logistics Lead to be registered as an admin.
       </p>
     </div>
   );

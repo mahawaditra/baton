@@ -83,6 +83,7 @@ export async function updateGood(
 
   revalidatePath(`/admin/goods/${id}`);
   revalidatePath(`/admin/goods`);
+  revalidatePath(`/admin/dashboard`);
   revalidatePath(`/admin/activity`);
   redirect(`/admin/goods/${id}`);
 }

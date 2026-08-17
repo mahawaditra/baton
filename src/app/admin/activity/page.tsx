@@ -1,12 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import {
-  formatActivityLog,
-  getEntityUrl,
-  toJakartaCalendarDate,
-  todayInJakarta,
-} from "@/lib/format";
+import { toJakartaCalendarDate, todayInJakarta } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
+import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { buttonVariants } from "@/components/ui/button";
 import { Activity, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,11 +34,11 @@ function groupLogsByDay(logs: (ActivityLog & { admin: Admin })[]) {
 
     let label: string;
     if (day.getTime() === today.getTime()) {
-      label = "Hari ini";
+      label = "Today";
     } else if (day.getTime() === yesterday.getTime()) {
-      label = "Kemarin";
+      label = "Yesterday";
     } else {
-      label = day.toLocaleDateString("id-ID", {
+      label = day.toLocaleDateString("en-GB", {
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -119,6 +115,8 @@ export default async function ActivityPage({
     return ENTITY_TYPE_LABEL[log.entityType] ?? log.entityType;
   }
 
+  const tags = new Map(logs.map((log) => [log.entityId, entityTag(log)]));
+
   const groupedLogs = groupLogsByDay(logs);
 
   return (
@@ -134,44 +132,7 @@ export default async function ActivityPage({
               <div className="text-sm font-semibold text-foreground-2">
                 {group.label}
               </div>
-              <div className="relative flex flex-col gap-3.5">
-                <div className="absolute top-2 bottom-2 left-1.5 w-0.5 bg-muted" />
-                {group.logs.map((log) => {
-                  const url = getEntityUrl(log.entityType, log.entityId);
-                  const content = (
-                    <>
-                      <span className="font-semibold">{log.admin.name}</span>{" "}
-                      {formatActivityLog(log)}
-                    </>
-                  );
-                  return (
-                    <div key={log.id} className="flex gap-3.5">
-                      <span className="relative z-10 mt-0.5 h-3.5 w-3.5 shrink-0 rounded-full border-[3px] border-surface bg-navy" />
-                      <div>
-                        <div className="text-sm">
-                          {url ? (
-                            <Link href={url} className="hover:underline">
-                              {content}
-                            </Link>
-                          ) : (
-                            content
-                          )}
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                          <span className="tabular">
-                            {log.createdAt.toLocaleString("id-ID", {
-                              timeStyle: "short",
-                            })}
-                          </span>
-                          <span className="tabular rounded-sm bg-muted px-1.5 py-0.5 font-medium">
-                            {entityTag(log)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <ActivityTimeline logs={group.logs} tags={tags} showDate={false} />
             </div>
           ))}
         </div>

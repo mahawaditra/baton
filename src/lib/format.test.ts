@@ -102,11 +102,25 @@ describe("formatActivityLog", () => {
     ).toBe("rejected deposit_proof: Nominal tidak sesuai");
   });
 
-  it("falls back to a humanized action name for actions with no dedicated message", () => {
+  it("names the label and count on export_snapshot", () => {
     expect(
       formatActivityLog(
         log("export_snapshot", { label: "Post Calang", instrumentCount: 42 }),
       ),
-    ).toBe("export snapshot");
+    ).toBe('exported inventory snapshot "Post Calang" (42 instruments)');
+  });
+
+  it("includes the reason on cancel_request when one was given", () => {
+    expect(
+      formatActivityLog(
+        log("cancel_request", { reason: "Beli alat sendiri", releasedInstrumentId: null }),
+      ),
+    ).toBe("cancelled request: Beli alat sendiri");
+  });
+
+  it("falls back to a humanized action name for actions with no dedicated message", () => {
+    expect(formatActivityLog(log("some_future_action", null))).toBe(
+      "some future action",
+    );
   });
 });

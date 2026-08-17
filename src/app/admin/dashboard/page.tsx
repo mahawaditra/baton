@@ -56,7 +56,7 @@ function StatCard({
     <Card>
       <CardContent className="gap-3">
         <div className="flex items-center justify-between">
-          <div className="text-micro uppercase text-muted-foreground">
+          <div className="text-caption uppercase text-foreground-2">
             {label}
           </div>
           <span
@@ -181,10 +181,10 @@ export default async function DashboardPage() {
           label="Request Pending"
           value={pendingCount}
           icon={FileText}
-          iconClassName="bg-gold-soft text-[oklch(0.42_0.09_82)]"
+          iconClassName="bg-gold-soft text-gold-soft-foreground"
         />
         <StatCard
-          label="Sedang Dipinjam"
+          label="Currently Borrowed"
           value={activeCount}
           icon={Clock}
           iconClassName="bg-plum-soft text-plum"
@@ -196,10 +196,10 @@ export default async function DashboardPage() {
           iconClassName="bg-destructive-soft text-destructive"
         />
         <StatCard
-          label="Butuh Reparasi"
+          label="Needs Repair"
           value={needRepairCount}
           icon={Wrench}
-          iconClassName="bg-warning-soft text-[oklch(0.46_0.145_50)]"
+          iconClassName="bg-warning-soft text-warning-soft-foreground"
         />
       </div>
 
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
                       <div className="flex items-center gap-1.5">
                         {needsAction && (
                           <CircleAlert
-                            className="h-3.5 w-3.5 shrink-0 text-[oklch(0.42_0.09_82)]"
+                            className="h-3.5 w-3.5 shrink-0 text-gold-soft-foreground"
                             strokeWidth={2}
                             aria-label="Needs action"
                           />
@@ -298,7 +298,7 @@ export default async function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Peminjaman Aktif</CardTitle>
+          <CardTitle>Active Loans</CardTitle>
           <CardAction>
             <Link
               href="/admin/requests?status=active,overdue"
@@ -321,22 +321,22 @@ export default async function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted text-left">
-                    <th className="text-micro px-6 py-2.5 font-semibold uppercase text-muted-foreground">
-                      Peminjam
+                    <th className="text-micro px-6 py-2.5 uppercase text-muted-foreground">
+                      Borrower
                     </th>
-                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
-                      Angkatan
+                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
+                      Year
                     </th>
-                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
-                      Instrumen
+                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
+                      Instrument
                     </th>
-                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
-                      No. Seri
+                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
+                      Serial No.
                     </th>
-                    <th className="text-micro px-4 py-2.5 font-semibold uppercase text-muted-foreground">
+                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
                       LINE ID
                     </th>
-                    <th className="text-micro px-6 py-2.5 font-semibold uppercase text-muted-foreground">
+                    <th className="text-micro px-6 py-2.5 uppercase text-muted-foreground">
                       Status
                     </th>
                   </tr>

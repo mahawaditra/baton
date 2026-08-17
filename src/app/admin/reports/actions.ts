@@ -50,9 +50,9 @@ async function computeAnnualReportSummary(year: number) {
   }).length;
 
   const summaryRows = [
-    { Metric: "Peminjaman Sedang Berjalan", Value: activeLoans },
+    { Metric: "Active Loans", Value: activeLoans },
     {
-      Metric: `Request Dibuat (1 Jan ${year} - ${periodEnd.toLocaleDateString("id-ID")})`,
+      Metric: `Requests Created (Jan 1, ${year} - ${periodEnd.toLocaleDateString("en-GB")})`,
       Value: requestsThisYear,
     },
     ...statusBreakdown.map((s) => ({
@@ -60,7 +60,7 @@ async function computeAnnualReportSummary(year: number) {
       Value: s._count,
     })),
     {
-      Metric: "Instrumen Direvitalisasi (need_repair → ok)",
+      Metric: "Instruments Repaired (need_repair → ok)",
       Value: revitalizedCount,
     },
   ];
@@ -107,11 +107,14 @@ export async function saveAnnualReport() {
   revalidatePath("/admin/reports");
 }
 
-export async function exportInventorySnapshot(label: string) {
+export async function exportInventorySnapshot(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     throw new Error("Not logged in");
   }
+
+  const rawLabel = formData.get("label") as string;
+  const label = rawLabel || `Snapshot ${new Date().toLocaleDateString("en-GB")}`;
 
   const instruments = await prisma.instrument.findMany({
     orderBy: { section: "asc" },
@@ -170,5 +173,4 @@ export async function exportInventorySnapshot(label: string) {
 
   revalidatePath("/admin/reports");
   revalidatePath("/admin/activity");
-  return { success: true, driveFileId };
 }

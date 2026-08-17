@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { addAdmin, AddAdminState } from "./actions";
+import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,10 +10,15 @@ import { Label } from "@/components/ui/label";
 const initialState: AddAdminState = {
   success: false,
   error: null,
+  generalError: null,
 };
 
 export function AddAdminForm() {
   const [state, formAction, isPending] = useActionState(addAdmin, initialState);
+
+  useEffect(() => {
+    if (state.generalError) toastError(state.generalError);
+  }, [state.generalError]);
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
@@ -23,7 +29,7 @@ export function AddAdminForm() {
       )}
       {state.success && (
         <p
-          className="text-sm font-medium text-[oklch(0.4_0.07_148)]"
+          className="text-sm font-medium text-success-soft-foreground"
           aria-live="polite"
         >
           Admin added successfully.

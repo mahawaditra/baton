@@ -42,7 +42,8 @@ type ActivityMetadataByAction =
         | "confirm_handover"
         | "confirm_extension"
         | "add_admin"
-        | "remove_admin";
+        | "deactivate_admin"
+        | "reactivate_admin";
       metadata: null;
     }
   | {
@@ -69,12 +70,14 @@ type ActivityMetadataByAction =
     }
   | {
       action: "generate_annual_report";
-      metadata: { year: number; driveFileId: string };
+      metadata: { year: number; reportId: string };
     }
   | {
-      action: "reject_request";
+      action: "reject_request" | "cancel_request";
       metadata: { reason: string; releasedInstrumentId: string | null };
-    };
+    }
+  | { action: "create_instrument"; metadata: { after: Instrument } }
+  | { action: "create_goods"; metadata: { after: Good } };
 
 function diffFields<T extends Record<string, unknown>>(
   before: T | undefined,
@@ -105,6 +108,8 @@ export function formatActivityLog(log: ActivityLogLike): string {
       return "assigned an instrument";
     case "reject_request":
       return `rejected request${typed.metadata.reason ? `: ${typed.metadata.reason}` : ""}`;
+    case "cancel_request":
+      return `cancelled request${typed.metadata.reason ? `: ${typed.metadata.reason}` : ""}`;
     case "approve_documents":
       return `approved ${typed.metadata.type}`;
     case "reject_documents":
@@ -113,8 +118,40 @@ export function formatActivityLog(log: ActivityLogLike): string {
       return "confirmed documents, request ready for pickup";
     case "confirm_handover":
       return "confirmed instrument handover";
+    case "confirm_extension":
+      return "confirmed extension";
+    case "confirm_return":
+      return `confirmed return (condition: ${typed.metadata.condition}, refund: Rp${typed.metadata.depositRefundAmount.toLocaleString("id-ID")})`;
+    case "update_goods": {
+      const changes = diffFields(typed.metadata.before, typed.metadata.after, [
+        "condition",
+        "quantity",
+        "location",
+      ]);
+      return changes.length > 0
+        ? `updated goods (${changes.join(", ")})`
+        : "updated goods";
+    }
+    case "update_loan_settings":
+      return "updated loan settings";
+    case "export_snapshot":
+      return `exported inventory snapshot "${typed.metadata.label}" (${typed.metadata.instrumentCount} instruments)`;
+    case "generate_annual_report":
+      return `generated annual report for ${typed.metadata.year}`;
+    case "notify_available":
+      return "notified borrower to complete Stage 2";
+    case "add_admin":
+      return "added a new admin";
+    case "deactivate_admin":
+      return "deactivated an admin";
+    case "reactivate_admin":
+      return "reactivated an admin";
+    case "create_instrument":
+      return `created instrument (${typed.metadata.after.section}/${typed.metadata.after.type})`;
+    case "create_goods":
+      return `created goods (${typed.metadata.after.name})`;
     default:
-      return typed.action.replaceAll("_", " ");
+      return log.action.replaceAll("_", " ");
   }
 }
 

@@ -30,7 +30,7 @@ export function FacetFilter({
       >
         {label}
         {selected.size > 0 && (
-          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-background">
+          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-micro text-background">
             {selected.size}
           </span>
         )}
