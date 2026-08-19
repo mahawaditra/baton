@@ -72,13 +72,15 @@ function DocumentUploadSlot({
         <p className="text-caption text-muted-foreground">{helperText}</p>
       )}
       <div className="flex items-center gap-2">
-        <CompressedFileInput
-          id={documentType}
-          name="file"
-          accept={accept}
-          required={required}
-          onCompressingChange={setIsCompressing}
-        />
+        <div className="min-w-0 flex-1">
+          <CompressedFileInput
+            id={documentType}
+            name="file"
+            accept={accept}
+            required={required}
+            onCompressingChange={setIsCompressing}
+          />
+        </div>
         <Button
           type="submit"
           size="sm"

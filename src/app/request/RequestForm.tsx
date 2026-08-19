@@ -45,7 +45,9 @@ export function RequestForm() {
         <EmptyState
           icon={CheckCircle2}
           title="Pengajuan Terkirim!"
-          description='Email konfirmasi berisi ticket ID dan kode akses udah dikirim ke inbox kamu — kalau belum kelihatan dalam beberapa menit, cek folder Spam (dan tandai "Bukan spam" kalau ada opsinya).'
+          description='Email konfirmasi berisi ticket ID dan kode akses udah dikirim ke inbox kamu. Kalau belum kelihatan dalam beberapa menit, coba cek folder Spam (dan tandai "Bukan spam" kalau ada opsinya).
+          
+          Jangan lupa nyalakan notifikasi email supaya gak kelewatan update status peminjaman ya!'
           tone="success"
         />
 

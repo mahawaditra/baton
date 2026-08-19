@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { BorrowingRequest } from "@/generated/prisma/client";
+import type {
+  BorrowingRequest,
+  BorrowingRequestStatus,
+} from "@/generated/prisma/client";
 import { DataTable } from "@/components/DataTable";
 import { columns } from "./columns";
 import {
@@ -14,6 +17,19 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
 import { FileText, SearchX, Hash, Calendar } from "lucide-react";
 import { toggleSetValue } from "@/lib/utils";
+
+const STATUS_GROUP_PRIORITY: BorrowingRequestStatus[] = [
+  "overdue",
+  "submitted",
+  "reviewing",
+  "contract_generated",
+  "documents_uploaded",
+  "ready_to_pickup",
+  "active",
+  "rejected",
+  "cancelled",
+  "returned",
+];
 
 function RequestCard({ request }: { request: BorrowingRequest }) {
   return (
@@ -65,14 +81,20 @@ export function RequestsExplorer({
   }, [requests, search]);
 
   const mobileGroups = useMemo(() => {
-    const map = new Map<string, BorrowingRequest[]>();
+    const map = new Map<BorrowingRequestStatus, BorrowingRequest[]>();
     for (const request of mobileFiltered) {
-      const label = getRequestStatusLabel(request.status);
-      const list = map.get(label) ?? [];
+      const list = map.get(request.status) ?? [];
       list.push(request);
-      map.set(label, list);
+      map.set(request.status, list);
     }
-    return [...map.entries()];
+    return [...map.entries()]
+      .sort(
+        ([a], [b]) =>
+          STATUS_GROUP_PRIORITY.indexOf(a) - STATUS_GROUP_PRIORITY.indexOf(b),
+      )
+      .map(
+        ([status, items]) => [getRequestStatusLabel(status), items] as const,
+      );
   }, [mobileFiltered]);
 
   return (

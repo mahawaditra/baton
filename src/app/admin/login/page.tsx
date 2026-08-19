@@ -73,8 +73,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>Sign in to BATON</CardTitle>
           <CardDescription>
-            Sign in with your OSUI Mahawaditra Logistics staff Google
-            account.
+            Sign in with your activated admin Google account.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,8 +96,8 @@ export default function LoginPage() {
 
       <p className="max-w-sm text-center text-caption text-muted-foreground">
         This page is for OSUI Mahawaditra Logistics staff only. If you&apos;re
-        Logistics staff and can&apos;t access it yet, contact the OSUI
-        Logistics Lead to be registered as an admin.
+        Logistics staff and can&apos;t access it yet, contact the OSUI Logistics
+        Lead to be registered as an admin.
       </p>
     </div>
   );

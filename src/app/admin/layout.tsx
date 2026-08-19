@@ -35,7 +35,7 @@ export default async function AdminLayout({
         adminName={session?.user.name ?? ""}
         adminEmail={session?.user.email ?? ""}
       />
-      <main className="flex-1 p-6 lg:p-8">{children}</main>
+      <main className="min-w-0 flex-1 p-6 lg:p-8">{children}</main>
       <div
         aria-hidden
         className="pointer-events-none fixed right-0 bottom-0 left-0 -z-10 overflow-hidden select-none lg:left-60"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { getContractPdf, verifyAccessCode } from "./actions";
 import { Stage2Form } from "./Stage2Form";
@@ -12,10 +12,12 @@ import { getRequestStep, LOAN_STEP_LABELS } from "@/lib/loan-rules";
 import { toastError } from "@/lib/toast";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { LoanStepper } from "@/components/LoanStepper";
+import { LoadingMarquee } from "@/components/LoadingMarquee";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Download, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +40,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   const [showExtendForm, setShowExtendForm] = useState(false);
   const [showReturnForm, setShowReturnForm] = useState(false);
 
-  async function refetch() {
+  const refetch = useCallback(async () => {
     const savedCode = localStorage.getItem(`access_code_${ticketId}`);
     if (!savedCode) return;
 
@@ -51,11 +53,11 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
       setData(null);
       setAccessCode(null);
     }
-  }
+  }, [ticketId]);
 
   useEffect(() => {
     refetch().finally(() => setChecking(false));
-  }, [ticketId]);
+  }, [ticketId, refetch]);
 
   async function handleSubmit(formData: FormData) {
     const code = formData.get("code") as string;
@@ -72,8 +74,33 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-body text-muted-foreground">Memuat...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background p-6">
+        <div className="flex flex-col items-center gap-2">
+          <span className="h-2.5 w-10 rounded-full bg-gold" />
+          <div className="font-heading text-h1 text-navy">BATON</div>
+          <div className="tabular text-micro uppercase text-muted-foreground">
+            Tiket {ticketId}
+          </div>
+        </div>
+
+        <div className="w-full max-w-sm">
+          <LoadingMarquee />
+        </div>
+
+        <Card className="w-full max-w-sm">
+          <CardContent className="gap-4">
+            <div>
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="mt-2.5 h-3 w-full" />
+              <Skeleton className="mt-1.5 h-3 w-3/4" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
