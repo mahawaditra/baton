@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ClipboardList, Clock } from "lucide-react";
 import { HeroMarquee } from "@/components/HeroMarquee";
 import { LandingHero } from "@/components/LandingHero";
+import Link from "next/link";
 
 type StepIconProps = { className?: string; strokeWidth?: number };
 
@@ -129,6 +130,16 @@ export default function Home() {
           </div>
           <p className="mt-10 text-center text-caption text-muted-foreground">
             Punya pertanyaan? Hubungi Ketua Logistik OSUI Mahawaditra.
+          </p>
+          <p className="mt-2 text-center text-caption text-muted-foreground">
+            If you're an admin, you can{" "}
+            <Link
+              href="/admin"
+              className="underline underline-offset-2 font-bold hover:text-foreground"
+            >
+              get in here
+            </Link>
+            .
           </p>
         </div>
       </section>
