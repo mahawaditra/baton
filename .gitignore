@@ -53,3 +53,4 @@ next-env.d.ts
 /scripts
 
 /DESIGN.MD
+/prisma/seed-data
