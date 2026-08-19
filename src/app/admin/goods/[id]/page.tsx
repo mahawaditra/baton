@@ -24,6 +24,11 @@ export default async function GoodDetailPage({
     where: { id },
   });
 
+  const goods = await prisma.good.findMany({
+    select: { location: true },
+  });
+  const locations = [...new Set(goods.map((g) => g.location))].sort();
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -76,7 +81,7 @@ export default async function GoodDetailPage({
               </Link>
             </div>
           ) : (
-            <EditGoodForm good={good} />
+            <EditGoodForm good={good} locations={locations} />
           )}
         </CardContent>
       </Card>

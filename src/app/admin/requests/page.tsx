@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { DataTable } from "@/components/DataTable";
-import { columns } from "./columns";
+import { RequestsExplorer } from "./RequestsExplorer";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { getRequestStatusLabel } from "@/components/RequestStatusBadge";
@@ -37,7 +36,7 @@ export default async function RequestsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-h1">Requests</h1>
+      <h1 className="hidden text-h1 lg:block">Requests</h1>
 
       <div className="flex flex-wrap gap-2">
         <Link
@@ -78,7 +77,7 @@ export default async function RequestsPage({
         })}
       </div>
 
-      <DataTable data={requests} columns={columns} />
+      <RequestsExplorer requests={requests} />
     </div>
   );
 }

@@ -21,7 +21,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-h1">Settings</h1>
+      <h1 className="hidden text-h1 lg:block">Settings</h1>
 
       <LoanSettingsForm loanSettings={loanSettings} />
 
@@ -39,9 +39,9 @@ export default async function SettingsPage() {
                 {admins.map((admin) => (
                   <div
                     key={admin.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm"
+                    className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <span
                         className={cn(
                           "font-medium",
@@ -54,7 +54,7 @@ export default async function SettingsPage() {
                         ({admin.email})
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {admin.role === "super_admin" && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-2 py-0.5 text-micro text-gold-soft-foreground">
                           <ShieldCheck className="h-3 w-3" strokeWidth={2} />

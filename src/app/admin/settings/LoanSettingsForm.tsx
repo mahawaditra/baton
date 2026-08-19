@@ -40,13 +40,13 @@ export function LoanSettingsForm({
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Loan Rules</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="dueDate">Due Date</Label>
                 <Input
@@ -100,7 +100,7 @@ export function LoanSettingsForm({
             <CardTitle>Bank Account</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="bankName">Bank Name</Label>
                 <Input
@@ -119,7 +119,7 @@ export function LoanSettingsForm({
                   required
                 />
               </div>
-              <div className="col-span-2 flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <Label htmlFor="bankHolder">Bank Account Holder</Label>
                 <Input
                   id="bankHolder"
@@ -138,7 +138,7 @@ export function LoanSettingsForm({
           <CardTitle>Signatory Data (PIHAK PERTAMA)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="signatoryName">Name</Label>
               <Input
@@ -176,7 +176,7 @@ export function LoanSettingsForm({
                 required
               />
             </div>
-            <div className="col-span-2 flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="signatoryAddressKtp">Address (as per KTP)</Label>
               <Input
                 id="signatoryAddressKtp"
@@ -185,7 +185,7 @@ export function LoanSettingsForm({
                 required
               />
             </div>
-            <div className="col-span-2 flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="signatoryAddressDomicile">Current Address</Label>
               <Input
                 id="signatoryAddressDomicile"
@@ -213,7 +213,7 @@ export function LoanSettingsForm({
                 required
               />
             </div>
-            <div className="col-span-2 flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="signatorySection">Section/Instrument</Label>
               <Input
                 id="signatorySection"
@@ -222,7 +222,7 @@ export function LoanSettingsForm({
                 required
               />
             </div>
-            <div className="col-span-2 flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="signatoryImage">
                 Signature Image{" "}
                 {loanSettings?.signatoryImageDriveId && (

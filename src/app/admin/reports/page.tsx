@@ -13,6 +13,8 @@ import {
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export const maxDuration = 60;
+
 export default async function ReportsPage() {
   const recentReports = await prisma.annualReport.findMany({
     include: { creator: true },

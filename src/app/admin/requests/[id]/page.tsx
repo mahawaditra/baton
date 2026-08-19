@@ -179,7 +179,7 @@ export default async function RequestDetailPage({
               <CardTitle>Borrower</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-muted-foreground">Year</dt>
                   <dd className="mt-0.5 font-medium">{request.borrowerYear}</dd>
@@ -270,7 +270,7 @@ export default async function RequestDetailPage({
                 <div className="text-sm font-semibold capitalize">
                   {a.timing} Condition
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+                <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-2">
                   <div className="flex flex-col gap-2.5">
                     <div>
                       <dt className="text-xs text-muted-foreground">
@@ -348,7 +348,7 @@ export default async function RequestDetailPage({
                   className="flex flex-col gap-3 rounded-md border border-border p-4"
                 >
                   <div className="text-sm font-semibold">Confirm Return</div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
                       <Label htmlFor="condition">Condition</Label>
                       <Select name="condition" defaultValue="ok">

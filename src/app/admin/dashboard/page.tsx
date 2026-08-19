@@ -55,13 +55,13 @@ function StatCard({
   return (
     <Card>
       <CardContent className="gap-3">
-        <div className="flex items-center justify-between">
-          <div className="text-caption uppercase text-foreground-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0 text-caption uppercase text-foreground-2">
             {label}
           </div>
           <span
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-md",
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
               iconClassName,
             )}
           >
@@ -170,13 +170,13 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-h1">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="hidden text-h1 lg:block">Dashboard</h1>
+        <p className="text-sm text-muted-foreground lg:mt-1">
           Welcome back, {session?.user.name || session?.user.email}.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label="Request Pending"
           value={pendingCount}
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
                     key={req.id}
                     className="flex items-center gap-4 border-b border-border px-6 py-3.5 last:border-b-0"
                   >
-                    <span className="tabular w-20 shrink-0 text-xs font-semibold text-muted-foreground">
+                    <span className="tabular w-16 shrink-0 text-xs font-semibold text-muted-foreground lg:w-20">
                       {req.ticketId}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -254,8 +254,13 @@ export default async function DashboardPage() {
                           ? getRequestActionLabel(req)
                           : waitingOnBorrowerLabel(req.status)}
                       </div>
+                      <div className="mt-2 lg:hidden">
+                        <RequestStatusBadge status={req.status} />
+                      </div>
                     </div>
-                    <RequestStatusBadge status={req.status} />
+                    <div className="hidden lg:block">
+                      <RequestStatusBadge status={req.status} />
+                    </div>
                     <Link
                       href={`/admin/requests/${req.id}`}
                       className={cn(buttonVariants({ size: "sm" }))}

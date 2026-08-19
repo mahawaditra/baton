@@ -29,16 +29,16 @@ export default async function AdminLayout({
     },
   });
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminNav
         pendingCount={pendingCount}
         adminName={session?.user.name ?? ""}
         adminEmail={session?.user.email ?? ""}
       />
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 p-6 lg:p-8">{children}</main>
       <div
         aria-hidden
-        className="pointer-events-none fixed right-0 bottom-0 left-60 -z-10 overflow-hidden select-none"
+        className="pointer-events-none fixed right-0 bottom-0 left-0 -z-10 overflow-hidden select-none lg:left-60"
       >
         <span
           className="font-heading block text-center text-[clamp(6rem,22vw,18rem)] leading-none font-extrabold tracking-tighter text-navy/[0.09]"

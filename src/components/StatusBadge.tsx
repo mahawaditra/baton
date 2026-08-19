@@ -102,7 +102,7 @@ export function StatusBadge({
     <span className="inline-flex items-center gap-1.5">
       <span
         className={cn(
-          "inline-flex h-[22px] items-center gap-1.5 px-2 text-micro uppercase",
+          "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap px-2 text-micro uppercase",
           variant === "pill" ? "rounded-full" : "rounded-sm",
           statusConfig.bg,
           statusConfig.fg,

@@ -9,6 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Autocomplete,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+} from "@/components/ui/autocomplete";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -21,7 +29,13 @@ const initialState: UpdateGoodState = {
   error: null,
 };
 
-export function EditGoodForm({ good }: { good: Good }) {
+export function EditGoodForm({
+  good,
+  locations,
+}: {
+  good: Good;
+  locations: string[];
+}) {
   const action = updateGood.bind(null, good.id);
   const [state, formAction, isPending] = useActionState(action, initialState);
 
@@ -33,7 +47,7 @@ export function EditGoodForm({ good }: { good: Good }) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="name">Name</Label>
           <Input id="name" name="name" defaultValue={good.name} required />
@@ -70,12 +84,21 @@ export function EditGoodForm({ good }: { good: Good }) {
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="location">Location</Label>
-        <Input
-          id="location"
-          name="location"
-          defaultValue={good.location}
-          required
-        />
+        <Autocomplete name="location" items={locations} defaultValue={good.location}>
+          <AutocompleteInput id="location" required />
+          <AutocompleteContent>
+            <AutocompleteEmpty>
+              No match — will be saved as a new location.
+            </AutocompleteEmpty>
+            <AutocompleteList>
+              {(item: string) => (
+                <AutocompleteItem key={item} value={item}>
+                  {item}
+                </AutocompleteItem>
+              )}
+            </AutocompleteList>
+          </AutocompleteContent>
+        </Autocomplete>
       </div>
 
       <div className="flex flex-col gap-1.5">

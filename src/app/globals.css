@@ -186,7 +186,7 @@
   --secondary: var(--surface-2);
   --secondary-foreground: var(--foreground);
   --accent: var(--gold-soft);
-  --accent-foreground: oklch(0.32 0.075 82);
+  --accent-foreground: var(--gold-soft-foreground);
   --input: var(--border);
 
   --sidebar: var(--surface);
@@ -272,7 +272,7 @@
   --secondary: var(--surface-2);
   --secondary-foreground: var(--foreground);
   --accent: var(--gold-soft);
-  --accent-foreground: oklch(0.945 0.01 85);
+  --accent-foreground: var(--gold-soft-foreground);
   --input: var(--border);
 
   --sidebar: var(--surface);
@@ -365,7 +365,7 @@ input:autofill {
 
 .marquee-track > span {
   flex-shrink: 0;
-  padding-right: 32px;
+  padding-right: 0.1em;
 }
 
 .marquee-l {

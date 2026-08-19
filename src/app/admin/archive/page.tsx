@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { columns } from "./columns";
-import { DataTable } from "@/components/DataTable";
+import { ArchiveExplorer } from "./ArchiveExplorer";
 import { EmptyState } from "@/components/EmptyState";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -60,7 +59,7 @@ export default async function ArchivePage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-h1">Archive</h1>
+      <h1 className="hidden text-h1 lg:block">Archive</h1>
 
       <div className="flex flex-wrap gap-2">
         <Link
@@ -125,7 +124,7 @@ export default async function ArchivePage({
           }
         />
       ) : (
-        <DataTable data={requests} columns={columns} />
+        <ArchiveExplorer requests={requests} />
       )}
     </div>
   );

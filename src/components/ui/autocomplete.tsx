@@ -5,7 +5,17 @@ import { Autocomplete as AutocompletePrimitive } from "@base-ui/react/autocomple
 
 import { cn } from "@/lib/utils";
 
-const Autocomplete = AutocompletePrimitive.Root;
+function Autocomplete({
+  openOnInputClick = true,
+  ...props
+}: React.ComponentProps<typeof AutocompletePrimitive.Root>) {
+  return (
+    <AutocompletePrimitive.Root
+      openOnInputClick={openOnInputClick}
+      {...props}
+    />
+  );
+}
 
 function AutocompleteInput({
   className,

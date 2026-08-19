@@ -125,7 +125,7 @@ export function UploadDocumentsForm({
           accessCode={accessCode}
           documentType="signed_contract"
           label={getDocumentTypeLabel("signed_contract")}
-          helperText={`Foto otomatis dikompres — PDF enggak, maksimal ${MAX_UPLOAD_SIZE_LABEL}.`}
+          helperText={`Foto otomatis dikompres, PDF tidak. Maks. ${MAX_UPLOAD_SIZE_LABEL}`}
           accept="image/*,.pdf"
           required
           uploaded={uploadedDocumentTypes.includes("signed_contract")}
@@ -151,10 +151,10 @@ export function UploadDocumentsForm({
           documentType="ktp_scan"
           label={
             isExtension
-              ? `${getDocumentTypeLabel("ktp_scan")} (opsional — cuma kalau ada perubahan)`
+              ? `${getDocumentTypeLabel("ktp_scan")} (opsional, cuma kalau ada perubahan)`
               : getDocumentTypeLabel("ktp_scan")
           }
-          helperText={`Foto otomatis dikompres — PDF enggak, maksimal ${MAX_UPLOAD_SIZE_LABEL}.`}
+          helperText={`Foto otomatis dikompres, PDF tidak. Maks. ${MAX_UPLOAD_SIZE_LABEL}`}
           accept="image/*,.pdf"
           required={!isExtension}
           uploaded={uploadedDocumentTypes.includes("ktp_scan")}

@@ -138,7 +138,7 @@ export default async function ActivityPage({
         </div>
       )}
 
-      <div className="fixed right-0 bottom-0 left-60 z-10 flex items-center justify-between border-t border-border bg-surface px-6 py-4">
+      <div className="fixed right-0 bottom-0 left-0 z-10 flex items-center justify-between border-t border-border bg-surface px-6 py-4 lg:left-60">
         <Link
           href={`/admin/activity?page=${page - 1}`}
           aria-disabled={page <= 1}

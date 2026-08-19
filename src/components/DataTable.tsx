@@ -7,6 +7,7 @@ import {
   getSortedRowModel,
   flexRender,
   type ColumnDef,
+  type OnChangeFn,
   type SortingState,
 } from "@tanstack/react-table";
 import { ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
@@ -15,17 +16,23 @@ import { cn } from "@/lib/utils";
 export function DataTable<T>({
   data,
   columns,
+  sorting: controlledSorting,
+  onSortingChange: controlledOnSortingChange,
 }: {
   data: T[];
   columns: ColumnDef<T>[];
+  sorting?: SortingState;
+  onSortingChange?: OnChangeFn<SortingState>;
 }) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [internalSorting, setInternalSorting] = useState<SortingState>([]);
+  const sorting = controlledSorting ?? internalSorting;
+  const onSortingChange = controlledOnSortingChange ?? setInternalSorting;
 
   const table = useReactTable({
     data,
     columns,
     state: { sorting },
-    onSortingChange: setSorting,
+    onSortingChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
@@ -34,7 +41,8 @@ export function DataTable<T>({
 
   return (
     <div className="rounded-lg border border-border bg-surface">
-      <style>{`${Array.from({ length: columnCount }, (_, i) => {
+      <style>{`@media (hover: hover) and (pointer: fine) {
+${Array.from({ length: columnCount }, (_, i) => {
         const n = i + 1;
         return `table.data-table:has(tbody td:nth-child(${n}):hover) thead th:nth-child(${n}),
 table.data-table:has(tbody td:nth-child(${n}):hover) tbody td:nth-child(${n}) {
@@ -43,6 +51,7 @@ table.data-table:has(tbody td:nth-child(${n}):hover) tbody td:nth-child(${n}) {
       }).join("\n")}
 table.data-table tbody td:hover {
   box-shadow: inset 0 0 0 999px color-mix(in oklab, var(--muted) 25%, transparent);
+}
 }`}</style>
       <table className="data-table w-full text-sm">
         <thead className="sticky top-0 z-10 rounded-t-lg bg-muted">

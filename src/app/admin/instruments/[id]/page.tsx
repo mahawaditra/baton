@@ -129,13 +129,13 @@ export default async function InstrumentDetailPage({
       </Card>
 
       <Card>
-        <div className="-mx-6 flex gap-1 border-b border-border px-6">
+        <div className="-mx-6 flex gap-1 overflow-x-auto border-b border-border px-6">
           {TABS.map((t) => (
             <Link
               key={t.key}
               href={`/admin/instruments/${id}?tab=${t.key}`}
               className={cn(
-                "px-5 py-3.5 text-sm",
+                "shrink-0 px-5 py-3.5 text-sm whitespace-nowrap",
                 tab === t.key
                   ? "-mb-px border-b-2 border-navy font-semibold text-foreground"
                   : "text-muted-foreground",
