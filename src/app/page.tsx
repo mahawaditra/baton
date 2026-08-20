@@ -86,7 +86,7 @@ const STEPS = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative flex min-h-screen items-end justify-center overflow-hidden bg-hero-bg">
+      <section className="relative isolate flex min-h-screen items-end justify-center overflow-hidden bg-hero-bg">
         <HeroMarquee />
         <div
           aria-hidden
@@ -95,151 +95,153 @@ export default function Home() {
         <LandingHero />
       </section>
 
-      <section className="border-t border-border bg-surface px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="text-center font-heading text-h2 text-foreground">
-            Cara Pinjam
-          </h2>
-          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {STEPS.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div key={step.title} className="relative">
-                  <span className="absolute -top-2.5 -left-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-background shadow-sm">
-                    {index + 1}
-                  </span>
-                  <Card size="sm">
-                    <CardContent>
-                      <div className="flex items-center gap-2.5">
-                        <Icon
-                          className="h-5 w-5 text-navy"
-                          strokeWidth={1.75}
-                        />
-                        <h3 className="text-title text-foreground">
-                          {step.title}
-                        </h3>
-                      </div>
-                      <p className="mt-3 text-body text-muted-foreground">
-                        {step.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              );
-            })}
-          </div>
-          <p className="mt-10 text-center text-caption text-muted-foreground">
-            Punya pertanyaan? Hubungi Ketua Logistik OSUI Mahawaditra.
-          </p>
-          <p className="mt-2 text-center text-caption text-muted-foreground">
-            If you're an admin, you can{" "}
-            <Link
-              href="/admin"
-              className="underline underline-offset-2 font-bold hover:text-foreground"
-            >
-              get in here
-            </Link>
-            .
-          </p>
-        </div>
-      </section>
-
-      <section className="border-t border-border bg-surface px-6 py-24">
-        <div className="mx-auto max-w-4xl">
-          <div className="grid grid-cols-1 items-start gap-10 sm:grid-cols-[auto_1fr]">
-            <div className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-xl bg-navy shadow-md">
-              <Image
-                src="/about/haseul-loona.gif"
-                alt="haseulbintaro"
-                width={140}
-                height={140}
-                className="h-full w-full object-cover"
-              />
-            </div>
-
-            <h2 className="font-heading text-h2 text-foreground sm:order-first sm:col-span-2 sm:text-center">
-              Why is this a thing?
+      <div className="relative isolate">
+        <section className="border-t border-border bg-surface px-6 py-16">
+          <div className="mx-auto max-w-7xl">
+            <h2 className="text-center font-heading text-h2 text-foreground">
+              Cara Pinjam
             </h2>
+            <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {STEPS.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <div key={step.title} className="relative">
+                    <span className="absolute -top-2.5 -left-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-background shadow-sm">
+                      {index + 1}
+                    </span>
+                    <Card size="sm">
+                      <CardContent>
+                        <div className="flex items-center gap-2.5">
+                          <Icon
+                            className="h-5 w-5 text-navy"
+                            strokeWidth={1.75}
+                          />
+                          <h3 className="text-title text-foreground">
+                            {step.title}
+                          </h3>
+                        </div>
+                        <p className="mt-3 text-body text-muted-foreground">
+                          {step.description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-10 text-center text-caption text-muted-foreground">
+              Punya pertanyaan? Hubungi Ketua Logistik OSUI Mahawaditra.
+            </p>
+            <p className="mt-2 text-center text-caption text-muted-foreground">
+              If you're an admin, you can{" "}
+              <Link
+                href="/admin"
+                className="underline underline-offset-2 font-bold hover:text-foreground"
+              >
+                get in here
+              </Link>
+              .
+            </p>
+          </div>
+        </section>
 
-            <div className="min-w-0">
-              <div className="flex flex-col gap-3.5 text-body-lg text-foreground">
-                <p>
-                  This site was build because for{" "}
-                  <strong className="font-semibold">one</strong>, I need more
-                  projects for my portfolio and{" "}
-                  <strong className="font-semibold">two</strong>, I was
-                  unfortunately Ketua Logistik 2023 so I know how{" "}
-                  <strong className="font-semibold">messy</strong> it is even
-                  after I fully reorganized the inventarisasi with such
-                  meticulousness and color coding like it&apos;s a K-Pop color
-                  coded lyrics video.
-                </p>
-                <strong className="font-semibold">
-                  I can definitely assure you I didn&apos;t do this because
-                  I&apos;m still somewhat attached to OSUI.
-                </strong>
-                <p>
-                  But anyways, here it is. I hope this runs well because
-                  building this was&hellip; Certainly an experience. If it does
-                  not&hellip; Yaudah lah ya maap kabarin aja.
-                </p>
-                <p>
-                  If you do have any questions regarding this web...{" "}
-                  <span className="font-medium not-italic text-foreground">
-                    no you don&apos;t.
-                  </span>
-                </p>
+        <section className="border-t border-border bg-surface px-6 py-24">
+          <div className="mx-auto max-w-4xl">
+            <div className="grid grid-cols-1 items-start gap-10 sm:grid-cols-[auto_1fr]">
+              <div className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-xl bg-navy shadow-md">
+                <Image
+                  src="/about/haseul-loona.gif"
+                  alt="haseulbintaro"
+                  width={140}
+                  height={140}
+                  className="h-full w-full object-cover"
+                />
               </div>
 
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
-                <div className="flex items-center gap-2.5">
-                  <span
-                    aria-hidden
-                    className="h-0.5 w-8 rounded-full bg-gold"
-                  />
-                  <span className="font-heading text-body font-medium text-foreground">
-                    ❄️ haseulbintaro
-                  </span>
+              <h2 className="font-heading text-h2 text-foreground sm:order-first sm:col-span-2 sm:text-center">
+                Why is this a thing?
+              </h2>
+
+              <div className="min-w-0">
+                <div className="flex flex-col gap-3.5 text-body-lg text-foreground">
+                  <p>
+                    This site was build because for{" "}
+                    <strong className="font-semibold">one</strong>, I need
+                    more projects for my portfolio and{" "}
+                    <strong className="font-semibold">two</strong>, I was
+                    unfortunately Ketua Logistik 2023 so I know how{" "}
+                    <strong className="font-semibold">messy</strong> it is
+                    even after I fully reorganized the inventarisasi with
+                    such meticulousness and color coding like it&apos;s a
+                    K-Pop color coded lyrics video.
+                  </p>
+                  <strong className="font-semibold">
+                    I can definitely assure you I didn&apos;t do this because
+                    I&apos;m still somewhat attached to OSUI.
+                  </strong>
+                  <p>
+                    But anyways, here it is. I hope this runs well because
+                    building this was&hellip; Certainly an experience. If it
+                    does not&hellip; Yaudah lah ya maap kabarin aja.
+                  </p>
+                  <p>
+                    If you do have any questions regarding this web...{" "}
+                    <span className="font-medium not-italic text-foreground">
+                      no you don&apos;t.
+                    </span>
+                  </p>
                 </div>
-                <div className="flex flex-col items-start gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
-                  <a
-                    href="https://github.com/mahawaditra/baton"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-caption font-medium text-foreground transition-colors hover:bg-muted"
-                  >
-                    <GithubIcon className="h-3.5 w-3.5" />
-                    mahawaditra/baton
-                  </a>
-                  <a
-                    href="https://vanillaine.my.id"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-caption font-medium text-foreground transition-colors hover:bg-muted"
-                  >
-                    <Image
-                      src="/about/loonaColors.svg"
-                      alt=""
-                      width={14}
-                      height={14}
-                      className="shrink-0"
+
+                <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      aria-hidden
+                      className="h-0.5 w-8 rounded-full bg-gold"
                     />
-                    vanillaine.my.id
-                  </a>
+                    <span className="font-heading text-body font-medium text-foreground">
+                      ❄️ haseulbintaro
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-start gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
+                    <a
+                      href="https://github.com/mahawaditra/baton"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-caption font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <GithubIcon className="h-3.5 w-3.5" />
+                      mahawaditra/baton
+                    </a>
+                    <a
+                      href="https://vanillaine.my.id"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-caption font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Image
+                        src="/about/loonaColors.svg"
+                        alt=""
+                        width={14}
+                        height={14}
+                        className="shrink-0"
+                      />
+                      vanillaine.my.id
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <footer className="px-6 py-6 text-center text-caption text-muted-foreground">
-        built with unspoken longing for a season long faded by{" "}
-        <strong className="font-semibold">haseulbintaro</strong>
-        <span className="mt-1 block text-micro text-foreground/5">
-          #STANLOONA
-        </span>
-      </footer>
+        <footer className="bg-background px-6 py-6 text-center text-caption text-muted-foreground">
+          built with unspoken longing for a season long faded by{" "}
+          <strong className="font-semibold">haseulbintaro</strong>
+          <span className="mt-1 block text-micro text-foreground/5">
+            #STANLOONA
+          </span>
+        </footer>
+      </div>
     </div>
   );
 }

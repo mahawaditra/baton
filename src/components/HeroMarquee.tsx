@@ -7,10 +7,11 @@ const MARQUEE_DURATION_SECONDS = 40;
 
 export function HeroMarquee() {
   return (
-    <div aria-hidden className="absolute inset-0">
+    <div aria-hidden className="fixed inset-0 -z-10">
       <div className="flex h-full flex-col justify-between py-6">
         {Array.from({ length: MOBILE_ROWS }).map((_, rowIndex) => {
-          const delaySeconds = -(rowIndex * MARQUEE_DURATION_SECONDS) / MOBILE_ROWS;
+          const delaySeconds =
+            -(rowIndex * MARQUEE_DURATION_SECONDS) / MOBILE_ROWS;
           return (
             <div
               key={rowIndex}
