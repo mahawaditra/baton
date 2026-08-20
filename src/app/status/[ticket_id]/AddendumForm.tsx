@@ -20,6 +20,7 @@ const initialState = {
   success: false,
   error: null,
   generalError: null,
+  fields: {},
 };
 
 export function AddendumForm({
@@ -100,6 +101,7 @@ export function AddendumForm({
         <form
           action={formAction}
           onSubmit={handleSubmit}
+          key={JSON.stringify(state.fields)}
           className="flex flex-col gap-4"
         >
           {(totalSizeError ?? state.error) && (
@@ -112,21 +114,40 @@ export function AddendumForm({
             <Label htmlFor="completeness" required>
               Kelengkapan (bow, case, rosin, dll.)
             </Label>
-            <Input id="completeness" name="completeness" type="text" required />
+            <Input
+              id="completeness"
+              name="completeness"
+              type="text"
+              defaultValue={state.fields.completeness ?? ""}
+              required
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="bodyCondition" required>
               Kondisi Badan Alat
             </Label>
-            <Textarea id="bodyCondition" name="bodyCondition" required />
+            <Textarea
+              id="bodyCondition"
+              name="bodyCondition"
+              defaultValue={state.fields.bodyCondition ?? ""}
+              required
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="accessoriesCondition">Kondisi Aksesori</Label>
-            <Textarea id="accessoriesCondition" name="accessoriesCondition" />
+            <Textarea
+              id="accessoriesCondition"
+              name="accessoriesCondition"
+              defaultValue={state.fields.accessoriesCondition ?? ""}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="notes">Catatan</Label>
-            <Textarea id="notes" name="notes" />
+            <Textarea
+              id="notes"
+              name="notes"
+              defaultValue={state.fields.notes ?? ""}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="photos" required>

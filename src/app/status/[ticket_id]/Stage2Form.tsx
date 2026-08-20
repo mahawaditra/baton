@@ -12,6 +12,7 @@ const initialState = {
   success: false,
   error: null,
   generalError: null,
+  fields: {},
 };
 
 export function Stage2Form({
@@ -42,7 +43,11 @@ export function Stage2Form({
         <CardTitle>Lengkapi data kontrak kamu</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="flex flex-col gap-4">
+        <form
+          action={formAction}
+          className="flex flex-col gap-4"
+          key={JSON.stringify(state.fields)}
+        >
           {state.error && (
             <p className="text-sm text-destructive" aria-live="polite">
               {state.error}
@@ -60,6 +65,7 @@ export function Stage2Form({
               inputMode="numeric"
               placeholder="16 digit"
               className="tabular"
+              defaultValue={state.fields.ktpNumber ?? ""}
               required
             />
           </div>
@@ -67,7 +73,13 @@ export function Stage2Form({
             <Label htmlFor="addressKtp" required>
               Alamat (sesuai KTP)
             </Label>
-            <Input id="addressKtp" name="addressKtp" type="text" required />
+            <Input
+              id="addressKtp"
+              name="addressKtp"
+              type="text"
+              defaultValue={state.fields.addressKtp ?? ""}
+              required
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="addressDomicile" required>
@@ -77,6 +89,7 @@ export function Stage2Form({
               id="addressDomicile"
               name="addressDomicile"
               type="text"
+              defaultValue={state.fields.addressDomicile ?? ""}
               required
             />
           </div>
@@ -89,6 +102,7 @@ export function Stage2Form({
               name="faculty"
               type="text"
               placeholder="mis. FMIPA/Biologi"
+              defaultValue={state.fields.faculty ?? ""}
               required
             />
           </div>
@@ -104,6 +118,7 @@ export function Stage2Form({
                 id="guardianName"
                 name="guardianName"
                 type="text"
+                defaultValue={state.fields.guardianName ?? ""}
                 required
               />
             </div>
@@ -116,6 +131,7 @@ export function Stage2Form({
                 name="guardianPhone"
                 type="tel"
                 className="tabular"
+                defaultValue={state.fields.guardianPhone ?? ""}
                 required
               />
             </div>
@@ -127,6 +143,7 @@ export function Stage2Form({
                 id="guardianAddressKtp"
                 name="guardianAddressKtp"
                 type="text"
+                defaultValue={state.fields.guardianAddressKtp ?? ""}
                 required
               />
             </div>

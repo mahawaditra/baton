@@ -14,6 +14,7 @@ type State = {
   accessCode: string | null;
   error: string | null;
   generalError: string | null;
+  fields: Record<string, string>;
 };
 
 const submitRequestSchema = z.object({
@@ -35,6 +36,15 @@ export async function submitRequest(
   prevState: State,
   formData: FormData,
 ): Promise<State> {
+  const fields = {
+    name: String(formData.get("name") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+    lineId: String(formData.get("lineId") ?? ""),
+    instrumentType: String(formData.get("instrumentType") ?? ""),
+    year: String(formData.get("year") ?? ""),
+  };
+
   const ip = await getClientIp();
   const { success } = await submitRequestLimiter.limit(`submit:${ip}`);
   if (!success) {
@@ -43,6 +53,7 @@ export async function submitRequest(
       accessCode: null,
       error: null,
       generalError: "Terlalu banyak pengajuan. Coba lagi nanti.",
+      fields,
     };
   }
 
@@ -61,6 +72,7 @@ export async function submitRequest(
       accessCode: null,
       error: parsed.error.issues[0].message,
       generalError: null,
+      fields,
     };
   }
 
@@ -121,5 +133,6 @@ export async function submitRequest(
     accessCode,
     error: null,
     generalError: null,
+    fields: {},
   };
 }

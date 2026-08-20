@@ -151,7 +151,6 @@ The fix was to split the flow into one upload per document: one button per file,
 | Testing            | Vitest                                                      |                                                                                                     |
 | Error tracking     | Sentry                                                      |                                                                                                     |
 | Hosting            | Vercel, with Vercel Cron for scheduled jobs                 |                                                                                                     |
-| PWA                | Serwist                                                     | installability shipped; offline caching in progress                                                 |
 
 ## Getting Started
 

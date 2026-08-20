@@ -42,6 +42,7 @@ type Stage2State = {
   success: boolean;
   error: string | null;
   generalError: string | null;
+  fields: Record<string, string>;
 };
 
 type UploadState = {
@@ -54,12 +55,14 @@ type AddendumState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
+  fields: Record<string, string>;
 };
 
 type ExtensionState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
+  fields: Record<string, string>;
 };
 
 async function requireTicketAccess(ticketId: string, accessCode: string) {
@@ -241,6 +244,7 @@ export async function submitStage2(
       success: false,
       error: null,
       generalError: "Kode akses salah.",
+      fields: {},
     };
   }
 
@@ -249,6 +253,7 @@ export async function submitStage2(
       success: false,
       error: null,
       generalError: "Pengajuan ini belum siap untuk Tahap 2.",
+      fields: {},
     };
   }
 
@@ -257,6 +262,7 @@ export async function submitStage2(
       success: false,
       error: null,
       generalError: "Instrumen belum ditugaskan.",
+      fields: {},
     };
   }
 
@@ -275,6 +281,15 @@ export async function submitStage2(
       success: false,
       error: parsed.error.issues[0].message,
       generalError: null,
+      fields: {
+        ktpNumber: String(formData.get("ktpNumber") ?? ""),
+        addressKtp: String(formData.get("addressKtp") ?? ""),
+        addressDomicile: String(formData.get("addressDomicile") ?? ""),
+        faculty: String(formData.get("faculty") ?? ""),
+        guardianName: String(formData.get("guardianName") ?? ""),
+        guardianPhone: String(formData.get("guardianPhone") ?? ""),
+        guardianAddressKtp: String(formData.get("guardianAddressKtp") ?? ""),
+      },
     };
   }
 
@@ -404,10 +419,11 @@ export async function submitStage2(
       success: false,
       error: null,
       generalError: "Pengajuan ini sudah diproses di tab/perangkat lain.",
+      fields: {},
     };
   }
 
-  return { success: true, error: null, generalError: null };
+  return { success: true, error: null, generalError: null, fields: {} };
 }
 
 export async function submitExtension(
@@ -418,6 +434,16 @@ export async function submitExtension(
 ): Promise<ExtensionState> {
   let request;
 
+  const fields = {
+    ktpNumber: String(formData.get("ktpNumber") ?? ""),
+    addressKtp: String(formData.get("addressKtp") ?? ""),
+    addressDomicile: String(formData.get("addressDomicile") ?? ""),
+    faculty: String(formData.get("faculty") ?? ""),
+    guardianName: String(formData.get("guardianName") ?? ""),
+    guardianPhone: String(formData.get("guardianPhone") ?? ""),
+    guardianAddressKtp: String(formData.get("guardianAddressKtp") ?? ""),
+  };
+
   try {
     request = await requireTicketAccess(ticketId, accessCode);
   } catch {
@@ -425,6 +451,7 @@ export async function submitExtension(
       success: false,
       error: null,
       generalError: "Kode akses salah.",
+      fields: {},
     };
   }
 
@@ -433,6 +460,7 @@ export async function submitExtension(
       success: false,
       error: null,
       generalError: "Pengajuan ini tidak bisa diperpanjang.",
+      fields: {},
     };
   }
 
@@ -451,6 +479,7 @@ export async function submitExtension(
       success: false,
       error: parsed.error.issues[0].message,
       generalError: null,
+      fields,
     };
   }
 
@@ -480,6 +509,7 @@ export async function submitExtension(
       success: false,
       error: null,
       generalError: "Belum masuk periode waktu perpanjangan.",
+      fields,
     };
   }
 
@@ -489,6 +519,7 @@ export async function submitExtension(
       error: null,
       generalError:
         "Perpanjangan untuk pengajuan ini masih menunggu konfirmasi admin.",
+      fields,
     };
   }
 
@@ -587,7 +618,7 @@ export async function submitExtension(
     }),
   ]);
 
-  return { success: true, error: null, generalError: null };
+  return { success: true, error: null, generalError: null, fields: {} };
 }
 
 export async function getContractPdf(
@@ -784,6 +815,13 @@ export async function submitAddendum(
   prevState: AddendumState,
   formData: FormData,
 ): Promise<AddendumState> {
+  const fields = {
+    completeness: String(formData.get("completeness") ?? ""),
+    bodyCondition: String(formData.get("bodyCondition") ?? ""),
+    accessoriesCondition: String(formData.get("accessoriesCondition") ?? ""),
+    notes: String(formData.get("notes") ?? ""),
+  };
+
   try {
     await requireTicketAccess(ticketId, accessCode);
   } catch {
@@ -791,6 +829,7 @@ export async function submitAddendum(
       success: false,
       error: null,
       generalError: "Kode akses salah.",
+      fields: {},
     };
   }
 
@@ -808,6 +847,7 @@ export async function submitAddendum(
       success: false,
       error: null,
       generalError: "Periode peminjaman tidak ditemukan.",
+      fields: {},
     };
   }
 
@@ -817,6 +857,7 @@ export async function submitAddendum(
         success: false,
         error: null,
         generalError: "Pengajuan ini tidak bisa dikembalikan.",
+        fields: {},
       };
     }
     const existingFinal = await prisma.addendum.findFirst({
@@ -827,6 +868,7 @@ export async function submitAddendum(
         success: false,
         error: null,
         generalError: "Addendum akhir untuk periode ini sudah pernah dikirim.",
+        fields: {},
       };
     }
   } else {
@@ -838,6 +880,7 @@ export async function submitAddendum(
           success: false,
           error: null,
           generalError: "Pengajuan ini belum siap untuk addendum.",
+          fields: {},
         };
       }
       const signedContract = await prisma.document.findFirst({
@@ -848,6 +891,7 @@ export async function submitAddendum(
           success: false,
           error: null,
           generalError: "Kontrak yang kamu tanda tangani masih direview admin.",
+          fields: {},
         };
       }
     } else {
@@ -856,6 +900,7 @@ export async function submitAddendum(
           success: false,
           error: null,
           generalError: "Pengajuan ini belum siap untuk addendum.",
+          fields: {},
         };
       }
     }
@@ -868,6 +913,7 @@ export async function submitAddendum(
         success: false,
         error: null,
         generalError: "Addendum awal untuk periode ini sudah pernah dikirim.",
+        fields: {},
       };
     }
   }
@@ -878,6 +924,7 @@ export async function submitAddendum(
       success: false,
       error: "Kamu harus mengonfirmasi bahwa data kondisi ini benar.",
       generalError: null,
+      fields,
     };
   }
 
@@ -893,6 +940,7 @@ export async function submitAddendum(
       success: false,
       error: parsed.error.issues[0].message,
       generalError: null,
+      fields,
     };
   }
 
@@ -917,7 +965,12 @@ export async function submitAddendum(
     if (photo.size === 0) continue;
     const validation = await validateImageUpload(photo);
     if (!validation.valid) {
-      return { success: false, error: validation.error, generalError: null };
+      return {
+        success: false,
+        error: validation.error,
+        generalError: null,
+        fields,
+      };
     }
     validatedPhotos.push({ file: photo, mimeType: validation.mimeType });
   }
@@ -952,5 +1005,5 @@ export async function submitAddendum(
     },
   });
 
-  return { success: true, error: null, generalError: null };
+  return { success: true, error: null, generalError: null, fields: {} };
 }

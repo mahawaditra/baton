@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { SerwistProvider } from "@serwist/turbopack/react";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -53,7 +52,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SerwistProvider swUrl="/serwist/sw.js">{children}</SerwistProvider>
+          {children}
           <Toaster />
           <ThemeToggle />
         </ThemeProvider>

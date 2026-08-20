@@ -13,6 +13,7 @@ const initialState = {
   success: false,
   error: null,
   generalError: null,
+  fields: {},
 };
 
 export function ExtendForm({
@@ -47,7 +48,11 @@ export function ExtendForm({
           Cek ulang data kamu di bawah — ubah kalau ada yang berubah.
         </p>
 
-        <form action={formAction} className="flex flex-col gap-4">
+        <form
+          action={formAction}
+          key={JSON.stringify(state.fields)}
+          className="flex flex-col gap-4"
+        >
           {state.error && (
             <p className="text-sm text-destructive" aria-live="polite">
               {state.error}
@@ -64,7 +69,7 @@ export function ExtendForm({
               type="text"
               inputMode="numeric"
               className="tabular"
-              defaultValue={data.borrowerKtpNumber ?? ""}
+              defaultValue={state.fields.ktpNumber || data.borrowerKtpNumber || ""}
               required
             />
           </div>
@@ -76,7 +81,9 @@ export function ExtendForm({
               id="ext-addressKtp"
               name="addressKtp"
               type="text"
-              defaultValue={data.borrowerAddressKtp ?? ""}
+              defaultValue={
+                state.fields.addressKtp || data.borrowerAddressKtp || ""
+              }
               required
             />
           </div>
@@ -88,7 +95,11 @@ export function ExtendForm({
               id="ext-addressDomicile"
               name="addressDomicile"
               type="text"
-              defaultValue={data.borrowerAddressDomicile ?? ""}
+              defaultValue={
+                state.fields.addressDomicile ||
+                data.borrowerAddressDomicile ||
+                ""
+              }
               required
             />
           </div>
@@ -100,7 +111,7 @@ export function ExtendForm({
               id="ext-faculty"
               name="faculty"
               type="text"
-              defaultValue={data.borrowerFaculty ?? ""}
+              defaultValue={state.fields.faculty || data.borrowerFaculty || ""}
               required
             />
           </div>
@@ -116,7 +127,9 @@ export function ExtendForm({
                 id="ext-guardianName"
                 name="guardianName"
                 type="text"
-                defaultValue={data.guardianName ?? ""}
+                defaultValue={
+                  state.fields.guardianName || data.guardianName || ""
+                }
                 required
               />
             </div>
@@ -129,7 +142,9 @@ export function ExtendForm({
                 name="guardianPhone"
                 type="tel"
                 className="tabular"
-                defaultValue={data.guardianPhone ?? ""}
+                defaultValue={
+                  state.fields.guardianPhone || data.guardianPhone || ""
+                }
                 required
               />
             </div>
@@ -141,7 +156,11 @@ export function ExtendForm({
                 id="ext-guardianAddressKtp"
                 name="guardianAddressKtp"
                 type="text"
-                defaultValue={data.guardianAddressKtp ?? ""}
+                defaultValue={
+                  state.fields.guardianAddressKtp ||
+                  data.guardianAddressKtp ||
+                  ""
+                }
                 required
               />
             </div>

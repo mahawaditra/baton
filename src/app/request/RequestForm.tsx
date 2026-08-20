@@ -25,6 +25,7 @@ const initialState = {
   accessCode: null,
   error: null,
   generalError: null,
+  fields: {},
 };
 
 export function RequestForm() {
@@ -103,7 +104,11 @@ export function RequestForm() {
         </p>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-6">
+      <form
+        action={formAction}
+        key={JSON.stringify(state.fields)}
+        className="flex flex-col gap-6"
+      >
         {state.error && (
           <p className="text-sm text-destructive" aria-live="polite">
             {state.error}
@@ -121,6 +126,7 @@ export function RequestForm() {
                 name="name"
                 type="text"
                 placeholder="Nama lengkap kamu"
+                defaultValue={state.fields.name ?? ""}
                 required
               />
             </div>
@@ -134,6 +140,7 @@ export function RequestForm() {
                 name="email"
                 type="email"
                 placeholder="nama@email.com"
+                defaultValue={state.fields.email ?? ""}
                 required
               />
               <p className="text-caption text-muted-foreground">
@@ -152,6 +159,7 @@ export function RequestForm() {
                   type="tel"
                   placeholder="+62 8xx xxxx xxxx"
                   className="tabular"
+                  defaultValue={state.fields.phone ?? ""}
                   required
                 />
               </div>
@@ -164,6 +172,7 @@ export function RequestForm() {
                   name="lineId"
                   type="text"
                   placeholder="ID LINE kamu"
+                  defaultValue={state.fields.lineId ?? ""}
                   required
                 />
               </div>
@@ -174,7 +183,11 @@ export function RequestForm() {
                 <Label htmlFor="instrumentType" required>
                   Instrumen yang diminati
                 </Label>
-                <Select name="instrumentType" required>
+                <Select
+                  name="instrumentType"
+                  defaultValue={state.fields.instrumentType || undefined}
+                  required
+                >
                   <SelectTrigger id="instrumentType" className="w-full">
                     <SelectValue placeholder="Pilih instrumen..." />
                   </SelectTrigger>
@@ -198,6 +211,7 @@ export function RequestForm() {
                   inputMode="numeric"
                   placeholder="mis. 2023"
                   className="tabular"
+                  defaultValue={state.fields.year ?? ""}
                   required
                 />
               </div>
