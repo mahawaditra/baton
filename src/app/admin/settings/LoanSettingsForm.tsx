@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignatoryPhonePublicToggle } from "./SignatoryPhonePublicToggle";
+import { splitFacultyMajor } from "@/lib/format";
 
 const initialState: UpdateLoanSettingsState = {
   success: false,
@@ -24,6 +25,7 @@ export function LoanSettingsForm({
     updateLoanSettings,
     initialState,
   );
+  const signatoryFacultyMajor = splitFacultyMajor(loanSettings?.signatoryFaculty);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -196,12 +198,22 @@ export function LoanSettingsForm({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryFaculty">Faculty/Major</Label>
+              <Label htmlFor="signatoryFaculty">Faculty</Label>
               <Input
                 id="signatoryFaculty"
                 name="signatoryFaculty"
-                defaultValue={loanSettings?.signatoryFaculty ?? ""}
-                placeholder="Contoh: FT/Teknik Elektro"
+                defaultValue={signatoryFacultyMajor.faculty}
+                placeholder="Contoh: FT"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="signatoryMajor">Major</Label>
+              <Input
+                id="signatoryMajor"
+                name="signatoryMajor"
+                defaultValue={signatoryFacultyMajor.major}
+                placeholder="Contoh: Teknik Elektro"
                 required
               />
             </div>
@@ -214,7 +226,7 @@ export function LoanSettingsForm({
                 required
               />
             </div>
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="signatorySection">Section/Instrument</Label>
               <Input
                 id="signatorySection"

@@ -8,7 +8,7 @@
 
 > Base for Assets, Tools, and Orchestral Needs
 
-![BATON admin dashboard](public/docs/BATON-Landing.png)
+![BATON landing page](public/docs/BATON-Landing.png)
 A web platform for OSUI Mahawaditra's Logistics division to manage instrument borrowing and inventory — replacing a patchwork of Google Forms, Sheets, and Word documents with one integrated system.
 
 
@@ -26,6 +26,8 @@ A web platform for OSUI Mahawaditra's Logistics division to manage instrument bo
     - [No login for borrowers](#no-login-for-borrowers)
     - [Keeping the free-tier database awake](#keeping-the-free-tier-database-awake)
     - [From one combined upload to one-per-document](#from-one-combined-upload-to-one-per-document)
+    - ["Ongoing loans" is a timestamp, not a status](#ongoing-loans-is-a-timestamp-not-a-status)
+    - [Two inputs for one field](#two-inputs-for-one-field)
   - [Tech Stack](#tech-stack)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
@@ -66,15 +68,16 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - One-click extension request (from 30 days before the due date) and early return
 - A web form — with phone-camera photos — for condition addendums on extension
 - Automatic email notifications at each status change
+- A landing-page FAQ, and a direct WhatsApp line to the logistics head when they choose to show it
 
 ### For admins
 
-- Dashboard: requests needing action, recent activity, active loan roster
-- Real-time instrument inventory, sortable/filterable, edited from a per-instrument detail page
-- A separate goods inventory (manual CRUD)
+- Dashboard: requests needing action, recent activity, and the active loan roster — with a one-click carry-over that moves long-running loans into a separate _ongoing_ roster before each intake season
+- Real-time instrument inventory, sortable/filterable, edited from a per-instrument detail page, each with a catalog photo (crop and rotate on upload)
+- A separate goods inventory (manual CRUD), catalog photos and all
 - One-click inventory snapshot export to XLSX, saved to Drive and downloaded
 - Prefilled contract PDF generation
-- Document review (approve/reject)
+- Document review (approve/reject), with an in-app viewer for uploaded condition photos
 - Deposit tracking
 - Extension and return handling
 - Per-instrument history page
@@ -131,6 +134,16 @@ Supabase's free tier pauses a database after a stretch of inactivity, which does
 Document upload originally submitted all three required files: signed contract, deposit proof, and ID scan in a single form and a single `submitDocuments` call (one upload stream). That ran into a real limit: Vercel's function body cap is a hard 4.5MB, not configurable, and BATON's own setting (`next.config.ts`, `serverActions.bodySizeLimit`) sat a notch below that at 4MB. With three files sharing one request, the per-file limit had to be split three ways (~1.3MB each). But even so, a couple of large scans or high-resolution photos could push the _combined_ upload over the limit even when every individual file was valid on its own.
 
 The fix was to split the flow into one upload per document: one button per file, the server action called three times independently, each request carrying a single file with the full ~4MB budget to itself instead of a shared one. It turned out to be a UX improvement too, not just a size fix — each upload confirms on its own as it succeeds, and the completion check (the one that flips the request to `documents_uploaded` and notifies the admin) simply re-runs after every individual upload. It naturally fires at the right moment, whichever document happens to land last, without needing a separate "batch complete" step.
+
+### "Ongoing loans" is a timestamp, not a status
+
+Right before the Prelude intake season, the admin team wants the active-loan roster to show _this_ batch of borrowers — not the stragglers still holding instruments from earlier in the year. But a straggler loan isn't a different kind of loan: it's still active, still counting down, still extendable, still flipped to `overdue` by the same daily cron. A new status would have meant every one of those paths having to learn about it.
+
+So "ongoing" is just a nullable `carriedOverAt` timestamp on the request. One admin action stamps it, in bulk, on every active loan the moment before intake opens; the dashboard and the requests table then partition the roster on that one field — null is "active", set is "ongoing" — and nothing else in the system has to care. Confirming an extension sets it automatically (a loan old enough to extend belongs with the carried-over group anyway), and a per-loan button clears it again. A boolean would have worked too, but the timestamp also records _when_ the line was drawn, which turns out to be the part worth keeping.
+
+### Two inputs for one field
+
+The borrower's faculty and major are stored — and printed on the contract — as a single `Faculty/Major` string, and the form used to collect them that way too: one text box, with a rule that there be exactly one slash in it. People kept failing that rule — a fullwidth `／` from a phone keyboard, no slash at all, a stray trailing one. It's now two separate inputs, joined on the server. The stored value and the contract come out identical to before, so there was nothing to migrate.
 
 ## Tech Stack
 
@@ -224,7 +237,7 @@ src/
   lib/           Business logic and integrations — Prisma client, Google Drive, email,
                  PDF generation, rate limiting, and pure rule functions (loan-rules.ts)
 prisma/
-  schema.prisma  Database schema (10 models)
+  schema.prisma  Database schema (14 models)
   migrations/    Migration history
   seed.ts        Seed data for local development
 ```

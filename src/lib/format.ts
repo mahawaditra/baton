@@ -212,3 +212,11 @@ export function toWhatsAppNumber(phone: string): string {
   if (digits.startsWith("0")) return `62${digits.slice(1)}`;
   return `62${digits}`;
 }
+
+export function splitFacultyMajor(value: string | null | undefined): {
+  faculty: string;
+  major: string;
+} {
+  const [faculty = "", ...rest] = (value ?? "").split("/");
+  return { faculty: faculty.trim(), major: rest.join("/").trim() };
+}

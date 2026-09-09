@@ -8,12 +8,7 @@ import {
   getBorrowerArchiveFolder,
   getOrCreateFolder,
 } from "@/lib/drive";
-import {
-  buildContractHTML,
-  headerTemplate,
-  footerTemplate,
-} from "@/lib/contract-pdf";
-import { getBrowser } from "@/lib/contract-pdf";
+import { renderBorrowerContractPdf } from "@/lib/contract-pdf";
 import { driveTimestamp, escapeHtml } from "@/lib/format";
 import {
   documentTypesNeedingUpload,
@@ -38,7 +33,7 @@ type DownloadResult =
   | { success: true; dataUrl: string; fileName: string }
   | { success: false; error: string };
 
-type Stage2State = {
+type FormActionState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
@@ -49,20 +44,6 @@ type UploadState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
-};
-
-type AddendumState = {
-  success: boolean;
-  error: string | null;
-  generalError: string | null;
-  fields: Record<string, string>;
-};
-
-type ExtensionState = {
-  success: boolean;
-  error: string | null;
-  generalError: string | null;
-  fields: Record<string, string>;
 };
 
 async function requireTicketAccess(ticketId: string, accessCode: string) {
@@ -204,11 +185,15 @@ const contractDataSchema = z.object({
   faculty: z
     .string()
     .trim()
-    .max(100, "Fakultas/jurusan maksimal 100 karakter")
-    .regex(
-      /^[^/]+\/[^/]+$/,
-      "Format harus Fakultas/Jurusan, mis. FMIPA/Biologi",
-    ),
+    .min(1, "Fakultas wajib diisi")
+    .max(60, "Fakultas maksimal 60 karakter")
+    .regex(/^[^/]+$/, "Fakultas tidak boleh mengandung tanda /"),
+  major: z
+    .string()
+    .trim()
+    .min(1, "Jurusan/prodi wajib diisi")
+    .max(60, "Jurusan/prodi maksimal 60 karakter")
+    .regex(/^[^/]+$/, "Jurusan/prodi tidak boleh mengandung tanda /"),
   guardianName: z.string().trim().min(1, "Nama wali wajib diisi").max(100),
   guardianPhone: z.string().trim().min(1, "Nomor HP wali wajib diisi").max(20),
   guardianAddressKtp: z
@@ -217,6 +202,15 @@ const contractDataSchema = z.object({
     .min(1, "Alamat KTP wali wajib diisi")
     .max(300),
 });
+
+function echoContractFields(formData: FormData): Record<string, string> {
+  return Object.fromEntries(
+    Object.keys(contractDataSchema.shape).map((key) => [
+      key,
+      String(formData.get(key) ?? ""),
+    ]),
+  );
+}
 
 const addendumDataSchema = z.object({
   completeness: z.string().trim().min(1, "Kelengkapan wajib diisi").max(500),
@@ -232,9 +226,9 @@ const addendumDataSchema = z.object({
 export async function submitStage2(
   ticketId: string,
   accessCode: string,
-  prevState: Stage2State,
+  prevState: FormActionState,
   formData: FormData,
-): Promise<Stage2State> {
+): Promise<FormActionState> {
   let request;
 
   try {
@@ -271,6 +265,7 @@ export async function submitStage2(
     addressKtp: formData.get("addressKtp"),
     addressDomicile: formData.get("addressDomicile"),
     faculty: formData.get("faculty"),
+    major: formData.get("major"),
     guardianName: formData.get("guardianName"),
     guardianPhone: formData.get("guardianPhone"),
     guardianAddressKtp: formData.get("guardianAddressKtp"),
@@ -281,15 +276,7 @@ export async function submitStage2(
       success: false,
       error: parsed.error.issues[0].message,
       generalError: null,
-      fields: {
-        ktpNumber: String(formData.get("ktpNumber") ?? ""),
-        addressKtp: String(formData.get("addressKtp") ?? ""),
-        addressDomicile: String(formData.get("addressDomicile") ?? ""),
-        faculty: String(formData.get("faculty") ?? ""),
-        guardianName: String(formData.get("guardianName") ?? ""),
-        guardianPhone: String(formData.get("guardianPhone") ?? ""),
-        guardianAddressKtp: String(formData.get("guardianAddressKtp") ?? ""),
-      },
+      fields: echoContractFields(formData),
     };
   }
 
@@ -298,10 +285,12 @@ export async function submitStage2(
     addressKtp,
     addressDomicile,
     faculty,
+    major,
     guardianName,
     guardianPhone,
     guardianAddressKtp,
   } = parsed.data;
+  const facultyMajor = `${faculty}/${major}`;
 
   const [instrument, settings] = await Promise.all([
     prisma.instrument.findUniqueOrThrow({
@@ -310,73 +299,31 @@ export async function submitStage2(
     prisma.loanSetting.findFirstOrThrow(),
   ]);
 
-  const signatoryImageBase64 = settings.signatoryImageDriveId
-    ? await downloadFileAsBase64(settings.signatoryImageDriveId, "image/png")
-    : null;
-
-  const html = await buildContractHTML({
-    signatory: {
-      name: settings.signatoryName,
-      phone: settings.signatoryPhone,
-      addressKtp: settings.signatoryAddressKtp,
-      addressDomicile: settings.signatoryAddressDomicile,
-      faculty: settings.signatoryFaculty,
-      year: settings.signatoryYear,
-      section: settings.signatorySection,
-      ktpNumber: settings.signatoryKtpNumber,
-      imageBase64: signatoryImageBase64,
-    },
+  const pdfBuffer = await renderBorrowerContractPdf({
+    settings,
+    instrument,
     borrower: {
       name: request.borrowerName,
       phone: request.borrowerPhone,
-      addressKtp,
-      addressDomicile,
-      faculty,
       year: request.borrowerYear,
       ktpNumber,
+      addressKtp,
+      addressDomicile,
+      facultyMajor,
     },
     guardian: {
       name: guardianName,
       phone: guardianPhone,
       addressKtp: guardianAddressKtp,
     },
-    instrumentLabel: `${instrument.section}/${instrument.type}`,
-    instrumentType: instrument.type,
-    depositAmount: settings.depositAmount,
-    depositPartialAmount: settings.depositPartialAmount,
-    depositGraceDays: settings.depositGraceDays,
-    bankName: settings.bankName,
-    bankAccount: settings.bankAccount,
-    bankHolder: settings.bankHolder,
-    dueDate: settings.dueDate,
   });
-
-  const browser = await getBrowser();
-  let pdfBuffer: Buffer;
-
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html);
-
-    pdfBuffer = Buffer.from(
-      await page.pdf({
-        format: "A4",
-        displayHeaderFooter: true,
-        headerTemplate,
-        footerTemplate,
-        margin: { top: "200px", bottom: "110px", left: "70px", right: "70px" },
-      }),
-    );
-  } finally {
-    await browser.close();
-  }
 
   const year = new Date().getFullYear();
   const folderId = await getGeneratedContractFolder(year);
   const driveFileId = await uploadFile(
     `Kontrak ${request.borrowerName}_${request.ticketId}.pdf`,
     "application/pdf",
-    Buffer.from(pdfBuffer),
+    pdfBuffer,
     folderId,
   );
 
@@ -396,7 +343,7 @@ export async function submitStage2(
           borrowerKtpNumber: ktpNumber,
           borrowerAddressKtp: addressKtp,
           borrowerAddressDomicile: addressDomicile,
-          borrowerFaculty: faculty,
+          borrowerFaculty: facultyMajor,
           guardianName,
           guardianPhone,
           guardianAddressKtp,
@@ -429,20 +376,12 @@ export async function submitStage2(
 export async function submitExtension(
   ticketId: string,
   accessCode: string,
-  prevState: ExtensionState,
+  prevState: FormActionState,
   formData: FormData,
-): Promise<ExtensionState> {
+): Promise<FormActionState> {
   let request;
 
-  const fields = {
-    ktpNumber: String(formData.get("ktpNumber") ?? ""),
-    addressKtp: String(formData.get("addressKtp") ?? ""),
-    addressDomicile: String(formData.get("addressDomicile") ?? ""),
-    faculty: String(formData.get("faculty") ?? ""),
-    guardianName: String(formData.get("guardianName") ?? ""),
-    guardianPhone: String(formData.get("guardianPhone") ?? ""),
-    guardianAddressKtp: String(formData.get("guardianAddressKtp") ?? ""),
-  };
+  const fields = echoContractFields(formData);
 
   try {
     request = await requireTicketAccess(ticketId, accessCode);
@@ -469,6 +408,7 @@ export async function submitExtension(
     addressKtp: formData.get("addressKtp"),
     addressDomicile: formData.get("addressDomicile"),
     faculty: formData.get("faculty"),
+    major: formData.get("major"),
     guardianName: formData.get("guardianName"),
     guardianPhone: formData.get("guardianPhone"),
     guardianAddressKtp: formData.get("guardianAddressKtp"),
@@ -488,10 +428,12 @@ export async function submitExtension(
     addressKtp,
     addressDomicile,
     faculty,
+    major,
     guardianName,
     guardianPhone,
     guardianAddressKtp,
   } = parsed.data;
+  const facultyMajor = `${faculty}/${major}`;
 
   const [instrument, settings, latestPeriod] = await Promise.all([
     prisma.instrument.findUniqueOrThrow({
@@ -523,66 +465,24 @@ export async function submitExtension(
     };
   }
 
-  const signatoryImageBase64 = settings.signatoryImageDriveId
-    ? await downloadFileAsBase64(settings.signatoryImageDriveId, "image/png")
-    : null;
-
-  const html = await buildContractHTML({
-    signatory: {
-      name: settings.signatoryName,
-      phone: settings.signatoryPhone,
-      addressKtp: settings.signatoryAddressKtp,
-      addressDomicile: settings.signatoryAddressDomicile,
-      faculty: settings.signatoryFaculty,
-      year: settings.signatoryYear,
-      section: settings.signatorySection,
-      ktpNumber: settings.signatoryKtpNumber,
-      imageBase64: signatoryImageBase64,
-    },
+  const pdfBuffer = await renderBorrowerContractPdf({
+    settings,
+    instrument,
     borrower: {
       name: request.borrowerName,
       phone: request.borrowerPhone,
-      addressKtp,
-      addressDomicile,
-      faculty,
       year: request.borrowerYear,
       ktpNumber,
+      addressKtp,
+      addressDomicile,
+      facultyMajor,
     },
     guardian: {
       name: guardianName,
       phone: guardianPhone,
       addressKtp: guardianAddressKtp,
     },
-    instrumentLabel: `${instrument.section}/${instrument.type}`,
-    instrumentType: instrument.type,
-    depositAmount: settings.depositAmount,
-    depositPartialAmount: settings.depositPartialAmount,
-    depositGraceDays: settings.depositGraceDays,
-    bankName: settings.bankName,
-    bankAccount: settings.bankAccount,
-    bankHolder: settings.bankHolder,
-    dueDate: settings.dueDate,
   });
-
-  const browser = await getBrowser();
-  let pdfBuffer: Buffer;
-
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html);
-
-    pdfBuffer = Buffer.from(
-      await page.pdf({
-        format: "A4",
-        displayHeaderFooter: true,
-        headerTemplate,
-        footerTemplate,
-        margin: { top: "200px", bottom: "110px", left: "70px", right: "70px" },
-      }),
-    );
-  } finally {
-    await browser.close();
-  }
 
   const nextSequence = latestPeriod.sequence + 1;
   const year = new Date().getFullYear();
@@ -590,7 +490,7 @@ export async function submitExtension(
   const driveFileId = await uploadFile(
     `Kontrak ${request.borrowerName}_${request.ticketId}_Ext${nextSequence}.pdf`,
     "application/pdf",
-    Buffer.from(pdfBuffer),
+    pdfBuffer,
     folderId,
   );
 
@@ -601,7 +501,7 @@ export async function submitExtension(
         borrowerKtpNumber: ktpNumber,
         borrowerAddressKtp: addressKtp,
         borrowerAddressDomicile: addressDomicile,
-        borrowerFaculty: faculty,
+        borrowerFaculty: facultyMajor,
         guardianName,
         guardianPhone,
         guardianAddressKtp,
@@ -812,9 +712,9 @@ export async function submitAddendum(
   ticketId: string,
   accessCode: string,
   timing: "initial" | "final",
-  prevState: AddendumState,
+  prevState: FormActionState,
   formData: FormData,
-): Promise<AddendumState> {
+): Promise<FormActionState> {
   const fields = {
     completeness: String(formData.get("completeness") ?? ""),
     bodyCondition: String(formData.get("bodyCondition") ?? ""),

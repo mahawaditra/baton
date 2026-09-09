@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import type { LoanSetting, Instrument } from "@/generated/prisma/client";
 import { downloadFileAsBase64 } from "@/lib/drive";
 import { escapeHtml } from "@/lib/format";
 
@@ -320,4 +321,89 @@ export async function getBrowser() {
   }
   const puppeteer = (await import("puppeteer")).default;
   return puppeteer.launch({ headless: true });
+}
+
+type BorrowerContractInput = {
+  settings: LoanSetting;
+  instrument: Instrument;
+  borrower: {
+    name: string;
+    phone: string;
+    year: string;
+    ktpNumber: string;
+    addressKtp: string;
+    addressDomicile: string;
+    facultyMajor: string;
+  };
+  guardian: {
+    name: string;
+    phone: string;
+    addressKtp: string;
+  };
+};
+
+export async function renderBorrowerContractPdf({
+  settings,
+  instrument,
+  borrower,
+  guardian,
+}: BorrowerContractInput): Promise<Buffer> {
+  const signatoryImageBase64 = settings.signatoryImageDriveId
+    ? await downloadFileAsBase64(settings.signatoryImageDriveId, "image/png")
+    : null;
+
+  const html = await buildContractHTML({
+    signatory: {
+      name: settings.signatoryName,
+      phone: settings.signatoryPhone,
+      addressKtp: settings.signatoryAddressKtp,
+      addressDomicile: settings.signatoryAddressDomicile,
+      faculty: settings.signatoryFaculty,
+      year: settings.signatoryYear,
+      section: settings.signatorySection,
+      ktpNumber: settings.signatoryKtpNumber,
+      imageBase64: signatoryImageBase64,
+    },
+    borrower: {
+      name: borrower.name,
+      phone: borrower.phone,
+      addressKtp: borrower.addressKtp,
+      addressDomicile: borrower.addressDomicile,
+      faculty: borrower.facultyMajor,
+      year: borrower.year,
+      ktpNumber: borrower.ktpNumber,
+    },
+    guardian: {
+      name: guardian.name,
+      phone: guardian.phone,
+      addressKtp: guardian.addressKtp,
+    },
+    instrumentLabel: `${instrument.section}/${instrument.type}`,
+    instrumentType: instrument.type,
+    depositAmount: settings.depositAmount,
+    depositPartialAmount: settings.depositPartialAmount,
+    depositGraceDays: settings.depositGraceDays,
+    bankName: settings.bankName,
+    bankAccount: settings.bankAccount,
+    bankHolder: settings.bankHolder,
+    dueDate: settings.dueDate,
+  });
+
+  const browser = await getBrowser();
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html);
+
+    return Buffer.from(
+      await page.pdf({
+        format: "A4",
+        displayHeaderFooter: true,
+        headerTemplate,
+        footerTemplate,
+        margin: { top: "200px", bottom: "110px", left: "70px", right: "70px" },
+      }),
+    );
+  } finally {
+    await browser.close();
+  }
 }

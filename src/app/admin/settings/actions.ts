@@ -65,11 +65,15 @@ const updateLoanSettingsSchema = z
     signatoryFaculty: z
       .string()
       .trim()
-      .max(100, "Signatory faculty/major must be 100 characters or fewer")
-      .regex(
-        /^[^/]+\/[^/]+$/,
-        "Signatory faculty/major format must be Faculty/Major, e.g. FT/Teknik Elektro",
-      ),
+      .min(1, "Signatory faculty is required")
+      .max(60, "Signatory faculty must be 60 characters or fewer")
+      .regex(/^[^/]+$/, "Signatory faculty cannot contain a / character"),
+    signatoryMajor: z
+      .string()
+      .trim()
+      .min(1, "Signatory major is required")
+      .max(60, "Signatory major must be 60 characters or fewer")
+      .regex(/^[^/]+$/, "Signatory major cannot contain a / character"),
     signatoryYear: z
       .string()
       .trim()
@@ -184,6 +188,7 @@ export async function updateLoanSettings(
     signatoryAddressKtp: formData.get("signatoryAddressKtp"),
     signatoryAddressDomicile: formData.get("signatoryAddressDomicile"),
     signatoryFaculty: formData.get("signatoryFaculty"),
+    signatoryMajor: formData.get("signatoryMajor"),
     signatoryYear: formData.get("signatoryYear"),
     signatorySection: formData.get("signatorySection"),
     signatoryKtpNumber: formData.get("signatoryKtpNumber"),
@@ -207,10 +212,12 @@ export async function updateLoanSettings(
     signatoryAddressKtp,
     signatoryAddressDomicile,
     signatoryFaculty,
+    signatoryMajor,
     signatoryYear,
     signatorySection,
     signatoryKtpNumber,
   } = parsed.data;
+  const signatoryFacultyMajor = `${signatoryFaculty}/${signatoryMajor}`;
 
   const existing = await prisma.loanSetting.findFirst();
 
@@ -246,7 +253,7 @@ export async function updateLoanSettings(
     signatoryLineId,
     signatoryAddressKtp,
     signatoryAddressDomicile,
-    signatoryFaculty,
+    signatoryFaculty: signatoryFacultyMajor,
     signatoryYear,
     signatorySection,
     signatoryKtpNumber,

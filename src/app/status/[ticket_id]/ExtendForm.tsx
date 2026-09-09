@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { submitExtension } from "./actions";
 import { RequestData } from "./types";
 import { toastError } from "@/lib/toast";
+import { splitFacultyMajor } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export function ExtendForm({
 }) {
   const action = submitExtension.bind(null, data.ticketId, accessCode);
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const prefillFaculty = splitFacultyMajor(data.borrowerFaculty);
 
   useEffect(() => {
     if (state.success) {
@@ -105,13 +107,27 @@ export function ExtendForm({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="ext-faculty" required>
-              Fakultas/Jurusan
+              Fakultas
             </Label>
             <Input
               id="ext-faculty"
               name="faculty"
               type="text"
-              defaultValue={state.fields.faculty || data.borrowerFaculty || ""}
+              placeholder="mis. FIB"
+              defaultValue={state.fields.faculty || prefillFaculty.faculty || ""}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ext-major" required>
+              Jurusan / Program Studi
+            </Label>
+            <Input
+              id="ext-major"
+              name="major"
+              type="text"
+              placeholder="mis. Sastra Jepang"
+              defaultValue={state.fields.major || prefillFaculty.major || ""}
               required
             />
           </div>

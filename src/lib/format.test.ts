@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { daysBetween, formatActivityLog, toWhatsAppNumber } from "./format";
+import {
+  daysBetween,
+  formatActivityLog,
+  toWhatsAppNumber,
+  splitFacultyMajor,
+} from "./format";
 import { toJakartaCalendarDate } from "./format";
 
 function log(action: string, metadata: unknown) {
@@ -44,6 +49,32 @@ describe("toWhatsAppNumber", () => {
   });
   it("prepends 62 when there is no leading zero or country code", () => {
     expect(toWhatsAppNumber("81234567890")).toBe("6281234567890");
+  });
+});
+
+describe("splitFacultyMajor", () => {
+  it("splits a stored Faculty/Major string", () => {
+    expect(splitFacultyMajor("FIB/Sastra Jepang")).toEqual({
+      faculty: "FIB",
+      major: "Sastra Jepang",
+    });
+  });
+  it("keeps a slash inside the major intact", () => {
+    expect(splitFacultyMajor("FT/Teknik Elektro/Telekomunikasi")).toEqual({
+      faculty: "FT",
+      major: "Teknik Elektro/Telekomunikasi",
+    });
+  });
+  it("returns empty strings for null / undefined / no slash", () => {
+    expect(splitFacultyMajor(null)).toEqual({ faculty: "", major: "" });
+    expect(splitFacultyMajor(undefined)).toEqual({ faculty: "", major: "" });
+    expect(splitFacultyMajor("FIB")).toEqual({ faculty: "FIB", major: "" });
+  });
+  it("trims surrounding whitespace on each part", () => {
+    expect(splitFacultyMajor(" FIB / Sastra Jepang ")).toEqual({
+      faculty: "FIB",
+      major: "Sastra Jepang",
+    });
   });
 });
 

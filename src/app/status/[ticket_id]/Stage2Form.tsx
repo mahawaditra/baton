@@ -95,14 +95,27 @@ export function Stage2Form({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="faculty" required>
-              Fakultas/Jurusan
+              Fakultas
             </Label>
             <Input
               id="faculty"
               name="faculty"
               type="text"
-              placeholder="mis. FMIPA/Biologi"
+              placeholder="mis. FIB"
               defaultValue={state.fields.faculty ?? ""}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="major" required>
+              Jurusan / Program Studi
+            </Label>
+            <Input
+              id="major"
+              name="major"
+              type="text"
+              placeholder="mis. Sastra Jepang"
+              defaultValue={state.fields.major ?? ""}
               required
             />
           </div>
