@@ -122,6 +122,38 @@ export async function getBorrowerArchiveFolder(
   return getOrCreateFolder(`${ticketId}_${borrowerName}`, archiveRoot);
 }
 
+export async function getItemPhotosFolder(): Promise<string> {
+  const assetsFolder = await getOrCreateFolder(
+    "Assets",
+    process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
+  );
+  return getOrCreateFolder("Item Photos", assetsFolder);
+}
+
+export async function trashFile(fileId: string): Promise<void> {
+  await drive.files.update({ fileId, requestBody: { trashed: true } });
+}
+
+export async function replaceItemPhoto(params: {
+  name: string;
+  buffer: Buffer;
+  oldFileId: string | null;
+}): Promise<string> {
+  const folder = await getItemPhotosFolder();
+  const newFileId = await uploadFile(
+    params.name.replace(/[/\\]+/g, "-"),
+    "image/jpeg",
+    params.buffer,
+    folder,
+  );
+  if (params.oldFileId) {
+    try {
+      await trashFile(params.oldFileId);
+    } catch {}
+  }
+  return newFileId;
+}
+
 export async function uploadFile(
   name: string,
   mimeType: string,

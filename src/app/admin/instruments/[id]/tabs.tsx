@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Users, History, ClipboardList, Activity } from "lucide-react";
 import type { ActivityAction } from "@/generated/prisma/client";
 import { PhotoViewerModal } from "@/components/PhotoViewerModal";
+import { uploadInstrumentPhoto } from "./actions";
 
 const INSTRUMENT_RELEVANT_REQUEST_ACTIONS: ActivityAction[] = [
   "assign_instrument",
@@ -114,16 +115,15 @@ export async function RiwayatAddendum({
           <div className="mt-1 text-sm text-foreground-2">
             {a.bodyCondition}
           </div>
-          <div className="mt-1.5 text-xs text-muted-foreground">
-            {a.driveFileIds.length > 0 && (
-              <div className="mt-2">
-                <PhotoViewerModal
-                  fileIds={a.driveFileIds}
-                  title={`${a.timing === "initial" ? "Initial" : "Final"} condition photos`}
-                />
-              </div>
-            )}
-          </div>
+          {a.driveFileIds.length > 0 && (
+            <div className="mt-2.5">
+              <PhotoViewerModal
+                fileIds={a.driveFileIds}
+                title={`${a.timing === "initial" ? "Initial" : "Final"} condition photos`}
+                uploadAction={uploadInstrumentPhoto.bind(null, instrumentId)}
+              />
+            </div>
+          )}
         </div>
       ))}
     </div>

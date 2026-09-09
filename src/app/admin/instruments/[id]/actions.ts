@@ -6,6 +6,9 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { replaceItemPhoto } from "@/lib/drive";
+import { driveTimestamp } from "@/lib/format";
+import { validateImageUpload } from "@/lib/file-validation";
 
 const updateInstrumentSchema = z.object({
   brand: z.string().trim().max(100).nullable(),
@@ -107,4 +110,40 @@ export async function updateInstrument(
   revalidatePath(`/admin/dashboard`);
   revalidatePath(`/admin/activity`);
   redirect(`/admin/instruments/${id}`);
+}
+
+export async function uploadInstrumentPhoto(id: string, formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Not logged in");
+
+  const file = formData.get("photo") as File;
+  const validation = await validateImageUpload(file);
+  if (!validation.valid) throw new Error(validation.error);
+
+  const before = await prisma.instrument.findUniqueOrThrow({ where: { id } });
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const newFileId = await replaceItemPhoto({
+    name: `${before.type}_${before.serialNumber ?? "NoSN"}_${driveTimestamp()}.jpg`,
+    buffer,
+    oldFileId: before.photoDriveFileId,
+  });
+
+  const after = await prisma.instrument.update({
+    where: { id },
+    data: { photoDriveFileId: newFileId },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "update_instrument",
+      entityType: "instrument",
+      entityId: id,
+      metadata: { before, after },
+    },
+  });
+
+  revalidatePath(`/admin/instruments/${id}`);
+  revalidatePath(`/admin/instruments`);
 }

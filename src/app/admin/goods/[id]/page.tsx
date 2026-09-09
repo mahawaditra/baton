@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { EditGoodForm } from "./EditGoodForm";
+import { uploadGoodPhoto } from "./actions";
 import {
   ConditionIndicator,
   getConditionLabel,
 } from "@/components/StatusBadge";
+import { ItemPhotoField } from "@/components/ItemPhotoField";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -44,41 +46,49 @@ export default async function GoodDetailPage({
         </CardHeader>
         <CardContent>
           {!isEditing ? (
-            <div className="flex flex-col gap-4">
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">Condition</dt>
-                  <dd className="mt-1 inline-flex items-center gap-1.5 font-medium">
-                    <ConditionIndicator condition={good.condition} />
-                    {getConditionLabel(good.condition)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Quantity</dt>
-                  <dd className="mt-0.5 font-medium">{good.quantity}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Reg. No.</dt>
-                  <dd className="tabular mt-0.5 font-medium">
-                    {good.registrationNo || "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Location</dt>
-                  <dd className="mt-0.5 font-medium">{good.location}</dd>
-                </div>
-                <div className="col-span-2">
-                  <dt className="text-muted-foreground">Notes</dt>
-                  <dd className="mt-0.5 font-medium">{good.notes || "—"}</dd>
-                </div>
-              </dl>
+            <div className="flex flex-col gap-5 sm:flex-row sm:gap-6">
+              <ItemPhotoField
+                fileId={good.photoDriveFileId}
+                alt={good.name}
+                action={uploadGoodPhoto.bind(null, id)}
+                className="mx-auto w-44 shrink-0 sm:mx-0"
+              />
+              <div className="flex flex-1 flex-col gap-4">
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Condition</dt>
+                    <dd className="mt-1 inline-flex items-center gap-1.5 font-medium">
+                      <ConditionIndicator condition={good.condition} />
+                      {getConditionLabel(good.condition)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Quantity</dt>
+                    <dd className="mt-0.5 font-medium">{good.quantity}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Reg. No.</dt>
+                    <dd className="tabular mt-0.5 font-medium">
+                      {good.registrationNo || "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Location</dt>
+                    <dd className="mt-0.5 font-medium">{good.location}</dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-muted-foreground">Notes</dt>
+                    <dd className="mt-0.5 font-medium">{good.notes || "—"}</dd>
+                  </div>
+                </dl>
 
-              <Link
-                href={`/admin/goods/${id}?edit=true`}
-                className={cn(buttonVariants({ size: "sm" }), "self-start")}
-              >
-                Edit Good
-              </Link>
+                <Link
+                  href={`/admin/goods/${id}?edit=true`}
+                  className={cn(buttonVariants({ size: "sm" }), "self-start")}
+                >
+                  Edit Good
+                </Link>
+              </div>
             </div>
           ) : (
             <EditGoodForm good={good} locations={locations} />

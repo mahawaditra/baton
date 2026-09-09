@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ImageIcon, ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
+import { ImageIcon, ChevronLeft, ChevronRight, ImageOff, Camera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PhotoUploadModal } from "@/components/PhotoUploadModal";
 import { MARQUEE_TEXT } from "@/lib/constants";
 
 const SKELETON_ROWS = 6;
@@ -68,11 +69,15 @@ function PhotoFrame({ fileId, alt }: { fileId: string; alt: string }) {
 export function PhotoViewerModal({
   fileIds,
   title,
+  uploadAction,
 }: {
   fileIds: string[];
   title: string;
+  uploadAction?: (formData: FormData) => Promise<void>;
 }) {
+  const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
+  const [cropFileId, setCropFileId] = useState<string | null>(null);
   const count = fileIds.length;
 
   if (count === 0) {
@@ -80,47 +85,82 @@ export function PhotoViewerModal({
   }
 
   return (
-    <Dialog onOpenChange={(open) => open && setIndex(0)}>
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>
-        <ImageIcon />
-        {count > 1 ? `View ${count} photos` : "View photo"}
-      </DialogTrigger>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (next) setIndex(0);
+        }}
+      >
+        <DialogTrigger render={<Button variant="outline" size="sm" />}>
+          <ImageIcon />
+          {count > 1 ? `View ${count} photos` : "View photo"}
+        </DialogTrigger>
 
-      <DialogContent className="gap-4 sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
+        <DialogContent className="gap-4 sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
 
-        <PhotoFrame
-          key={fileIds[index]}
-          fileId={fileIds[index]}
-          alt={`${title} — ${index + 1}`}
+          <PhotoFrame
+            key={fileIds[index]}
+            fileId={fileIds[index]}
+            alt={`${title} — ${index + 1}`}
+          />
+
+          {count > 1 && (
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label="Previous photo"
+                onClick={() => setIndex((i) => (i - 1 + count) % count)}
+              >
+                <ChevronLeft />
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Photo {index + 1} of {count}
+              </span>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label="Next photo"
+                onClick={() => setIndex((i) => (i + 1) % count)}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+          )}
+
+          {uploadAction && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCropFileId(fileIds[index]);
+                setOpen(false);
+              }}
+            >
+              <Camera />
+              Use as instrument photo
+            </Button>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {uploadAction && (
+        <PhotoUploadModal
+          key={cropFileId ?? "none"}
+          open={cropFileId !== null}
+          onOpenChange={(next) => {
+            if (!next) setCropFileId(null);
+          }}
+          action={uploadAction}
+          initialImageSrc={
+            cropFileId ? `/admin/drive-files/${cropFileId}` : undefined
+          }
         />
-
-        {count > 1 && (
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label="Previous photo"
-              onClick={() => setIndex((i) => (i - 1 + count) % count)}
-            >
-              <ChevronLeft />
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Photo {index + 1} of {count}
-            </span>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label="Next photo"
-              onClick={() => setIndex((i) => (i + 1) % count)}
-            >
-              <ChevronRight />
-            </Button>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 }

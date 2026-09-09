@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { EditInstrumentForm } from "./EditInstrumentForm";
+import { uploadInstrumentPhoto } from "./actions";
 import {
   RiwayatAddendum,
   RiwayatAktivitas,
@@ -9,6 +10,7 @@ import {
 } from "./tabs";
 import { ArrowRight } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ItemPhotoField } from "@/components/ItemPhotoField";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -60,64 +62,72 @@ export default async function InstrumentDetailPage({
         </CardHeader>
         <CardContent>
           {!isEditing ? (
-            <div className="flex flex-col gap-4">
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">Status</dt>
-                  <dd className="mt-1">
-                    <StatusBadge
-                      status={instrument.status}
-                      condition={instrument.condition}
-                    />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Brand</dt>
-                  <dd className="mt-0.5 font-medium">{instrument.brand}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Serial No.</dt>
-                  <dd className="tabular mt-0.5 font-medium">
-                    {instrument.serialNumber}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Loanable</dt>
-                  <dd className="mt-0.5 font-medium">
-                    {instrument.isLoanable ? "Ya" : "Tidak"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Location</dt>
-                  <dd className="mt-0.5 font-medium">{instrument.location}</dd>
-                </div>
-                <div className="col-span-2">
-                  <dt className="text-muted-foreground">Notes</dt>
-                  <dd className="mt-0.5 font-medium">
-                    {instrument.notes || "—"}
-                  </dd>
-                </div>
-              </dl>
+            <div className="flex flex-col gap-5 sm:flex-row sm:gap-6">
+              <ItemPhotoField
+                fileId={instrument.photoDriveFileId}
+                alt={instrument.type}
+                action={uploadInstrumentPhoto.bind(null, id)}
+                className="mx-auto w-44 shrink-0 sm:mx-0"
+              />
+              <div className="flex flex-1 flex-col gap-4">
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Status</dt>
+                    <dd className="mt-1">
+                      <StatusBadge
+                        status={instrument.status}
+                        condition={instrument.condition}
+                      />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Brand</dt>
+                    <dd className="mt-0.5 font-medium">{instrument.brand}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Serial No.</dt>
+                    <dd className="tabular mt-0.5 font-medium">
+                      {instrument.serialNumber}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Loanable</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {instrument.isLoanable ? "Ya" : "Tidak"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Location</dt>
+                    <dd className="mt-0.5 font-medium">{instrument.location}</dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-muted-foreground">Notes</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {instrument.notes || "—"}
+                    </dd>
+                  </div>
+                </dl>
 
-              {activeRequest && (
+                {activeRequest && (
+                  <Link
+                    href={`/admin/requests/${activeRequest.id}`}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "self-start",
+                    )}
+                  >
+                    Lihat peminjaman aktif
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  </Link>
+                )}
+
                 <Link
-                  href={`/admin/requests/${activeRequest.id}`}
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "self-start",
-                  )}
+                  href={`/admin/instruments/${id}?edit=true`}
+                  className={cn(buttonVariants({ size: "sm" }), "self-start")}
                 >
-                  Lihat peminjaman aktif
-                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Edit Instrument
                 </Link>
-              )}
-
-              <Link
-                href={`/admin/instruments/${id}?edit=true`}
-                className={cn(buttonVariants({ size: "sm" }), "self-start")}
-              >
-                Edit Instrument
-              </Link>
+              </div>
             </div>
           ) : (
             <EditInstrumentForm

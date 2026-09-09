@@ -23,18 +23,19 @@ enum ItemCondition {
 }
 
 model Instrument {
-  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  section      String
-  type         String
-  brand        String?
-  serialNumber String?          @map("serial_number")
-  condition    ItemCondition    @default(ok)
-  status       InstrumentStatus @default(available)
-  isLoanable   Boolean          @default(true) @map("is_loanable")
-  location     String           @default("Sekre")
-  notes        String?
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  section          String
+  type             String
+  brand            String?
+  serialNumber     String?          @map("serial_number")
+  condition        ItemCondition    @default(ok)
+  status           InstrumentStatus @default(available)
+  isLoanable       Boolean          @default(true) @map("is_loanable")
+  location         String           @default("Sekre")
+  notes            String?
+  photoDriveFileId String?          @map("photo_drive_file_id")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
 
   borrowingRequests BorrowingRequest[]
 
@@ -43,16 +44,17 @@ model Instrument {
 }
 
 model Good {
-  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String
-  brand          String?
-  quantity       Int           @default(1)
-  condition      ItemCondition @default(ok)
-  location       String        @default("RB1")
-  registrationNo String?       @map("registration_no")
-  notes          String?
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  brand            String?
+  quantity         Int           @default(1)
+  condition        ItemCondition @default(ok)
+  location         String        @default("RB1")
+  registrationNo   String?       @map("registration_no")
+  notes            String?
+  photoDriveFileId String?       @map("photo_drive_file_id")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   @@map("goods")
 }

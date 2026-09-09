@@ -6,6 +6,9 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { replaceItemPhoto } from "@/lib/drive";
+import { driveTimestamp } from "@/lib/format";
+import { validateImageUpload } from "@/lib/file-validation";
 
 const updateGoodSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -86,4 +89,40 @@ export async function updateGood(
   revalidatePath(`/admin/dashboard`);
   revalidatePath(`/admin/activity`);
   redirect(`/admin/goods/${id}`);
+}
+
+export async function uploadGoodPhoto(id: string, formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Not logged in");
+
+  const file = formData.get("photo") as File;
+  const validation = await validateImageUpload(file);
+  if (!validation.valid) throw new Error(validation.error);
+
+  const before = await prisma.good.findUniqueOrThrow({ where: { id } });
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const newFileId = await replaceItemPhoto({
+    name: `${before.name}_${driveTimestamp()}.jpg`,
+    buffer,
+    oldFileId: before.photoDriveFileId,
+  });
+
+  const after = await prisma.good.update({
+    where: { id },
+    data: { photoDriveFileId: newFileId },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "update_goods",
+      entityType: "goods",
+      entityId: id,
+      metadata: { before, after },
+    },
+  });
+
+  revalidatePath(`/admin/goods/${id}`);
+  revalidatePath(`/admin/goods`);
 }

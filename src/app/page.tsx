@@ -6,7 +6,6 @@ import { LandingHero } from "@/components/LandingHero";
 import { LandingFaq } from "@/components/LandingFaq";
 import { prisma } from "@/lib/prisma";
 import { toWhatsAppNumber } from "@/lib/format";
-import Link from "next/link";
 
 type StepIconProps = { className?: string; strokeWidth?: number };
 
@@ -34,6 +33,14 @@ function GithubIcon({ className }: StepIconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor">
       <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2C6 20.94 5.34 19 5.34 19c-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.85 1.24 1.85 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.31-.54-1.53.11-3.19 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.19.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.28 0 .32.21.69.8.57 4.57-1.52 7.85-5.83 7.85-10.91C23.5 5.65 18.35.5 12 .5z" />
+    </svg>
+  );
+}
+
+function WhatsAppIcon({ className }: StepIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.359.101 11.892c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a11.882 11.882 0 005.71 1.454h.006c6.585 0 11.946-5.359 11.949-11.893a11.821 11.821 0 00-3.495-8.46z" />
     </svg>
   );
 }
@@ -143,20 +150,23 @@ export default async function Home() {
             <p className="mt-10 text-center text-caption text-muted-foreground">
               Punya pertanyaan? Hubungi Ketua Logistik OSUI Mahawaditra.
             </p>
-            <p className="mt-2 text-center text-caption text-muted-foreground">
-              If you&apos;re an admin, you can{" "}
-              <Link
-                href="/admin"
-                className="underline underline-offset-2 font-bold hover:text-foreground"
-              >
-                get in here
-              </Link>
-              .
-            </p>
+            {whatsappNumber && (
+              <div className="mt-3 flex justify-center">
+                <a
+                  href={`https://wa.me/${whatsappNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-caption font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <WhatsAppIcon className="h-3.5 w-3.5" />
+                  Chat via WhatsApp
+                </a>
+              </div>
+            )}
           </div>
         </section>
 
-        <LandingFaq whatsappNumber={whatsappNumber} />
+        <LandingFaq />
 
         <section className="border-t border-border bg-surface px-6 py-24">
           <div className="mx-auto max-w-4xl">
