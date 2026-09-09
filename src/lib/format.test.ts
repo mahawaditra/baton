@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { daysBetween, formatActivityLog } from "./format";
+import { daysBetween, formatActivityLog, toWhatsAppNumber } from "./format";
 import { toJakartaCalendarDate } from "./format";
 
 function log(action: string, metadata: unknown) {
@@ -29,6 +29,21 @@ describe("daysBetween", () => {
     const morning = new Date("2026-08-01T01:00:00Z");
     const night = new Date("2026-08-01T23:00:00Z");
     expect(daysBetween(morning, night)).toBe(0);
+  });
+});
+
+describe("toWhatsAppNumber", () => {
+  it("converts a leading zero to the 62 country code", () => {
+    expect(toWhatsAppNumber("081234567890")).toBe("6281234567890");
+  });
+  it("strips spaces, dashes, and the plus sign", () => {
+    expect(toWhatsAppNumber("+62 812-3456-7890")).toBe("6281234567890");
+  });
+  it("leaves an already-normalized number unchanged", () => {
+    expect(toWhatsAppNumber("6281234567890")).toBe("6281234567890");
+  });
+  it("prepends 62 when there is no leading zero or country code", () => {
+    expect(toWhatsAppNumber("81234567890")).toBe("6281234567890");
   });
 });
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { submitRequest } from "./actions";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Copy } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,43 @@ const initialState = {
   generalError: null,
   fields: {},
 };
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-label text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="tabular text-title font-semibold text-foreground">
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          aria-label={copied ? `${label} tersalin` : `Salin ${label}`}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          {copied ? (
+            <Check className="h-4 w-4 text-success" strokeWidth={2} />
+          ) : (
+            <Copy className="h-4 w-4" strokeWidth={1.75} />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function RequestForm() {
   const [state, formAction, isPending] = useActionState(
@@ -54,21 +91,9 @@ export function RequestForm() {
 
         <Card className="w-full">
           <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-label text-muted-foreground">
-                Ticket ID
-              </span>
-              <span className="tabular text-title font-semibold text-foreground">
-                {state.ticketId}
-              </span>
-            </div>
-            <div className="flex items-center justify-between border-t border-border pt-4">
-              <span className="text-label text-muted-foreground">
-                Kode Akses
-              </span>
-              <span className="tabular text-title font-semibold text-foreground">
-                {state.accessCode}
-              </span>
+            <CopyField label="Ticket ID" value={state.ticketId} />
+            <div className="border-t border-border pt-4">
+              <CopyField label="Kode Akses" value={state.accessCode ?? ""} />
             </div>
           </CardContent>
         </Card>

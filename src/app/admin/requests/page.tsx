@@ -18,19 +18,32 @@ const REQUEST_STATUSES = [
 export default async function RequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; cohort?: string }>;
 }) {
-  const { status } = await searchParams;
+  const { status, cohort } = await searchParams;
+  const ongoing = cohort === "ongoing";
 
-  const selectedStatuses = (status ?? "")
-    .split(",")
-    .filter((s): s is (typeof REQUEST_STATUSES)[number] =>
-      (REQUEST_STATUSES as readonly string[]).includes(s),
-    );
+  const selectedStatuses = ongoing
+    ? []
+    : (status ?? "")
+        .split(",")
+        .filter((s): s is (typeof REQUEST_STATUSES)[number] =>
+          (REQUEST_STATUSES as readonly string[]).includes(s),
+        );
 
   const requests = await prisma.borrowingRequest.findMany({
-    where:
-      selectedStatuses.length > 0 ? { status: { in: selectedStatuses } } : {},
+    where: ongoing
+      ? { status: { in: ["active", "overdue"] }, carriedOverAt: { not: null } }
+      : selectedStatuses.length > 0
+        ? { status: { in: selectedStatuses } }
+        : {},
+    include: {
+      loanPeriods: {
+        select: { sequence: true, startDate: true },
+        orderBy: { sequence: "desc" },
+        take: 1,
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -43,7 +56,10 @@ export default async function RequestsPage({
           href="/admin/requests"
           className={cn(
             buttonVariants({
-              variant: selectedStatuses.length === 0 ? "default" : "outline",
+              variant:
+                !ongoing && selectedStatuses.length === 0
+                  ? "default"
+                  : "outline",
               size: "sm",
             }),
           )}
@@ -75,6 +91,17 @@ export default async function RequestsPage({
             </Link>
           );
         })}
+        <Link
+          href="/admin/requests?cohort=ongoing"
+          className={cn(
+            buttonVariants({
+              variant: ongoing ? "default" : "outline",
+              size: "sm",
+            }),
+          )}
+        >
+          Ongoing
+        </Link>
       </div>
 
       <RequestsExplorer requests={requests} />

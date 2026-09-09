@@ -280,6 +280,34 @@ export async function updateLoanSettings(
   return { success: true, error: null };
 }
 
+export async function setSignatoryPhonePublic(value: boolean) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Not logged in");
+
+  const existing = await prisma.loanSetting.findFirst();
+  if (!existing) throw new Error("Loan settings have not been set up yet.");
+
+  const updated = await prisma.loanSetting.update({
+    where: { id: existing.id },
+    data: { signatoryPhonePublic: value },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "update_loan_settings",
+      entityType: "loan_settings",
+      entityId: updated.id,
+      metadata: { before: existing, after: updated },
+    },
+  });
+
+  invalidateFooterCache();
+  revalidatePath("/");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/activity");
+}
+
 export async function setAdminActive(adminId: string, isActive: boolean) {
   const session = await auth.api.getSession({ headers: await headers() });
 

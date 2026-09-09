@@ -3,7 +3,11 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { ActivityTimeline } from "@/components/ActivityTimeline";
-import { getRequestActionLabel, requestNeedsAction } from "@/lib/loan-rules";
+import {
+  confirmedExtensionCount,
+  getRequestActionLabel,
+  requestNeedsAction,
+} from "@/lib/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import {
   Card,
@@ -27,6 +31,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
+import { ExtensionBadge } from "@/components/ExtensionBadge";
+import { TransferToOngoingButton } from "./TransferToOngoingButton";
+import type { Prisma } from "@/generated/prisma/client";
 
 function waitingOnBorrowerLabel(status: string): string {
   switch (status) {
@@ -46,11 +53,13 @@ function StatCard({
   value,
   icon: Icon,
   iconClassName,
+  sublabel,
 }: {
   label: string;
   value: number;
   icon: LucideIcon;
   iconClassName: string;
+  sublabel?: string;
 }) {
   return (
     <Card>
@@ -68,40 +77,133 @@ function StatCard({
             <Icon className="h-4 w-4" strokeWidth={1.75} />
           </span>
         </div>
-        <div className="tabular text-display">{value}</div>
+        <div className="flex items-end gap-x-2">
+          <div className="tabular text-display">{value}</div>
+          {sublabel && (
+            <div className="min-w-0 pb-1 text-caption text-muted-foreground">
+              {sublabel}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+type RosterRow = Prisma.BorrowingRequestGetPayload<{
+  include: {
+    instrument: true;
+    loanPeriods: { orderBy: { sequence: "desc" }; take: 1 };
+  };
+}> & { dueDate: Date | null };
+
+function LoanRosterTable({ rows }: { rows: RosterRow[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border bg-muted text-left">
+            <th className="text-micro px-6 py-2.5 uppercase text-muted-foreground">
+              Borrower
+            </th>
+            <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
+              Year
+            </th>
+            <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
+              Instrument
+            </th>
+            <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
+              Serial No.
+            </th>
+            <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
+              LINE ID
+            </th>
+            <th className="text-micro px-6 py-2.5 uppercase text-muted-foreground">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((req) => (
+            <tr
+              key={req.id}
+              className="border-b border-border last:border-b-0 hover:bg-muted/40"
+            >
+              <td className="px-6 py-3">
+                <Link
+                  href={`/admin/requests/${req.id}`}
+                  className="font-medium text-navy hover:underline"
+                >
+                  {req.borrowerName}
+                </Link>
+              </td>
+              <td className="px-4 py-3">{req.borrowerYear}</td>
+              <td className="px-4 py-3">{req.instrument?.type}</td>
+              <td className="tabular px-4 py-3">
+                {req.instrument?.serialNumber}
+              </td>
+              <td className="px-4 py-3">{req.borrowerLineId}</td>
+              <td className="px-6 py-3">
+                <div className="flex items-center gap-1.5">
+                  <RequestStatusBadge status={req.status} />
+                  <ExtensionBadge
+                    count={confirmedExtensionCount(req.loanPeriods[0])}
+                  />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  const [pendingCount, activeCount, overdueCount, needRepairCount] =
-    await Promise.all([
-      prisma.borrowingRequest.count({
-        where: {
-          status: {
-            in: [
-              "submitted",
-              "reviewing",
-              "contract_generated",
-              "documents_uploaded",
-              "ready_to_pickup",
-            ],
-          },
+  const [
+    pendingCount,
+    activeCount,
+    overdueCount,
+    needRepairCount,
+    activeOngoingCount,
+    transferableCount,
+  ] = await Promise.all([
+    prisma.borrowingRequest.count({
+      where: {
+        status: {
+          in: [
+            "submitted",
+            "reviewing",
+            "contract_generated",
+            "documents_uploaded",
+            "ready_to_pickup",
+          ],
         },
-      }),
-      prisma.borrowingRequest.count({
-        where: { status: "active" },
-      }),
-      prisma.borrowingRequest.count({
-        where: { status: "overdue" },
-      }),
-      prisma.instrument.count({
-        where: { condition: "need_repair" },
-      }),
-    ]);
+      },
+    }),
+    prisma.borrowingRequest.count({
+      where: { status: "active" },
+    }),
+    prisma.borrowingRequest.count({
+      where: { status: "overdue" },
+    }),
+    prisma.instrument.count({
+      where: { condition: "need_repair" },
+    }),
+    prisma.borrowingRequest.count({
+      where: { status: "active", carriedOverAt: { not: null } },
+    }),
+    prisma.borrowingRequest.count({
+      where: {
+        status: { in: ["active", "overdue"] },
+        carriedOverAt: null,
+      },
+    }),
+  ]);
+
+  const activeNewCount = activeCount - activeOngoingCount;
 
   const [pendingRequests, recentActivity, activeRequests] = await Promise.all([
     prisma.borrowingRequest.findMany({
@@ -148,7 +250,7 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const activeRoster = activeRequests
+  const rosterWithDueDate: RosterRow[] = activeRequests
     .map((req) => ({
       ...req,
       dueDate: req.loanPeriods[0]?.dueDate ?? null,
@@ -157,7 +259,13 @@ export default async function DashboardPage() {
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
       return a.dueDate.getTime() - b.dueDate.getTime();
-    })
+    });
+
+  const activeRoster = rosterWithDueDate
+    .filter((req) => !req.carriedOverAt)
+    .slice(0, 5);
+  const ongoingRoster = rosterWithDueDate
+    .filter((req) => req.carriedOverAt)
     .slice(0, 5);
 
   const sortedPendingRequests = [...pendingRequests].sort((a, b) => {
@@ -188,6 +296,11 @@ export default async function DashboardPage() {
           value={activeCount}
           icon={Clock}
           iconClassName="bg-plum-soft text-plum"
+          sublabel={
+            activeOngoingCount > 0
+              ? `${activeNewCount} new · ${activeOngoingCount} ongoing`
+              : undefined
+          }
         />
         <StatCard
           label="Overdue"
@@ -305,13 +418,18 @@ export default async function DashboardPage() {
         <CardHeader>
           <CardTitle>Active Loans</CardTitle>
           <CardAction>
-            <Link
-              href="/admin/requests?status=active,overdue"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              View all
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-            </Link>
+            <div className="flex gap-2">
+              <TransferToOngoingButton transferableCount={transferableCount} />
+              <Link
+                href="/admin/requests?status=active,overdue"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                )}
+              >
+                View all
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </Link>
+            </div>
           </CardAction>
         </CardHeader>
         <CardContent className="gap-0 px-0">
@@ -322,61 +440,32 @@ export default async function DashboardPage() {
               title="No active loans right now"
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted text-left">
-                    <th className="text-micro px-6 py-2.5 uppercase text-muted-foreground">
-                      Borrower
-                    </th>
-                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
-                      Year
-                    </th>
-                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
-                      Instrument
-                    </th>
-                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
-                      Serial No.
-                    </th>
-                    <th className="text-micro px-4 py-2.5 uppercase text-muted-foreground">
-                      LINE ID
-                    </th>
-                    <th className="text-micro px-6 py-2.5 uppercase text-muted-foreground">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeRoster.map((req) => (
-                    <tr
-                      key={req.id}
-                      className="border-b border-border last:border-b-0 hover:bg-muted/40"
-                    >
-                      <td className="px-6 py-3">
-                        <Link
-                          href={`/admin/requests/${req.id}`}
-                          className="font-medium text-navy hover:underline"
-                        >
-                          {req.borrowerName}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">{req.borrowerYear}</td>
-                      <td className="px-4 py-3">{req.instrument?.type}</td>
-                      <td className="tabular px-4 py-3">
-                        {req.instrument?.serialNumber}
-                      </td>
-                      <td className="px-4 py-3">{req.borrowerLineId}</td>
-                      <td className="px-6 py-3">
-                        <RequestStatusBadge status={req.status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <LoanRosterTable rows={activeRoster} />
           )}
         </CardContent>
       </Card>
+
+      {ongoingRoster.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ongoing Loans</CardTitle>
+            <CardAction>
+              <Link
+                href="/admin/requests?cohort=ongoing"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                )}
+              >
+                View all
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </Link>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="gap-0 px-0">
+            <LoanRosterTable rows={ongoingRoster} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

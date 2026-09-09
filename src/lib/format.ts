@@ -41,6 +41,7 @@ type ActivityMetadataByAction =
         | "confirm_ready"
         | "confirm_handover"
         | "confirm_extension"
+        | "revert_from_ongoing"
         | "add_admin"
         | "deactivate_admin"
         | "reactivate_admin";
@@ -77,7 +78,8 @@ type ActivityMetadataByAction =
       metadata: { reason: string; releasedInstrumentId: string | null };
     }
   | { action: "create_instrument"; metadata: { after: Instrument } }
-  | { action: "create_goods"; metadata: { after: Good } };
+  | { action: "create_goods"; metadata: { after: Good } }
+  | { action: "transfer_to_ongoing"; metadata: { count: number } };
 
 function diffFields<T extends Record<string, unknown>>(
   before: T | undefined,
@@ -138,6 +140,10 @@ export function formatActivityLog(log: ActivityLogLike): string {
       return `exported inventory snapshot "${typed.metadata.label}" (${typed.metadata.instrumentCount} instruments)`;
     case "generate_annual_report":
       return `generated annual report for ${typed.metadata.year}`;
+    case "transfer_to_ongoing":
+      return `moved ${typed.metadata.count} ${typed.metadata.count === 1 ? "loan" : "loans"} to ongoing loans`;
+    case "revert_from_ongoing":
+      return "moved a loan back to the active roster";
     case "notify_available":
       return "notified borrower to complete Stage 2";
     case "add_admin":
@@ -198,4 +204,11 @@ export function toJakartaCalendarDate(date: Date): Date {
 
 export function todayInJakarta(): Date {
   return toJakartaCalendarDate(new Date());
+}
+
+export function toWhatsAppNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("62")) return digits;
+  if (digits.startsWith("0")) return `62${digits.slice(1)}`;
+  return `62${digits}`;
 }

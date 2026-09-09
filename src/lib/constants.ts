@@ -18,3 +18,6 @@ export const conditionColor: Record<string, string> = {
   retired: "bg-gray-100 text-gray-800",
   lost: "bg-red-100 text-red-800",
 };
+
+export const MARQUEE_TEXT =
+  "VIOLIN × VIOLA × CELLO × CONTRABASS × FRENCH HORN × TRUMPET × TROMBONE × TUBA × OBOE × CLARINET × BASSOON × FLUTE × PERCUSSION ×";

@@ -91,6 +91,16 @@ export function computeCanExtend(
   return daysUntilDue >= 0 && daysUntilDue <= 30;
 }
 
+export function confirmedExtensionCount(
+  latestPeriod: { sequence: number; startDate: Date | null } | null | undefined,
+): number {
+  if (!latestPeriod) return 0;
+  const confirmed = latestPeriod.startDate
+    ? latestPeriod.sequence - 1
+    : latestPeriod.sequence - 2;
+  return Math.max(0, confirmed);
+}
+
 export const REQUIRED_DOCUMENT_TYPES = [
   "signed_contract",
   "deposit_proof",

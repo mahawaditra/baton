@@ -56,8 +56,19 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   }, [ticketId]);
 
   useEffect(() => {
-    refetch().finally(() => setChecking(false));
-  }, [ticketId, refetch]);
+    let active = true;
+    async function loadInitial() {
+      try {
+        await refetch();
+      } finally {
+        if (active) setChecking(false);
+      }
+    }
+    loadInitial();
+    return () => {
+      active = false;
+    };
+  }, [refetch]);
 
   async function handleSubmit(formData: FormData) {
     const code = formData.get("code") as string;

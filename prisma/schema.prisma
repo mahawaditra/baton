@@ -78,6 +78,7 @@ model LoanSetting {
   signatoryYear            String  @map("signatory_year")
   signatorySection         String  @map("signatory_section")
   signatoryKtpNumber       String  @map("signatory_ktp_number")
+  signatoryPhonePublic     Boolean @default(false) @map("signatory_phone_public")
   signatoryImageDriveId    String? @map("signatory_image_drive_id")
 
   currentYearFolderId   String? @map("current_year_folder_id")
@@ -130,9 +131,10 @@ model BorrowingRequest {
   rejectionReason     String? @map("rejection_reason")
   cancellationReason  String? @map("cancellation_reason")
 
-  status    BorrowingRequestStatus @default(submitted)
-  createdAt DateTime               @default(now()) @map("created_at")
-  updatedAt DateTime               @default(now()) @updatedAt @map("updated_at")
+  status        BorrowingRequestStatus @default(submitted)
+  carriedOverAt DateTime?              @map("carried_over_at")
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @default(now()) @updatedAt @map("updated_at")
 
   loanPeriods LoanPeriod[]
 
@@ -310,6 +312,8 @@ enum ActivityAction {
   create_goods
   deactivate_admin
   reactivate_admin
+  transfer_to_ongoing
+  revert_from_ongoing
 }
 
 enum EntityType {

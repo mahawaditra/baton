@@ -3,12 +3,18 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { BorrowingRequest } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
+import { ExtensionBadge } from "@/components/ExtensionBadge";
+import { confirmedExtensionCount } from "@/lib/loan-rules";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const columns: ColumnDef<BorrowingRequest>[] = [
+export type RequestRow = Prisma.BorrowingRequestGetPayload<{
+  include: { loanPeriods: { select: { sequence: true; startDate: true } } };
+}>;
+
+export const columns: ColumnDef<RequestRow>[] = [
   {
     accessorKey: "ticketId",
     header: "Ticket ID",
@@ -22,7 +28,14 @@ export const columns: ColumnDef<BorrowingRequest>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <RequestStatusBadge status={row.original.status} />,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1.5">
+        <RequestStatusBadge status={row.original.status} />
+        <ExtensionBadge
+          count={confirmedExtensionCount(row.original.loanPeriods[0])}
+        />
+      </div>
+    ),
   },
   {
     accessorKey: "createdAt",

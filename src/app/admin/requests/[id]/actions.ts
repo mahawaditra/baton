@@ -563,10 +563,42 @@ export async function confirmExtension(requestId: string) {
     data: { startDate: new Date() },
   });
 
+  await prisma.borrowingRequest.updateMany({
+    where: { id: requestId, carriedOverAt: null },
+    data: { carriedOverAt: new Date() },
+  });
+
   await prisma.activityLog.create({
     data: {
       adminId: session.user.id,
       action: "confirm_extension",
+      entityType: "borrowing_request",
+      entityId: requestId,
+    },
+  });
+
+  revalidateRequestViews(requestId);
+}
+
+export async function revertFromOngoing(requestId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    throw new Error("Not logged in");
+  }
+
+  const result = await prisma.borrowingRequest.updateMany({
+    where: { id: requestId, carriedOverAt: { not: null } },
+    data: { carriedOverAt: null },
+  });
+
+  if (result.count === 0) {
+    throw new Error("This loan is not in the ongoing group.");
+  }
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "revert_from_ongoing",
       entityType: "borrowing_request",
       entityId: requestId,
     },

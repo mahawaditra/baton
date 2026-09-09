@@ -3,6 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ClipboardList, Clock } from "lucide-react";
 import { HeroMarquee } from "@/components/HeroMarquee";
 import { LandingHero } from "@/components/LandingHero";
+import { LandingFaq } from "@/components/LandingFaq";
+import { prisma } from "@/lib/prisma";
+import { toWhatsAppNumber } from "@/lib/format";
 import Link from "next/link";
 
 type StepIconProps = { className?: string; strokeWidth?: number };
@@ -83,7 +86,15 @@ const STEPS = [
   },
 ] as const;
 
-export default function Home() {
+export default async function Home() {
+  const settings = await prisma.loanSetting.findFirst({
+    select: { signatoryPhone: true, signatoryPhonePublic: true },
+  });
+  const whatsappNumber =
+    settings?.signatoryPhonePublic && settings.signatoryPhone
+      ? toWhatsAppNumber(settings.signatoryPhone)
+      : undefined;
+
   return (
     <div className="min-h-screen bg-background">
       <section className="relative isolate flex min-h-screen items-end justify-center overflow-hidden bg-hero-bg">
@@ -133,7 +144,7 @@ export default function Home() {
               Punya pertanyaan? Hubungi Ketua Logistik OSUI Mahawaditra.
             </p>
             <p className="mt-2 text-center text-caption text-muted-foreground">
-              If you're an admin, you can{" "}
+              If you&apos;re an admin, you can{" "}
               <Link
                 href="/admin"
                 className="underline underline-offset-2 font-bold hover:text-foreground"
@@ -144,6 +155,8 @@ export default function Home() {
             </p>
           </div>
         </section>
+
+        <LandingFaq whatsappNumber={whatsappNumber} />
 
         <section className="border-t border-border bg-surface px-6 py-24">
           <div className="mx-auto max-w-4xl">
@@ -165,7 +178,7 @@ export default function Home() {
               <div className="min-w-0">
                 <div className="flex flex-col gap-3.5 text-body-lg text-foreground">
                   <p>
-                    This site was build because for{" "}
+                    This site was built because for{" "}
                     <strong className="font-semibold">one</strong>, I need
                     more projects for my portfolio and{" "}
                     <strong className="font-semibold">two</strong>, I was

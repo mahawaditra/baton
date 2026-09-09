@@ -7,6 +7,7 @@ import {
   canNotifyBorrower,
   canCancelRequest,
   computeCanExtend,
+  confirmedExtensionCount,
   requiredDocumentTypesForPeriod,
   getRequestActionLabel,
   getRequestStep,
@@ -207,6 +208,33 @@ describe("computeCanExtend", () => {
 
   it("blocks when there is no due date yet", () => {
     expect(computeCanExtend("active", null)).toBe(false);
+  });
+});
+
+describe("confirmedExtensionCount", () => {
+  it("returns 0 for a loan with no periods", () => {
+    expect(confirmedExtensionCount(null)).toBe(0);
+    expect(confirmedExtensionCount(undefined)).toBe(0);
+  });
+
+  it("returns 0 for a loan still on its initial period", () => {
+    expect(confirmedExtensionCount({ sequence: 1, startDate: new Date() })).toBe(
+      0,
+    );
+  });
+
+  it("counts confirmed extensions when the latest period has started", () => {
+    expect(confirmedExtensionCount({ sequence: 2, startDate: new Date() })).toBe(
+      1,
+    );
+    expect(confirmedExtensionCount({ sequence: 3, startDate: new Date() })).toBe(
+      2,
+    );
+  });
+
+  it("does not count a pending extension that has not been confirmed yet", () => {
+    expect(confirmedExtensionCount({ sequence: 2, startDate: null })).toBe(0);
+    expect(confirmedExtensionCount({ sequence: 3, startDate: null })).toBe(1);
   });
 });
 

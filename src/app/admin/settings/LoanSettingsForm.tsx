@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SignatoryPhonePublicToggle } from "./SignatoryPhonePublicToggle";
 
 const initialState: UpdateLoanSettingsState = {
   success: false,
@@ -235,6 +236,11 @@ export function LoanSettingsForm({
                 id="signatoryImage"
                 name="signatoryImage"
                 format="image/png"
+              />
+            </div>
+            <div className="border-t border-border pt-4 sm:col-span-2">
+              <SignatoryPhonePublicToggle
+                defaultValue={loanSettings?.signatoryPhonePublic ?? false}
               />
             </div>
           </div>

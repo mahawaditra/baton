@@ -71,14 +71,32 @@ export function InstrumentsExplorer({
     setStatusFilter(new Set());
   }
 
+  function handleSectionToggle(value: string) {
+    const nextSections = toggleSetValue(sectionFilter, value);
+    setSectionFilter(nextSections);
+
+    const pool =
+      nextSections.size > 0
+        ? instruments.filter((i) => nextSections.has(i.section))
+        : instruments;
+    const validTypes = new Set(pool.map((i) => i.type));
+    setTypeFilter((prev) => {
+      const next = new Set([...prev].filter((t) => validTypes.has(t)));
+      return next.size === prev.size ? prev : next;
+    });
+  }
+
   const sections = useMemo(
     () => [...new Set(instruments.map((i) => i.section))].sort(),
     [instruments],
   );
-  const types = useMemo(
-    () => [...new Set(instruments.map((i) => i.type))].sort(),
-    [instruments],
-  );
+  const types = useMemo(() => {
+    const pool =
+      sectionFilter.size > 0
+        ? instruments.filter((i) => sectionFilter.has(i.section))
+        : instruments;
+    return [...new Set(pool.map((i) => i.type))].sort();
+  }, [instruments, sectionFilter]);
   const statusOptions = useMemo(() => STATUS_VALUES.map(getStatusLabel), []);
 
   const filtered = useMemo(() => {
@@ -146,9 +164,7 @@ export function InstrumentsExplorer({
             label="Section"
             options={sections}
             selected={sectionFilter}
-            onToggle={(value) =>
-              setSectionFilter((prev) => toggleSetValue(prev, value))
-            }
+            onToggle={handleSectionToggle}
           />
           <FacetFilter
             label="Type"
@@ -225,9 +241,7 @@ export function InstrumentsExplorer({
                 label="Section"
                 options={sections}
                 selected={sectionFilter}
-                onToggle={(value) =>
-                  setSectionFilter((prev) => toggleSetValue(prev, value))
-                }
+                onToggle={handleSectionToggle}
               />
               <FacetFilter
                 label="Type"

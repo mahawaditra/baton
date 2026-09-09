@@ -4,18 +4,24 @@ import { AssignSection } from "./AssignSection";
 import { NotifyAndRejectPanel } from "./NotifyAndRejectPanel";
 import { CancelRequestPanel } from "./CancelRequestPanel";
 import { DocumentReviewSection } from "./DocumentReviewSection";
-import { confirmExtension, confirmHandover, confirmReturn } from "./actions";
+import {
+  confirmExtension,
+  confirmHandover,
+  confirmReturn,
+  revertFromOngoing,
+} from "./actions";
 import {
   canAssignInstrument,
   canCancelRequest,
   canNotifyBorrower,
+  confirmedExtensionCount,
   getRequestStep,
   LOAN_STEP_LABELS,
 } from "@/lib/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
+import { ExtensionBadge } from "@/components/ExtensionBadge";
 import { LoanStepper } from "@/components/LoanStepper";
 import { SubmitButton } from "@/components/SubmitButton";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,8 +32,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, ImageIcon, Ban } from "lucide-react";
+import { AlertTriangle, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PhotoViewerModal } from "@/components/PhotoViewerModal";
 
 export default async function RequestDetailPage({
   params,
@@ -92,8 +99,9 @@ export default async function RequestDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <div className="mb-2 flex items-center gap-3">
+        <div className="mb-2 flex flex-wrap items-center gap-3">
           <RequestStatusBadge status={request.status} variant="pill" />
+          <ExtensionBadge count={confirmedExtensionCount(latestPeriod)} />
           <span className="tabular text-xs text-muted-foreground">
             Submitted {request.createdAt.toLocaleDateString("en-GB")}
           </span>
@@ -228,25 +236,53 @@ export default async function RequestDetailPage({
           ) : (
             request.instrument && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Instrument</CardTitle>
-                </CardHeader>
                 <CardContent>
-                  <Link
-                    href={`/admin/instruments/${request.instrument.id}`}
-                    className="text-sm font-medium text-navy underline-offset-4 hover:underline"
-                  >
-                    {request.instrument.type}
-                    {request.instrument.brand &&
-                      ` — ${request.instrument.brand}`}
-                    {request.instrument.serialNumber &&
-                      ` (S/N: ${request.instrument.serialNumber})`}
-                  </Link>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="font-heading text-h3">Instrument</span>
+                    <Link
+                      href={`/admin/instruments/${request.instrument.id}`}
+                      className="text-sm font-medium text-navy underline-offset-4 hover:underline"
+                    >
+                      {request.instrument.type}
+                      {request.instrument.brand &&
+                        ` — ${request.instrument.brand}`}
+                      {request.instrument.serialNumber &&
+                        ` (S/N: ${request.instrument.serialNumber})`}
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             )
           )}
           {canCancel && <CancelRequestPanel requestId={id} />}
+
+          {request.carriedOverAt &&
+            (request.status === "active" || request.status === "overdue") && (
+              <Card>
+                <CardContent>
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <div>
+                      <span className="font-heading text-h3">
+                        Ongoing Loans
+                      </span>{" "}
+                      <span className="text-sm text-muted-foreground">
+                        — since{" "}
+                        {request.carriedOverAt.toLocaleDateString("en-GB")}.
+                      </span>
+                    </div>
+                    <form action={revertFromOngoing.bind(null, id)}>
+                      <SubmitButton
+                        pendingText="Moving..."
+                        variant="outline"
+                        size="sm"
+                      >
+                        Move back to active roster
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
         </div>
       </div>
 
@@ -303,23 +339,11 @@ export default async function RequestDetailPage({
                   </div>
                 </div>
                 {a.driveFileIds.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {a.driveFileIds.map((fileId, index) => (
-                      <a
-                        key={fileId}
-                        href={`/admin/drive-files/${fileId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={cn(
-                          buttonVariants({ variant: "outline", size: "sm" }),
-                        )}
-                      >
-                        <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                        {a.driveFileIds.length > 1
-                          ? `Photo ${index + 1}`
-                          : "View Photo"}
-                      </a>
-                    ))}
+                  <div className="mt-3">
+                    <PhotoViewerModal
+                      fileIds={a.driveFileIds}
+                      title={`${a.timing === "initial" ? "Initial" : "Final"} condition photos`}
+                    />
                   </div>
                 )}
               </div>
