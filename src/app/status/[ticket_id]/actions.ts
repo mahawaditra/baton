@@ -3,12 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import {
   uploadFile,
-  downloadFileAsBase64,
   getGeneratedContractFolder,
   getBorrowerArchiveFolder,
   getOrCreateFolder,
 } from "@/lib/drive";
 import { renderBorrowerContractPdf } from "@/lib/contract-pdf";
+import { signDownloadToken } from "@/lib/download-token";
 import { driveTimestamp, escapeHtml } from "@/lib/format";
 import {
   documentTypesNeedingUpload,
@@ -30,7 +30,7 @@ type VerifyResult =
   | { success: false; error: string };
 
 type DownloadResult =
-  | { success: true; dataUrl: string; fileName: string }
+  | { success: true; url: string }
   | { success: false; error: string };
 
 type FormActionState = {
@@ -527,7 +527,7 @@ export async function getContractPdf(
 ): Promise<DownloadResult> {
   const request = await prisma.borrowingRequest.findUnique({
     where: { ticketId },
-    select: { id: true, accessCode: true, borrowerName: true },
+    select: { id: true, accessCode: true },
   });
 
   if (!request || request.accessCode !== accessCode) {
@@ -543,20 +543,10 @@ export async function getContractPdf(
     return { success: false, error: "PDF kontrak tidak ditemukan." };
   }
 
-  const dataUrl = await downloadFileAsBase64(
-    period.contractDriveFileId,
-    "application/pdf",
-  );
-
-  const fileName =
-    period.periodType === "extension"
-      ? `Kontrak ${request.borrowerName}_${ticketId}_Ext${period.sequence}.pdf`
-      : `Kontrak ${request.borrowerName}_${ticketId}.pdf`;
-
+  const token = signDownloadToken(ticketId);
   return {
     success: true,
-    dataUrl,
-    fileName,
+    url: `/api/status/${ticketId}/contract?token=${token}`,
   };
 }
 

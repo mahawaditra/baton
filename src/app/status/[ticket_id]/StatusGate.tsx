@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import Link from "next/link";
 import { getContractPdf, verifyAccessCode } from "./actions";
 import { Stage2Form } from "./Stage2Form";
@@ -39,6 +39,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   const [checking, setChecking] = useState(true);
   const [showExtendForm, setShowExtendForm] = useState(false);
   const [showReturnForm, setShowReturnForm] = useState(false);
+  const [downloadPending, startDownloadTransition] = useTransition();
 
   const refetch = useCallback(async () => {
     const savedCode = localStorage.getItem(`access_code_${ticketId}`);
@@ -289,20 +290,29 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 variant="outline"
-                onClick={async () => {
-                  const result = await getContractPdf(ticketId, accessCode);
-                  if (result.success) {
-                    const link = document.createElement("a");
-                    link.href = result.dataUrl;
-                    link.download = result.fileName;
-                    link.click();
-                  } else {
-                    alert(result.error);
-                  }
+                disabled={downloadPending}
+                onClick={() => {
+                  startDownloadTransition(async () => {
+                    try {
+                      const result = await getContractPdf(
+                        ticketId,
+                        accessCode,
+                      );
+                      if (result.success) {
+                        const link = document.createElement("a");
+                        link.href = result.url;
+                        link.click();
+                      } else {
+                        toastError(result.error);
+                      }
+                    } catch {
+                      toastError("Gagal mengunduh kontrak. Coba lagi.");
+                    }
+                  });
                 }}
               >
                 <Download className="h-4 w-4" strokeWidth={1.75} />
-                Download Kontrak
+                {downloadPending ? "Menyiapkan..." : "Download Kontrak"}
               </Button>
             </div>
           )}
