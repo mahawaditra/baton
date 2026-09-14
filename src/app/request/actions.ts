@@ -8,6 +8,7 @@ import { z } from "zod";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { escapeHtml } from "@/lib/format";
 import * as Sentry from "@sentry/nextjs";
+import { Prisma } from "@/generated/prisma/client";
 
 type State = {
   ticketId: string | null;
@@ -77,23 +78,36 @@ export async function submitRequest(
   }
 
   const { name, email, phone, lineId, instrumentType, year } = parsed.data;
-
-  const ticketId = generateTicketId();
-  const accessCode = generateAccessCode();
   const safeName = escapeHtml(name);
 
-  await prisma.borrowingRequest.create({
-    data: {
-      ticketId,
-      accessCode,
-      instrumentTypeRequested: instrumentType,
-      borrowerName: name,
-      borrowerEmail: email,
-      borrowerPhone: phone,
-      borrowerLineId: lineId,
-      borrowerYear: year,
-    },
-  });
+  let ticketId = "";
+  let accessCode = "";
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    ticketId = generateTicketId(instrumentType);
+    accessCode = generateAccessCode();
+
+    try {
+      await prisma.borrowingRequest.create({
+        data: {
+          ticketId,
+          accessCode,
+          instrumentTypeRequested: instrumentType,
+          borrowerName: name,
+          borrowerEmail: email,
+          borrowerPhone: phone,
+          borrowerLineId: lineId,
+          borrowerYear: year,
+        },
+      });
+      break;
+    } catch (err) {
+      const isTicketIdCollision =
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002";
+      if (!isTicketIdCollision || attempt === 4) throw err;
+    }
+  }
 
   try {
     await sendEmail({
