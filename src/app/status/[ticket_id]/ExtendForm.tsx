@@ -46,7 +46,7 @@ export function ExtendForm({
         <CardTitle>Perpanjang masa peminjaman</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mb-4 text-caption text-muted-foreground">
+        <p className="mb-4 text-caption text-foreground-2">
           Cek ulang data kamu di bawah — ubah kalau ada yang berubah.
         </p>
 

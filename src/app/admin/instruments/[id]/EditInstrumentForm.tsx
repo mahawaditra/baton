@@ -118,7 +118,7 @@ export function EditInstrumentForm({
           />
           Loanable
         </label>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground-2">
           Note: setting Condition to Retired or Lost will force this off
           automatically, regardless of this checkbox.
         </p>

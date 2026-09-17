@@ -112,7 +112,7 @@ export default async function RequestDetailPage({
             — {request.ticketId}
           </span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-foreground-2">
           {request.instrumentTypeRequested}
           {request.status === "reviewing" &&
             request.instrumentConfirmed &&
@@ -402,7 +402,7 @@ export default async function RequestDetailPage({
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-foreground-2">
                         Ignored if Retired/Lost — forced Unavailable.
                       </p>
                     </div>
@@ -429,7 +429,7 @@ export default async function RequestDetailPage({
       )}
 
       {isExtension && addendums.length === 0 && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-foreground-2">
           Waiting for borrower to submit the addendum for this extension period.
         </p>
       )}

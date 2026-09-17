@@ -51,7 +51,7 @@ export default async function InstrumentDetailPage({
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-h1">{instrument.type}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-foreground-2">
           {instrument.section}
         </p>
       </div>

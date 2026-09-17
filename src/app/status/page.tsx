@@ -97,7 +97,7 @@ export default async function StatusSearchPage({
         </CardContent>
       </Card>
 
-      <p className="max-w-sm text-center text-caption text-muted-foreground">
+      <p className="max-w-sm text-center text-caption text-foreground-2">
         Lupa Ticket ID-nya? Cek email konfirmasi yang kamu terima pas kirim
         pengajuan.
       </p>

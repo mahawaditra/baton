@@ -91,7 +91,7 @@ export function AddendumForm({
       </CardHeader>
       <CardContent>
         {timing === "initial" && (
-          <p className="mb-4 text-caption text-muted-foreground">
+          <p className="mb-4 text-caption text-foreground-2">
             Sebelum atau saat mengisi form ini, pastikan kamu sudah koordinasi
             jadwal pengambilan instrumen dengan staf Logistik OSUI (bisa dicek
             lewat email).

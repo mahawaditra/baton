@@ -194,7 +194,7 @@ export function DocumentReviewSection({
                     : "Confirm Documents & Notify Ready for Pickup"}
               </SubmitButton>
               {!allDecided && (
-                <p className="text-center text-xs text-muted-foreground">
+                <p className="text-center text-xs text-foreground-2">
                   Approve or reject every document above to continue.
                 </p>
               )}

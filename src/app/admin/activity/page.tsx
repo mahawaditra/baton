@@ -121,7 +121,7 @@ export default async function ActivityPage({
 
   return (
     <div className="flex flex-col gap-6 pb-20">
-      <h1 className="text-h1">Activity Log</h1>
+      <h1 className="hidden text-h1 lg:block">Activity Log</h1>
 
       {logs.length === 0 ? (
         <EmptyState icon={Activity} title="No activity recorded yet" />

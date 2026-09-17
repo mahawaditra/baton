@@ -173,6 +173,9 @@ export async function updateLoanSettings(
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) throw new Error("Not logged in");
+  if (session.user.role !== "super_admin") {
+    throw new Error("Only super admin can update loan settings.");
+  }
 
   const parsed = updateLoanSettingsSchema.safeParse({
     dueDate: formData.get("dueDate"),
@@ -290,6 +293,9 @@ export async function updateLoanSettings(
 export async function setSignatoryPhonePublic(value: boolean) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Not logged in");
+  if (session.user.role !== "super_admin") {
+    throw new Error("Only super admin can update loan settings.");
+  }
 
   const existing = await prisma.loanSetting.findFirst();
   if (!existing) throw new Error("Loan settings have not been set up yet.");

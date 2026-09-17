@@ -73,7 +73,7 @@ function FaqItem({ item }: { item: { q: string; a: ReactNode } }) {
           <ChevronDown className="h-4 w-4" strokeWidth={1.75} />
         </span>
       </summary>
-      <p className="mt-3 text-body text-muted-foreground">{item.a}</p>
+      <p className="mt-3 text-body text-foreground-2">{item.a}</p>
     </details>
   );
 }

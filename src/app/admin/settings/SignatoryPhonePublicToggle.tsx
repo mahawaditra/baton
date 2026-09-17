@@ -8,8 +8,10 @@ import { toastError } from "@/lib/toast";
 
 export function SignatoryPhonePublicToggle({
   defaultValue,
+  disabled,
 }: {
   defaultValue: boolean;
+  disabled?: boolean;
 }) {
   const [checked, setChecked] = useState(defaultValue);
   const [pending, startTransition] = useTransition();
@@ -32,7 +34,7 @@ export function SignatoryPhonePublicToggle({
         id="signatoryPhonePublic"
         checked={checked}
         onCheckedChange={handleChange}
-        disabled={pending}
+        disabled={pending || disabled}
         className="mt-0.5"
       />
       <div className="flex flex-col gap-0.5">
@@ -44,9 +46,11 @@ export function SignatoryPhonePublicToggle({
           contact button in the FAQ.
         </Label>
         <span className="text-caption text-muted-foreground">
-          {pending
-            ? "Saving…"
-            : "Applies immediately — independent of the Save button below."}
+          {disabled
+            ? "Cuma super admin yang bisa ubah ini."
+            : pending
+              ? "Saving…"
+              : "Applies immediately — independent of the Save button below."}
         </span>
       </div>
     </div>

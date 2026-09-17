@@ -23,7 +23,7 @@ export default async function SettingsPage() {
     <div className="flex flex-col gap-6">
       <h1 className="hidden text-h1 lg:block">Settings</h1>
 
-      <LoanSettingsForm loanSettings={loanSettings} />
+      <LoanSettingsForm loanSettings={loanSettings} isSuperAdmin={isSuperAdmin} />
 
       {isSuperAdmin && (
         <Card>

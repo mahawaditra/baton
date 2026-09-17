@@ -94,7 +94,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
-      <p className="max-w-sm text-center text-caption text-muted-foreground">
+      <p className="max-w-sm text-center text-caption text-foreground-2">
         This page is for OSUI Mahawaditra Logistics staff only. If you&apos;re
         Logistics staff and can&apos;t access it yet, contact the OSUI Logistics
         Lead to be registered as an admin.

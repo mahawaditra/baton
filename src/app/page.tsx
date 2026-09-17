@@ -89,7 +89,7 @@ const STEPS = [
     icon: PickupIcon,
     title: "Ambil di Sekre",
     description:
-      "Serahkan dokumen, catat kondisi awal, instrumen resmi jadi tanggung jawabmu.",
+      "Catat kondisi awal, instrumen resmi jadi tanggung jawabmu.",
   },
 ] as const;
 
@@ -138,7 +138,7 @@ export default async function Home() {
                             {step.title}
                           </h3>
                         </div>
-                        <p className="mt-3 text-body text-muted-foreground">
+                        <p className="mt-3 text-body text-foreground-2">
                           {step.description}
                         </p>
                       </CardContent>

@@ -98,7 +98,7 @@ export function RequestForm() {
           </CardContent>
         </Card>
 
-        <p className="text-caption text-muted-foreground">
+        <p className="text-caption text-foreground-2">
           Halaman ini gak akan nampilin lagi datanya, jadi sebaiknya dicatat
           atau di-screenshot ticket ID dan kode aksesnya.
         </p>

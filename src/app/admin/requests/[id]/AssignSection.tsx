@@ -63,7 +63,7 @@ export function AssignSection({
       )}
 
       {candidates.length === 0 && !currentInstrument && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-foreground-2">
           No matching instruments available to assign right now.
         </p>
       )}

@@ -139,7 +139,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
                 — {data.ticketId}
               </span>
             </h1>
-            <p className="mt-1 text-body text-muted-foreground">
+            <p className="mt-1 text-body text-foreground-2">
               {data.instrumentTypeRequested}
             </p>
           </div>
@@ -417,7 +417,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
               <h2 className="font-heading text-h3 text-foreground">
                 Masukkan Kode Akses
               </h2>
-              <p className="mt-1 text-caption text-muted-foreground">
+              <p className="mt-1 text-caption text-foreground-2">
                 Masukkan kode akses yang dikirim ke email kamu untuk buka status
                 peminjaman ini.
               </p>
@@ -441,7 +441,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
         </CardContent>
       </Card>
 
-      <p className="max-w-sm text-center text-caption text-muted-foreground">
+      <p className="max-w-sm text-center text-caption text-foreground-2">
         Lupa kode aksesnya? Cek email konfirmasi yang kamu terima pas kirim
         pengajuan.
       </p>

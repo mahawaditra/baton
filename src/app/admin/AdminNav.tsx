@@ -7,6 +7,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { useTheme } from "next-themes";
 import { authClient } from "@/lib/auth-client";
 import { useMounted } from "@/lib/use-mounted";
+import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   FileText,
@@ -16,14 +17,28 @@ import {
   FileBarChart,
   Archive,
   Settings,
+  BookOpen,
+  ChevronDown,
   Menu,
   X,
   Moon,
   Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HANDBOOK_SECTIONS } from "./handbook/sections";
 
-const NAV_GROUPS = [
+type LeafNavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  showBadge?: boolean;
+};
+
+type NavGroupItem =
+  | LeafNavItem
+  | { label: string; icon: LucideIcon; children: LeafNavItem[] };
+
+const NAV_GROUPS: { label: string; items: NavGroupItem[] }[] = [
   {
     label: "Operations",
     items: [
@@ -44,6 +59,15 @@ const NAV_GROUPS = [
     label: "System",
     items: [
       { href: "/admin/archive", label: "Archive", icon: Archive },
+      {
+        label: "Handbook",
+        icon: BookOpen,
+        children: HANDBOOK_SECTIONS.map((section) => ({
+          href: `/admin/handbook/${section.slug}`,
+          label: section.title,
+          icon: section.icon,
+        })),
+      },
       { href: "/admin/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -93,11 +117,15 @@ export function AdminNav({
   const mounted = useMounted();
   const { resolvedTheme, setTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [handbookOpen, setHandbookOpen] = useState(
+    pathname.startsWith("/admin/handbook"),
+  );
   const [prevPathname, setPrevPathname] = useState(pathname);
 
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     setDrawerOpen(false);
+    if (pathname.startsWith("/admin/handbook")) setHandbookOpen(true);
   }
 
   async function handleLogout() {
@@ -109,9 +137,11 @@ export function AdminNav({
   const isDark = mounted && resolvedTheme === "dark";
 
   const activeLabel =
-    NAV_GROUPS.flatMap((group) => group.items).find((item) =>
-      isActive(pathname, item.href),
-    )?.label ?? "Admin";
+    NAV_GROUPS.flatMap((group) =>
+      group.items.flatMap((item) =>
+        "children" in item ? item.children : [item],
+      ),
+    ).find((item) => isActive(pathname, item.href))?.label ?? "Admin";
 
   const navGroups = (
     <nav className="flex flex-1 flex-col gap-4 overflow-y-auto">
@@ -122,6 +152,66 @@ export function AdminNav({
           </div>
           <div className="flex flex-col gap-0.5">
             {group.items.map((item) => {
+              if ("children" in item) {
+                const ParentIcon = item.icon;
+                const groupActive = item.children.some((child) =>
+                  isActive(pathname, child.href),
+                );
+                return (
+                  <div key={item.label}>
+                    <button
+                      type="button"
+                      onClick={() => setHandbookOpen((v) => !v)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm",
+                        groupActive
+                          ? "font-semibold text-foreground"
+                          : "text-muted-foreground hover:bg-muted",
+                      )}
+                    >
+                      <ParentIcon
+                        className="h-[18px] w-[18px]"
+                        strokeWidth={1.75}
+                      />
+                      {item.label}
+                      <ChevronDown
+                        className={cn(
+                          "ml-auto h-4 w-4 transition-transform",
+                          !handbookOpen && "-rotate-90",
+                        )}
+                        strokeWidth={1.75}
+                      />
+                    </button>
+                    {handbookOpen && (
+                      <div className="mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
+                        {item.children.map((child) => {
+                          const active = isActive(pathname, child.href);
+                          const ChildIcon = child.icon;
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className={cn(
+                                "flex items-center gap-2.5 rounded px-3 py-1.5 text-sm",
+                                active
+                                  ? "bg-gold-soft/40 font-semibold text-foreground"
+                                  : "text-muted-foreground hover:bg-muted",
+                              )}
+                            >
+                              <ChildIcon
+                                className="h-4 w-4"
+                                strokeWidth={1.75}
+                              />
+                              {child.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               const active = isActive(pathname, item.href);
               const Icon = item.icon;
               return (

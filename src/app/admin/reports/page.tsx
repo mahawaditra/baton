@@ -30,7 +30,7 @@ export default async function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-h1">Reports</h1>
+      <h1 className="hidden text-h1 lg:block">Reports</h1>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <AnnualReportPanel recentReports={recentReports} />
@@ -61,7 +61,7 @@ export default async function ReportsPage() {
                       key={s.id}
                       className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
                     >
-                      <span className="text-muted-foreground">
+                      <span className="text-foreground-2">
                         {s.label} — by {s.creator.name} —{" "}
                         {s.createdAt.toLocaleDateString("en-GB")}
                       </span>

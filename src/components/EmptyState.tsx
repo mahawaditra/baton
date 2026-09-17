@@ -52,7 +52,7 @@ export function EmptyState({
       {description && (
         <p
           className={cn(
-            "max-w-xs text-muted-foreground",
+            "max-w-xs text-foreground-2",
             compact ? "mt-1 text-xs" : "mt-2 text-sm",
           )}
         >

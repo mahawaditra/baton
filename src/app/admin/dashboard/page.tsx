@@ -279,7 +279,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="hidden text-h1 lg:block">Dashboard</h1>
-        <p className="text-sm text-muted-foreground lg:mt-1">
+        <p className="text-sm text-foreground-2 lg:mt-1">
           Welcome back, {session?.user.name || session?.user.email}.
         </p>
       </div>
@@ -362,7 +362,7 @@ export default async function DashboardPage() {
                           {req.borrowerName}
                         </span>
                       </div>
-                      <div className="truncate text-xs text-muted-foreground">
+                      <div className="truncate text-xs text-foreground-2">
                         {needsAction
                           ? getRequestActionLabel(req)
                           : waitingOnBorrowerLabel(req.status)}

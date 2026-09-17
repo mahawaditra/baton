@@ -46,7 +46,7 @@ I'm an alumnus of OSUI Mahawaditra year 2020. I happened to be the Deputy Head (
 - Contracts were filled in by hand — typos and inconsistent file & document conventions were common
 - Deadline reminders and deposit status were both tracked manually, that is, not tracked at all until the admin team realized an instrument was still witheld by someone (now who's at fault for that really?)
 
-BATON is built halfly as a handoff tool and a personal project that I'll keep maintaining for... As long as I can remember, or needed, really. Whoever holds the head-of-logistics position (and their staffs) each year becomes an **admin**, with day-to-day access to requests, inventory, and document review, as head of logistics always do. I stay on as a **super admin** — full access to configuration and historical data, without being the one who has to run it week to week.
+BATON is built halfly as a handoff tool and a personal project that I'll keep maintaining for... As long as I can remember, or needed, really. Whoever holds the head-of-logistics position each year becomes a **super admin** — day-to-day access to requests, inventory, and document review, plus full control over configuration (Loan Settings, deposit amounts, the signatory data printed on every contract) and their own team's admin accounts, so they can onboard incoming staff and deactivate outgoing ones themselves at handoff. Their staff get plain **admin** access — same day-to-day work, minus configuration and admin management. I stay on as a super admin too, permanently — I'm the only one who can actually grant that role in the first place, since it's a direct database change, not something the UI exposes.
 
 It's also deliberately still hybrid with the existing Google ecosystem, not a full replacement of it: files still live in the shared logistics division's Drive folder, admins still log in with their Google account, and the physical, stamped contract is still the document that's actually legally binding. BATON's job is to make the process **_around_** that. Tracking, reminders, status, history — structured and hard to get wrong (I hope), not to throw away what already worked.
 
@@ -81,7 +81,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Deposit tracking
 - Extension and return handling
 - Per-instrument history page
-- Annual settings (due dates, bank details, deposit amount)
+- Annual settings (due dates, bank details, deposit amount, signatory data) — super admin only, visible but locked for other admins
 - Admin management (super admin only)
 
 ### Borrowing Flow

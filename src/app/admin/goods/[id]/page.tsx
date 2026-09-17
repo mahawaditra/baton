@@ -36,7 +36,7 @@ export default async function GoodDetailPage({
       <div>
         <h1 className="text-h1">{good.name}</h1>
         {good.brand && (
-          <p className="mt-1 text-sm text-muted-foreground">{good.brand}</p>
+          <p className="mt-1 text-sm text-foreground-2">{good.brand}</p>
         )}
       </div>
 

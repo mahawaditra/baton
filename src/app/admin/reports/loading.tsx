@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function ReportsLoading() {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-h1">Reports</h1>
+      <h1 className="hidden text-h1 lg:block">Reports</h1>
       <LoadingMarquee />
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">

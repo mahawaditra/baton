@@ -18,8 +18,10 @@ const initialState: UpdateLoanSettingsState = {
 
 export function LoanSettingsForm({
   loanSettings,
+  isSuperAdmin,
 }: {
   loanSettings: LoanSetting | null;
+  isSuperAdmin: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(
     updateLoanSettings,
@@ -42,7 +44,14 @@ export function LoanSettingsForm({
           Loan settings saved.
         </p>
       )}
+      {!isSuperAdmin && (
+        <p className="text-sm text-foreground-2">
+          Cuma super admin yang bisa ubah Loan Settings. Kamu bisa liat
+          isinya, tapi nggak bisa nyimpen perubahan.
+        </p>
+      )}
 
+      <fieldset disabled={!isSuperAdmin} className="contents">
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -179,7 +188,7 @@ export function LoanSettingsForm({
                 required
               />
             </div>
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="signatoryAddressKtp">Address (as per KTP)</Label>
               <Input
                 id="signatoryAddressKtp"
@@ -188,7 +197,7 @@ export function LoanSettingsForm({
                 required
               />
             </div>
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="signatoryAddressDomicile">Current Address</Label>
               <Input
                 id="signatoryAddressDomicile"
@@ -248,11 +257,13 @@ export function LoanSettingsForm({
                 id="signatoryImage"
                 name="signatoryImage"
                 format="image/png"
+                disabled={!isSuperAdmin}
               />
             </div>
             <div className="border-t border-border pt-4 sm:col-span-2">
               <SignatoryPhonePublicToggle
                 defaultValue={loanSettings?.signatoryPhonePublic ?? false}
+                disabled={!isSuperAdmin}
               />
             </div>
           </div>
@@ -262,6 +273,7 @@ export function LoanSettingsForm({
       <Button type="submit" disabled={isPending} className="self-start">
         {isPending ? "Saving..." : "Save Loan Settings"}
       </Button>
+      </fieldset>
     </form>
   );
 }

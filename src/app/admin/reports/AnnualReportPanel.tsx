@@ -104,7 +104,7 @@ export function AnnualReportPanel({
         <CardTitle>Annual Report</CardTitle>
       </CardHeader>
       <CardContent className="gap-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-foreground-2">
           Summary from January 1st of this year through now. Click Generate
           for a preview — nothing is saved until you click Save.
         </p>
