@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "db:reset": "tsx prisma/reset.ts && tsx prisma/seed.ts && tsx prisma/drive-reminder.ts",
     "postinstall": "prisma generate",
     "test": "vitest run",
     "test:watch": "vitest"

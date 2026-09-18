@@ -34,6 +34,7 @@ type GoodRow = {
   Quantity?: number;
   Condition?: string;
   Location?: string;
+  "Registration No."?: string;
   "Registration No"?: string;
   Notes?: string;
 };
@@ -93,10 +94,10 @@ async function seedGoods() {
   const goods = rows.map((row) => ({
     name: row.Name,
     brand: row.Brand || null,
-    quantity: row.Quantity || 1,
+    quantity: row.Quantity ?? 1,
     condition: (row.Condition || "ok") as ItemCondition,
     location: row.Location || "RB1",
-    registrationNo: row["Registration No"] || null,
+    registrationNo: row["Registration No."] || row["Registration No"] || null,
     notes: row.Notes || null,
   }));
 
