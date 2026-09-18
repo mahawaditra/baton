@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   if (!process.env.CRON_SECRET) {
@@ -12,6 +13,7 @@ export async function GET(req: NextRequest) {
   }
 
   await prisma.$queryRaw`SELECT 1;`;
+  await redis.ping();
 
   return new Response("OK", { status: 200 });
 }

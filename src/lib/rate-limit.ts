@@ -1,8 +1,9 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
+import * as Sentry from "@sentry/nextjs";
 
-const redis = Redis.fromEnv();
+export const redis = Redis.fromEnv();
 
 export const accessCodeLimiter = new Ratelimit({
   redis,
@@ -25,4 +26,16 @@ export const statusSearchLimiter = new Ratelimit({
 export async function getClientIp(): Promise<string> {
   const h = await headers();
   return h.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+}
+
+export async function limitOrAllow(
+  limiter: Ratelimit,
+  identifier: string,
+): Promise<{ success: boolean }> {
+  try {
+    return await limiter.limit(identifier);
+  } catch (error) {
+    Sentry.captureException(error);
+    return { success: true };
+  }
 }

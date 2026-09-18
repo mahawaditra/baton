@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
-import { getClientIp, submitRequestLimiter } from "@/lib/rate-limit";
+import { getClientIp, limitOrAllow, submitRequestLimiter } from "@/lib/rate-limit";
 import { generateTicketId, generateAccessCode } from "@/lib/id-generators";
 import { z } from "zod";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
@@ -50,7 +50,7 @@ export async function submitRequest(
   };
 
   const ip = await getClientIp();
-  const { success } = await submitRequestLimiter.limit(`submit:${ip}`);
+  const { success } = await limitOrAllow(submitRequestLimiter, `submit:${ip}`);
   if (!success) {
     return {
       ticketId: null,

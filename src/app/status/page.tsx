@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getClientIp, statusSearchLimiter } from "@/lib/rate-limit";
+import { getClientIp, limitOrAllow, statusSearchLimiter } from "@/lib/rate-limit";
 import { redirect } from "next/navigation";
 import { Search, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export default async function StatusSearchPage({
 
   if (q) {
     const ip = await getClientIp();
-    const { success } = await statusSearchLimiter.limit(`status-search:${ip}`);
+    const { success } = await limitOrAllow(statusSearchLimiter, `status-search:${ip}`);
     if (!success) {
       rateLimited = true;
     } else {

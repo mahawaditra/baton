@@ -18,7 +18,7 @@ import {
 } from "@/lib/loan-rules";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
-import { accessCodeLimiter } from "@/lib/rate-limit";
+import { accessCodeLimiter, limitOrAllow } from "@/lib/rate-limit";
 import { z } from "zod";
 import {
   validateDocumentUpload,
@@ -87,7 +87,8 @@ export async function verifyAccessCode(
   });
 
   if (!request || request.accessCode !== code) {
-    const { success } = await accessCodeLimiter.limit(
+    const { success } = await limitOrAllow(
+      accessCodeLimiter,
       `access-code:${ticketId}`,
     );
     return {
