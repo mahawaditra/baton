@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   uploadFile,
+  trashFile,
   getGeneratedContractFolder,
   getBorrowerArchiveFolder,
   getOrCreateFolder,
@@ -631,6 +632,11 @@ export async function submitDocument(
     request.borrowerName,
   );
 
+  const previousDocument = await prisma.document.findUnique({
+    where: { periodId_type: { periodId: latestPeriod.id, type: documentType } },
+    select: { driveFileId: true },
+  });
+
   const buffer = Buffer.from(await file.arrayBuffer());
   const ext = file.name.split(".").pop();
   const driveFileId = await uploadFile(
@@ -680,6 +686,12 @@ export async function submitDocument(
 
     return complete;
   });
+
+  if (previousDocument) {
+    try {
+      await trashFile(previousDocument.driveFileId);
+    } catch {}
+  }
 
   if (nowComplete) {
     try {
