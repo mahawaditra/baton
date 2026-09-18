@@ -25,4 +25,5 @@ export type RequestData = {
   guardianName: string | null;
   guardianPhone: string | null;
   guardianAddressKtp: string | null;
+  pickupContact: { whatsappUrl: string; lineUrl: string | null } | null;
 };

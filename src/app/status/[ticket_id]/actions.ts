@@ -10,7 +10,7 @@ import {
 } from "@/lib/drive";
 import { renderBorrowerContractPdf } from "@/lib/contract-pdf";
 import { signDownloadToken } from "@/lib/download-token";
-import { driveTimestamp, escapeHtml } from "@/lib/format";
+import { driveTimestamp, escapeHtml, toWhatsAppNumber } from "@/lib/format";
 import {
   documentTypesNeedingUpload,
   computeCanExtend,
@@ -158,11 +158,25 @@ export async function verifyAccessCode(
   const canExtend =
     computeCanExtend(request.status, dueDate) && !hasPendingExtension;
 
+  let pickupContact: RequestData["pickupContact"] = null;
+  if (request.status === "ready_to_pickup" && !hasInitialAddendum) {
+    const contactSettings = await prisma.loanSetting.findFirst({
+      select: { signatoryPhone: true, signatoryLineAddFriendUrl: true },
+    });
+    if (contactSettings) {
+      pickupContact = {
+        whatsappUrl: `https://wa.me/${toWhatsAppNumber(contactSettings.signatoryPhone)}`,
+        lineUrl: contactSettings.signatoryLineAddFriendUrl,
+      };
+    }
+  }
+
   const { accessCode, id, ...safeData } = request;
   return {
     success: true,
     request: {
       ...safeData,
+      pickupContact,
       hasInitialAddendum,
       hasFinalAddendum,
       dueDate,

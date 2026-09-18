@@ -15,6 +15,7 @@ import { LoanStepper } from "@/components/LoanStepper";
 import { LoadingMarquee } from "@/components/LoadingMarquee";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ContactLink, LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -331,11 +332,34 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
 
           {data.status === "ready_to_pickup" && !data.hasInitialAddendum && (
             <StatusNote>
-              Instrumen kamu siap diambil! Koordinasi jadwal pengambilan dengan
-              staf Logistik OSUI (info kontak bisa dicek lewat email), lalu isi
-              kondisi awal di bawah ini.
+              Instrumen kamu siap diambil! Hubungi staf Logistik OSUI dan
+              koordinasi jadwal pengambilan dengan kontaknya di bawah ini (atau
+              bisa dicek lewat email), lalu isi kondisi awal di bawah ini.
             </StatusNote>
           )}
+
+          {data.status === "ready_to_pickup" &&
+            !data.hasInitialAddendum &&
+            data.pickupContact && (
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <ContactLink
+                  href={data.pickupContact.whatsappUrl}
+                  icon={WhatsAppIcon}
+                  className="sm:flex-1"
+                >
+                  Chat via WhatsApp
+                </ContactLink>
+                {data.pickupContact.lineUrl && (
+                  <ContactLink
+                    href={data.pickupContact.lineUrl}
+                    icon={LineIcon}
+                    className="sm:flex-1"
+                  >
+                    Chat via LINE
+                  </ContactLink>
+                )}
+              </div>
+            )}
 
           {((data.status === "ready_to_pickup" && !data.hasInitialAddendum) ||
             data.canFillExtensionAddendum) && (
