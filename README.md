@@ -24,7 +24,7 @@ A web platform for OSUI Mahawaditra's Logistics division to manage instrument bo
   - [Technical Decisions \& Challenges](#technical-decisions--challenges)
     - [Puppeteer only fully works locally](#puppeteer-only-fully-works-locally)
     - [No login for borrowers](#no-login-for-borrowers)
-    - [Keeping the free-tier database awake](#keeping-the-free-tier-database-awake)
+    - [Keeping the free-tier services awake](#keeping-the-free-tier-services-awake)
     - [From one combined upload to one-per-document](#from-one-combined-upload-to-one-per-document)
     - ["Ongoing loans" is a timestamp, not a status](#ongoing-loans-is-a-timestamp-not-a-status)
     - [Two inputs for one field](#two-inputs-for-one-field)
@@ -128,9 +128,11 @@ Generating the prefilled contract PDF renders an HTML template with Puppeteer. R
 
 Borrowers touch the platform a handful of times a year at most, so requiring them to create an account felt like unnecessary friction for something this infrequent. Instead, each request gets a `ticket_id` (used as the URL, effectively public) and a separate `access_code` (the actual secret), generated on submission and sent by email. The access code gates every read and write on that ticket — not just the initial page load — so knowing or guessing a `ticket_id` alone doesn't expose someone else's request. Initially I considered sending the credentials via WhatsApp, but as of building this, let's just say this project is _completely free of cost_, so email it is.
 
-### Keeping the free-tier database awake
+### Keeping the free-tier services awake
 
-Supabase's free tier pauses a database after a stretch of inactivity, which doesn't play well with BATON's actual usage pattern — bursts during intake season, quiet stretches the rest of the year with some bits of updates on instruments when needed. `/api/cron/keepalive`, triggered by Vercel Cron every few days, runs a bare `SELECT 1` against the database to keep it from being auto-paused. The route itself is locked behind a `CRON_SECRET` bearer token, since it's meant to be called by the scheduler, not relying on someone opening the URL every few days.
+Supabase's free tier pauses a database after a stretch of inactivity, and Upstash's free tier deactivates an unused Redis database the same way — neither plays well with BATON's actual usage pattern: bursts during intake season, quiet stretches the rest of the year with some bits of updates on instruments when needed. `/api/cron/keepalive`, triggered daily by Vercel Cron, runs a bare `SELECT 1` against Postgres and a `PING` against Redis to keep both from being auto-paused. The route itself is locked behind a `CRON_SECRET` bearer token, since it's meant to be called by the scheduler, not relying on someone opening the URL by hand.
+
+Rate limiting fails open for the same reason: if Redis is ever unreachable, the request is let through and the error goes to Sentry, rather than locking borrowers out of a form over a side service.
 
 ### From one combined upload to one-per-document
 
@@ -217,7 +219,8 @@ cp .env-example .env
 | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `DATABASE_URL`                                                                                     | Pooled (transaction-mode) Postgres connection, used at runtime |
 | `DIRECT_URL`                                                                                       | Session-mode Postgres connection, used for migrations          |
-| `BETTER_AUTH_SECRET` / `BETTER_AUTH_URL`                                                           | Better Auth session configuration                              |
+| `BETTER_AUTH_SECRET`                                                                               | Better Auth session signing secret                             |
+| `BETTER_AUTH_URL`                                                                                  | Public base URL, no trailing slash; used in OAuth and emails   |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`                                                        | Google OAuth app credentials (admin login and Drive access)    |
 | `GOOGLE_DRIVE_REFRESH_TOKEN`                                                                       | Long-lived token for OAuth-as-user Drive access                |
 | `GOOGLE_DRIVE_ROOT_FOLDER_ID`                                                                      | Drive folder BATON uses as its root                            |
@@ -234,6 +237,10 @@ Set up the database:
 npx prisma migrate dev
 npx prisma db seed
 ```
+
+The seed reads the real inventory from `prisma/seed-data/instruments.xlsx` and `prisma/seed-data/goods.xlsx`. Those two files are gitignored — they're the org's actual inventory — so a fresh clone needs its own copies, with the same column headers `prisma/seed.ts` reads.
+
+To wipe a database back to a clean slate and re-seed it (after a round of testing, say), run `npm run db:reset`. It validates both spreadsheets before touching anything, lists exactly what it is about to delete, keeps super admins and Loan Settings, and only continues if you type `RESET` in an interactive terminal. Afterwards it prints which Drive folders are safe to clear by hand, since a database reset doesn't touch Drive.
 
 Run the dev server:
 
@@ -260,7 +267,8 @@ src/
 prisma/
   schema.prisma  Database schema (15 models)
   migrations/    Migration history
-  seed.ts        Seed data for local development
+  seed.ts        Seeds instruments and goods from prisma/seed-data/*.xlsx (gitignored)
+  reset.ts       Guarded wipe behind `npm run db:reset` — keeps super admins and Loan Settings
 ```
 
 ## Testing
