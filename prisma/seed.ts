@@ -8,6 +8,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import * as XLSX from "xlsx/xlsx.mjs";
 import * as fs from "fs";
+import { requiredText, text } from "./seed-utils";
 
 XLSX.set_fs(fs);
 
@@ -18,25 +19,25 @@ const prisma = new PrismaClient({ adapter });
 const STANDARD_LOCATIONS = ["Sekre", "RB1"];
 
 type InstrumentRow = {
-  Section: string;
-  Type: string;
-  Brand?: string;
-  "Serial Number"?: string;
-  Condition: string;
-  Status: string;
-  Location: string;
-  Notes?: string;
+  Section?: unknown;
+  Type?: unknown;
+  Brand?: unknown;
+  "Serial Number"?: unknown;
+  Condition?: unknown;
+  Status?: unknown;
+  Location?: unknown;
+  Notes?: unknown;
 };
 
 type GoodRow = {
-  Name: string;
-  Brand?: string;
+  Name?: unknown;
+  Brand?: unknown;
   Quantity?: number;
-  Condition?: string;
-  Location?: string;
-  "Registration No."?: string;
-  "Registration No"?: string;
-  Notes?: string;
+  Condition?: unknown;
+  Location?: unknown;
+  "Registration No."?: unknown;
+  "Registration No"?: unknown;
+  Notes?: unknown;
 };
 
 async function seedInstruments() {
@@ -50,10 +51,11 @@ async function seedInstruments() {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows: InstrumentRow[] = XLSX.utils.sheet_to_json(sheet);
 
-  const instruments = rows.map((row) => {
-    const condition = (row.Condition || "ok") as string;
-    const location = row.Location || "Sekre";
-    let status = (row.Status || "available") as string;
+  const instruments = rows.map((row, index) => {
+    const rowNumber = index + 2;
+    const condition = text(row.Condition) ?? "ok";
+    const location = text(row.Location) ?? "Sekre";
+    let status = text(row.Status) ?? "available";
     let isLoanable = true;
 
     if (condition === "retired" || condition === "lost") {
@@ -64,15 +66,15 @@ async function seedInstruments() {
     }
 
     return {
-      section: row.Section,
-      type: row.Type,
-      brand: row.Brand || null,
-      serialNumber: row["Serial Number"] || null,
+      section: requiredText(row.Section, "Section", rowNumber),
+      type: requiredText(row.Type, "Type", rowNumber),
+      brand: text(row.Brand),
+      serialNumber: text(row["Serial Number"]),
       condition: condition as ItemCondition,
       status: status as InstrumentStatus,
       isLoanable,
       location,
-      notes: row.Notes || null,
+      notes: text(row.Notes),
     };
   });
 
@@ -91,14 +93,14 @@ async function seedGoods() {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows: GoodRow[] = XLSX.utils.sheet_to_json(sheet);
 
-  const goods = rows.map((row) => ({
-    name: row.Name,
-    brand: row.Brand || null,
+  const goods = rows.map((row, index) => ({
+    name: requiredText(row.Name, "Name", index + 2),
+    brand: text(row.Brand),
     quantity: row.Quantity ?? 1,
-    condition: (row.Condition || "ok") as ItemCondition,
-    location: row.Location || "RB1",
-    registrationNo: row["Registration No."] || row["Registration No"] || null,
-    notes: row.Notes || null,
+    condition: (text(row.Condition) ?? "ok") as ItemCondition,
+    location: text(row.Location) ?? "RB1",
+    registrationNo: text(row["Registration No."]) ?? text(row["Registration No"]),
+    notes: text(row.Notes),
   }));
 
   const result = await prisma.good.createMany({ data: goods });

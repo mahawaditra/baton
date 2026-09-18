@@ -20,6 +20,7 @@ function assertSeedFile(
   requiredHeaders: string[],
   allowedValues: Record<string, string[]> = {},
   numericColumns: string[] = [],
+  requiredCells: string[] = [],
 ) {
   if (!fs.existsSync(path)) {
     throw new Error(`Seed file not found: ${path}. Nothing was deleted.`);
@@ -42,6 +43,12 @@ function assertSeedFile(
   const problems: string[] = [];
   rows.forEach((row, i) => {
     const excelRow = i + 2;
+    for (const column of requiredCells) {
+      const value = row[column];
+      if (value === undefined || value === null || String(value).trim() === "") {
+        problems.push(`row ${excelRow}, ${column} is required but blank`);
+      }
+    }
     for (const [column, allowed] of Object.entries(allowedValues)) {
       const value = row[column];
       if (value !== undefined && value !== null && !allowed.includes(String(value))) {
@@ -69,12 +76,15 @@ async function main() {
     "prisma/seed-data/instruments.xlsx",
     ["Section", "Type", "Condition", "Location"],
     { Condition: CONDITIONS, Status: STATUSES },
+    [],
+    ["Section", "Type"],
   );
   assertSeedFile(
     "prisma/seed-data/goods.xlsx",
     ["Name", "Quantity", "Location"],
     { Condition: CONDITIONS },
     ["Quantity"],
+    ["Name"],
   );
 
   const superAdmins = await prisma.admin.findMany({
@@ -147,7 +157,7 @@ async function main() {
       where: { id: { in: superAdminIds } },
       data: { emailVerified: true, isActive: true },
     });
-  });
+  }, { timeout: 30_000, maxWait: 10_000 });
 
   console.log("\nReset done. Seeding instruments and goods next...\n");
 }
