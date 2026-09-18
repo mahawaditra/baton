@@ -13,6 +13,6 @@
       }
     </style>
   </defs>
-  <rect width="64" height="64" fill="#1b2842" />
-  <text x="32" y="45" font-size="40" fill="#f8f5ee" text-anchor="middle">B</text>
+  <rect width="64" height="64" fill="#11111f" />
+  <text x="31" y="55" font-size="62" fill="#f8f5ee" text-anchor="middle">B</text>
 </svg>
