@@ -91,6 +91,18 @@ model LoanSetting {
   @@map("loan_settings")
 }
 
+model InstrumentTypeSlot {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  instrumentType     String   @unique @map("instrument_type")
+  maxConcurrentLoans Int      @default(1) @map("max_concurrent_loans")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy          String?  @map("updated_by") @db.Uuid
+
+  updatedByAdmin Admin? @relation(fields: [updatedBy], references: [id])
+
+  @@map("instrument_type_slots")
+}
+
 enum BorrowingRequestStatus {
   submitted
   reviewing
@@ -114,11 +126,12 @@ model BorrowingRequest {
   instrumentTypeRequested String      @map("instrument_type_requested")
   instrumentConfirmed     Boolean     @default(false) @map("instrument_confirmed")
 
-  borrowerName   String @map("borrower_name")
-  borrowerEmail  String @map("borrower_email")
-  borrowerPhone  String @map("borrower_phone")
-  borrowerLineId String @map("borrower_line_id")
-  borrowerYear   String @map("borrower_year")
+  borrowerName     String  @map("borrower_name")
+  borrowerEmail    String  @map("borrower_email")
+  borrowerPhone    String  @map("borrower_phone")
+  borrowerLineId   String  @map("borrower_line_id")
+  borrowerYear     String  @map("borrower_year")
+  borrowerNickname String? @map("borrower_nickname")
 
   borrowerKtpNumber       String? @map("borrower_ktp_number")
   borrowerAddressKtp      String? @map("borrower_address_ktp")
@@ -237,12 +250,13 @@ model Admin {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
 
-  loanSettingsUpdated LoanSetting[]
-  activityLogs        ActivityLog[]
-  inventorySnapshots  InventorySnapshot[]
-  sessions            Session[]
-  accounts            Account[]
-  annualReports       AnnualReport[]
+  loanSettingsUpdated        LoanSetting[]
+  activityLogs               ActivityLog[]
+  inventorySnapshots         InventorySnapshot[]
+  sessions                   Session[]
+  accounts                   Account[]
+  annualReports              AnnualReport[]
+  instrumentTypeSlotsUpdated InstrumentTypeSlot[]
 
   @@map("admins")
 }
@@ -305,6 +319,7 @@ enum ActivityAction {
   update_instrument
   update_goods
   update_loan_settings
+  update_instrument_type_slot
   export_snapshot
   generate_annual_report
   reject_request
@@ -324,6 +339,7 @@ enum EntityType {
   instrument
   goods
   loan_settings
+  instrument_type_slot
   admin
   inventory_snapshot
 }

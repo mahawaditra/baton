@@ -25,9 +25,11 @@ const initialState: UpdateInstrumentState = {
 export function EditInstrumentForm({
   instrument,
   statusLocked,
+  displayLocation,
 }: {
   instrument: Instrument;
   statusLocked: boolean;
+  displayLocation: string;
 }) {
   const action = updateInstrument.bind(null, instrument.id);
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -129,8 +131,15 @@ export function EditInstrumentForm({
         <Input
           id="location"
           name="location"
-          defaultValue={instrument.location}
+          defaultValue={statusLocked ? displayLocation : instrument.location}
+          disabled={statusLocked}
         />
+        {statusLocked && (
+          <p className="text-xs text-destructive">
+            Location cannot be changed while instrument is reserved or
+            borrowed.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">

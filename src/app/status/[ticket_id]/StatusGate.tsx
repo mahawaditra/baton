@@ -8,7 +8,7 @@ import { UploadDocumentsForm } from "./UploadDocumentsForm";
 import { RequestData } from "./types";
 import { AddendumForm } from "./AddendumForm";
 import { ExtendForm } from "./ExtendForm";
-import { getRequestStep, LOAN_STEP_LABELS } from "@/lib/loan-rules";
+import { getRequestStep, LOAN_STEP_LABELS, resolveNickname } from "@/lib/loan-rules";
 import { toastError } from "@/lib/toast";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { LoanStepper } from "@/components/LoanStepper";
@@ -134,7 +134,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
               </span>
             </div>
             <h1 className="font-heading text-h1 text-foreground">
-              {data.borrowerName}{" "}
+              {resolveNickname(data.borrowerName, data.borrowerNickname)}{" "}
               <span className="tabular text-muted-foreground">
                 — {data.ticketId}
               </span>

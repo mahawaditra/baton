@@ -78,40 +78,44 @@ export function DocumentReviewSection({
                 key={doc.id}
                 className="overflow-hidden rounded-md border border-border"
               >
-                <div className="flex items-center gap-4 p-4">
-                  <span
-                    className={cn(
-                      "flex h-12 w-12 shrink-0 items-center justify-center rounded-md",
-                      style,
-                    )}
-                  >
-                    <FileText className="h-5 w-5" strokeWidth={1.5} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold">
-                      {formatDocType(doc.type)}
-                    </div>
-                    <div className="tabular mt-0.5 text-xs text-muted-foreground">
-                      {doc.uploadedAt.toLocaleDateString("en-GB")}
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 items-center gap-4 sm:flex-1">
+                    <span
+                      className={cn(
+                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-md",
+                        style,
+                      )}
+                    >
+                      <FileText className="h-5 w-5" strokeWidth={1.5} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">
+                        {formatDocType(doc.type)}
+                      </div>
+                      <div className="tabular mt-0.5 text-xs text-muted-foreground">
+                        {doc.uploadedAt.toLocaleDateString("en-GB")}
+                      </div>
                     </div>
                   </div>
-                  <a
-                    href={`/admin/documents/${doc.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                  >
-                    <Eye className="h-3.5 w-3.5" strokeWidth={1.75} />
-                    View
-                  </a>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-full px-2.5 py-1 text-micro uppercase",
-                      style,
-                    )}
-                  >
-                    {doc.reviewStatus}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <a
+                      href={`/admin/documents/${doc.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                      <Eye className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      View
+                    </a>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2.5 py-1 text-micro uppercase",
+                        style,
+                      )}
+                    >
+                      {doc.reviewStatus}
+                    </span>
+                  </div>
                 </div>
 
                 {doc.reviewStatus === "pending" ? (
@@ -185,7 +189,7 @@ export function DocumentReviewSection({
                       : "Confirming..."
                 }
                 disabled={!allDecided}
-                className="w-full"
+                className="h-auto w-full py-2.5 whitespace-normal"
               >
                 {anyRejected
                   ? "Notify for Reupload"

@@ -3,6 +3,7 @@ import type { BorrowingRequestStatus } from "@/generated/prisma/client";
 export type RequestData = {
   ticketId: string;
   borrowerName: string;
+  borrowerNickname: string | null;
   status: BorrowingRequestStatus;
   createdAt: Date;
   rejectionReason: string | null;

@@ -6,6 +6,7 @@ import { Users, History, ClipboardList, Activity } from "lucide-react";
 import type { ActivityAction } from "@/generated/prisma/client";
 import { PhotoViewerModal } from "@/components/PhotoViewerModal";
 import { uploadInstrumentPhoto } from "./actions";
+import { formatNameWithNickname } from "@/lib/loan-rules";
 
 const INSTRUMENT_RELEVANT_REQUEST_ACTIONS: ActivityAction[] = [
   "assign_instrument",
@@ -42,7 +43,7 @@ export async function RiwayatPeminjam({
         <div key={req.id} className="rounded-md border border-border p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold">
-              {req.borrowerName}{" "}
+              {formatNameWithNickname(req.borrowerName, req.borrowerNickname)}{" "}
               <span className="font-normal text-muted-foreground">
                 ({req.borrowerYear})
               </span>

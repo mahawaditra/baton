@@ -11,6 +11,10 @@ import {
 } from "@/lib/drive";
 import { buildXlsxBuffer } from "@/lib/xlsx";
 import { toJakartaCalendarDate } from "@/lib/format";
+import {
+  ACTIVE_INSTRUMENT_HOLD_STATUSES,
+  formatSharedLocation,
+} from "@/lib/loan-rules";
 
 async function computeAnnualReportSummary(year: number) {
   const yearStart = new Date(Date.UTC(year, 0, 1));
@@ -118,6 +122,12 @@ export async function exportInventorySnapshot(formData: FormData) {
 
   const instruments = await prisma.instrument.findMany({
     orderBy: { section: "asc" },
+    include: {
+      borrowingRequests: {
+        where: { status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] } },
+        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
+      },
+    },
   });
 
   const rows = instruments.map((inst) => ({
@@ -127,7 +137,7 @@ export async function exportInventorySnapshot(formData: FormData) {
     "Serial Number": inst.serialNumber ?? "",
     Condition: inst.condition,
     Status: inst.status,
-    Location: inst.location,
+    Location: formatSharedLocation(inst.borrowingRequests, inst.location),
     Notes: inst.notes ?? "",
   }));
 

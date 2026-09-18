@@ -37,7 +37,10 @@ export default async function ArchivePage({
         },
       }),
       ...(borrower && {
-        borrowerName: { contains: borrower, mode: "insensitive" },
+        OR: [
+          { borrowerName: { contains: borrower, mode: "insensitive" } },
+          { borrowerNickname: { contains: borrower, mode: "insensitive" } },
+        ],
       }),
       ...(instrument && {
         instrument: {

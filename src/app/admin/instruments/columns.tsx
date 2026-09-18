@@ -15,7 +15,11 @@ const CONDITION_TRIAGE_ORDER: Record<ItemCondition, number> = {
   retired: 3,
 };
 
-export const columns: ColumnDef<Instrument>[] = [
+export type InstrumentWithDisplayLocation = Instrument & {
+  displayLocation: string;
+};
+
+export const columns: ColumnDef<InstrumentWithDisplayLocation>[] = [
   { accessorKey: "section", header: "Section" },
   { accessorKey: "type", header: "Instrument" },
   { accessorKey: "brand", header: "Brand" },
@@ -38,7 +42,7 @@ export const columns: ColumnDef<Instrument>[] = [
       />
     ),
   },
-  { accessorKey: "location", header: "Location" },
+  { accessorKey: "displayLocation", header: "Location" },
   {
     id: "view",
     header: "",

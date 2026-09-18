@@ -9,7 +9,7 @@ import {
   getRequestStatusLabel,
 } from "@/components/RequestStatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
-import { confirmedExtensionCount } from "@/lib/loan-rules";
+import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan-rules";
 import { EntityCard } from "@/components/EntityCard";
 import { CollapsibleGroup } from "@/components/CollapsibleGroup";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,7 @@ function RequestCard({ request }: { request: RequestRow }) {
   return (
     <EntityCard
       href={`/admin/requests/${request.id}`}
-      title={request.borrowerName}
+      title={formatNameWithNickname(request.borrowerName, request.borrowerNickname)}
       titleSuffix={
         <span className="tabular shrink-0 text-caption text-muted-foreground">
           {request.borrowerYear}
@@ -75,6 +75,7 @@ export function RequestsExplorer({
       const haystack = [
         request.ticketId,
         request.borrowerName,
+        request.borrowerNickname,
         request.borrowerYear,
         request.instrumentTypeRequested,
         getRequestStatusLabel(request.status),

@@ -9,6 +9,7 @@ import type {
   LoanPeriod,
 } from "@/generated/prisma/client";
 import { buttonVariants } from "@/components/ui/button";
+import { formatNameWithNickname } from "@/lib/loan-rules";
 import { cn } from "@/lib/utils";
 
 export type ArchivedRequest = BorrowingRequest & {
@@ -17,7 +18,12 @@ export type ArchivedRequest = BorrowingRequest & {
 };
 
 export const columns: ColumnDef<ArchivedRequest>[] = [
-  { accessorKey: "borrowerName", header: "Borrower" },
+  {
+    id: "borrowerName",
+    header: "Borrower",
+    accessorFn: (row) =>
+      formatNameWithNickname(row.borrowerName, row.borrowerNickname),
+  },
   { accessorKey: "borrowerYear", header: "Year" },
   {
     id: "instrument",

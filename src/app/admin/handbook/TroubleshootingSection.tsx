@@ -30,10 +30,11 @@ export function TroubleshootingSection() {
 
       <TaskCard title="Kenapa aku nggak bisa ubah kondisi instrumen yang lagi dipinjem?">
         <p>
-          Sengaja supaya instrumen yang statusnya reserved (baru di-assign,
-          belum di-handover) atau borrowed (lagi aktif dipinjam) di-lock di form
-          edit, status dan kondisinya nggak bisa diubah lewat form biasa sampai
-          requestnya kelar (reject/cancel/return).
+          Sengaja supaya instrumen yang lagi punya peminjam aktif (reserved,
+          borrowed, atau dua-duanya sekaligus kalau lagi di-share) di-lock di
+          form edit — Condition, Status, DAN Location-nya nggak bisa diubah
+          manual lewat form biasa sampai SEMUA peminjam aktifnya kelar
+          (reject/cancel/return).
         </p>
         <p>
           Kalau ada laporan instrumen rusak SELAGI masih dipinjem: catat manual
@@ -80,6 +81,33 @@ export function TroubleshootingSection() {
         </p>
       </TaskCard>
 
+      <TaskCard title="Instrumen terbatas, pemegang double gimana? (Sep 2026)">
+        <p>
+          Slot per tipe instrumen diatur di Settings, bagian{" "}
+          <strong>Instrument Sharing Slots</strong> — super admin doang yang
+          bisa ubah, tapi semua admin bisa lihat. By default 1 slot buat semua
+          tipe instrumen; naikin manual (button +) buat tipe yang emang perlu
+          di-share (misal Contrabass jadi 2). Nggak bisa diturunin lagi kalau
+          ada unit yang saat ini beneran lagi dipegang sejumlah itu.
+        </p>
+        <p>
+          Kalau slotnya masih kosong, instrumen itu tetep muncul di assignable
+          instruments, walaupun statusnya udah
+          &quot;reserved&quot;/&quot;borrowed&quot; buat peminjam lain — assign
+          aja seperti biasa. Peminjam baru tetep isi kontrak + addendum SENDIRI,
+          jadi kalau dia yang nyebabin kerusakan, dia sendiri yang tanggung
+          jawab, bukan peminjam yang udah lebih dulu.
+        </p>
+        <p>
+          Location di detail instrumen otomatis nunjukin gabungan nama semua
+          peminjam aktif (contoh: &quot;Adit (2020) &amp; David (2020)&quot;) —
+          nggak perlu lagi dicatet manual di Notes. Kondisi/status FINAL
+          instrumen juga baru diminta pas peminjam yang TERAKHIR return — kalau
+          masih ada peminjam lain yang megang, admin cuma nutup peminjaman orang
+          itu doang.
+        </p>
+      </TaskCard>
+
       <TaskCard title="Undo Transfer to Ongoing yang salah pencet (massal)">
         <p>
           Buat 1-2 loan doang, ada tombol Move back to active roster&quot; di
@@ -122,7 +150,15 @@ export function TroubleshootingSection() {
           <li>
             <strong>Reserved vs borrowed</strong> — status instrumen. Reserved =
             udah di-assign ke sebuah request tapi belum di-handover. Borrowed =
-            udah di-handover, lagi beneran dipinjam.
+            udah di-handover, lagi beneran dipinjam. Bisa lebih dari satu
+            peminjam aktif bareng-bareng kalau instrumennya lagi di-share —
+            lihat <strong>Slot instrumen</strong>.
+          </li>
+          <li>
+            <strong>Slot instrumen</strong> — berapa banyak peminjam aktif yang
+            boleh nempel ke instrumen dari SATU tipe yang sama secara bersamaan
+            (misal Violin slotnya 1, Contrabass bisa diset 2). Diatur per tipe
+            di Settings, super admin doang yang bisa ubah.
           </li>
           <li>
             <strong>Ongoing</strong> — sebutan buat loan yang udah di-carry

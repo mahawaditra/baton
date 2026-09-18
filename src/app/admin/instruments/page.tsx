@@ -4,11 +4,26 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { AdminHeaderAction } from "@/components/AdminHeaderAction";
+import {
+  ACTIVE_INSTRUMENT_HOLD_STATUSES,
+  formatSharedLocation,
+} from "@/lib/loan-rules";
 
 export default async function InstrumentsPage() {
-  const instruments = await prisma.instrument.findMany({
+  const instrumentsRaw = await prisma.instrument.findMany({
     orderBy: { section: "asc" },
+    include: {
+      borrowingRequests: {
+        where: { status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] } },
+        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
+      },
+    },
   });
+
+  const instruments = instrumentsRaw.map((inst) => ({
+    ...inst,
+    displayLocation: formatSharedLocation(inst.borrowingRequests, inst.location),
+  }));
 
   return (
     <div className="flex flex-col gap-6">

@@ -157,6 +157,22 @@ export function RequestForm() {
             </div>
 
             <div className="flex flex-col gap-1.5">
+              <Label htmlFor="nickname">
+                Nama panggilan{" "}
+                <span className="font-normal text-foreground-2">
+                  (opsional)
+                </span>
+              </Label>
+              <Input
+                id="nickname"
+                name="nickname"
+                type="text"
+                placeholder="Nama panggilan kamu, kalau ada"
+                defaultValue={state.fields.nickname ?? ""}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="email" required>
                 Email
               </Label>

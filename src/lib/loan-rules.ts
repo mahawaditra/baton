@@ -82,6 +82,70 @@ export function canCancelRequest(status: string): boolean {
   return CANCELLABLE_STATUSES.includes(status);
 }
 
+export const ACTIVE_INSTRUMENT_HOLD_STATUSES = [
+  "reviewing",
+  "contract_generated",
+  "documents_uploaded",
+  "ready_to_pickup",
+  "active",
+  "overdue",
+] as const;
+
+export function hasAvailableSlot(
+  activeLoanCount: number,
+  maxConcurrentLoans: number,
+): boolean {
+  return activeLoanCount < maxConcurrentLoans;
+}
+
+// `Instrument.type` is free text (e.g. "Double French Horn") and gets matched
+// against the canonical REQUESTABLE_INSTRUMENT_TYPES name (e.g. "French Horn")
+// by substring elsewhere (assign-candidate lookup) — slot resolution has to
+// use the same substring match, not an exact one, or variants silently fall
+// back to the default of 1.
+export function resolveMaxConcurrentLoans(
+  instrumentType: string,
+  slots: { instrumentType: string; maxConcurrentLoans: number }[],
+): number {
+  const match = slots.find((slot) =>
+    instrumentType.toLowerCase().includes(slot.instrumentType.toLowerCase()),
+  );
+  return match?.maxConcurrentLoans ?? 1;
+}
+
+export function formatSharedLocation(
+  holders: {
+    borrowerName: string;
+    borrowerNickname: string | null;
+    borrowerYear: string;
+  }[],
+  fallback: string,
+): string {
+  if (holders.length === 0) return fallback;
+  return holders
+    .map(
+      (h) =>
+        `${resolveNickname(h.borrowerName, h.borrowerNickname)} (${h.borrowerYear})`,
+    )
+    .join(" & ");
+}
+
+export function resolveNickname(
+  fullName: string,
+  nickname: string | null,
+): string {
+  return nickname && nickname.trim().length > 0 ? nickname : fullName;
+}
+
+export function formatNameWithNickname(
+  fullName: string,
+  nickname: string | null,
+): string {
+  return nickname && nickname.trim().length > 0
+    ? `${fullName} (${nickname})`
+    : fullName;
+}
+
 export function computeCanExtend(
   status: string,
   dueDate: Date | null,

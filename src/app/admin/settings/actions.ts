@@ -9,6 +9,7 @@ import { driveTimestamp } from "@/lib/format";
 import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
+import { ACTIVE_INSTRUMENT_HOLD_STATUSES } from "@/lib/loan-rules";
 
 const addAdminSchema = z.object({
   email: z.email("Invalid email address"),
@@ -348,4 +349,79 @@ export async function setAdminActive(adminId: string, isActive: boolean) {
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin/activity");
+}
+
+export type AdjustInstrumentTypeSlotResult =
+  | { success: true; value: number }
+  | { success: false; error: string };
+
+export async function adjustInstrumentTypeSlot(
+  instrumentType: string,
+  direction: "increase" | "decrease",
+): Promise<AdjustInstrumentTypeSlotResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Not logged in");
+  if (session.user.role !== "super_admin") {
+    throw new Error("Only super admin can update instrument slot settings.");
+  }
+
+  const existing = await prisma.instrumentTypeSlot.findUnique({
+    where: { instrumentType },
+  });
+  const current = existing?.maxConcurrentLoans ?? 1;
+  const next = direction === "increase" ? current + 1 : current - 1;
+
+  if (next < 1) {
+    return { success: false, error: "Slot can't go below 1." };
+  }
+
+  if (direction === "decrease") {
+    const instruments = await prisma.instrument.findMany({
+      where: { type: { contains: instrumentType, mode: "insensitive" } },
+      include: {
+        _count: {
+          select: {
+            borrowingRequests: {
+              where: { status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] } },
+            },
+          },
+        },
+      },
+    });
+    const floor = instruments.reduce(
+      (max, inst) => Math.max(max, inst._count.borrowingRequests),
+      1,
+    );
+    if (next < floor) {
+      return {
+        success: false,
+        error: `Can't go below ${floor} — at least one ${instrumentType} unit currently has ${floor} active borrower(s).`,
+      };
+    }
+  }
+
+  const updated = await prisma.instrumentTypeSlot.upsert({
+    where: { instrumentType },
+    create: {
+      instrumentType,
+      maxConcurrentLoans: next,
+      updatedBy: session.user.id,
+    },
+    update: { maxConcurrentLoans: next, updatedBy: session.user.id },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "update_instrument_type_slot",
+      entityType: "instrument_type_slot",
+      entityId: updated.id,
+      metadata: { instrumentType, before: current, after: next },
+    },
+  });
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/activity");
+
+  return { success: true, value: updated.maxConcurrentLoans };
 }

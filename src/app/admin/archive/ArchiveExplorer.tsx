@@ -1,13 +1,14 @@
 import { RotateCcw } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import { EntityCard } from "@/components/EntityCard";
+import { formatNameWithNickname } from "@/lib/loan-rules";
 import { columns, type ArchivedRequest } from "./columns";
 
 function ArchiveCard({ request }: { request: ArchivedRequest }) {
   return (
     <EntityCard
       href={`/admin/requests/${request.id}`}
-      title={request.borrowerName}
+      title={formatNameWithNickname(request.borrowerName, request.borrowerNickname)}
       titleSuffix={
         <span className="tabular shrink-0 text-caption text-muted-foreground">
           {request.borrowerYear}

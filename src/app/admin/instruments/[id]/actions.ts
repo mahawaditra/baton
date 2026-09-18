@@ -9,6 +9,7 @@ import { z } from "zod";
 import { replaceItemPhoto } from "@/lib/drive";
 import { driveTimestamp } from "@/lib/format";
 import { validateImageUpload } from "@/lib/file-validation";
+import { ACTIVE_INSTRUMENT_HOLD_STATUSES } from "@/lib/loan-rules";
 
 const updateInstrumentSchema = z.object({
   brand: z.string().trim().max(100).nullable(),
@@ -44,12 +45,20 @@ export async function updateInstrument(
     where: { id },
   });
 
+  const activeHolderCount = await prisma.borrowingRequest.count({
+    where: {
+      instrumentId: id,
+      status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+    },
+  });
+  const statusLocked = activeHolderCount > 0;
+
   const parsed = updateInstrumentSchema.safeParse({
     brand: formData.get("brand") || null,
     serialNumber: formData.get("serialNumber") || null,
-    condition: formData.get("condition"),
-    status: formData.get("status"),
-    location: formData.get("location"),
+    condition: formData.get("condition") ?? before.condition,
+    status: formData.get("status") ?? before.status,
+    location: formData.get("location") ?? before.location,
     notes: formData.get("notes") || null,
   });
 
@@ -57,14 +66,13 @@ export async function updateInstrument(
     return { error: parsed.error.issues[0].message };
   }
 
-  const { brand, serialNumber, location, notes } = parsed.data;
-  let { status, condition } = parsed.data;
-
-  const statusLocked =
-    before.status === "reserved" || before.status === "borrowed";
+  const { brand, serialNumber, notes } = parsed.data;
+  let { status, condition, location } = parsed.data;
 
   if (statusLocked) {
     condition = before.condition;
+    status = before.status;
+    location = before.location;
   }
 
   let isLoanable = formData.get("isLoanable") === "true";
@@ -73,9 +81,7 @@ export async function updateInstrument(
     isLoanable = false;
   }
 
-  if (statusLocked) {
-    status = before.status;
-  } else if (condition === "retired" || condition === "lost") {
+  if (!statusLocked && (condition === "retired" || condition === "lost")) {
     status = "unavailable";
   }
 

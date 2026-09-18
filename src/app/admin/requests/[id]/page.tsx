@@ -11,12 +11,17 @@ import {
   revertFromOngoing,
 } from "./actions";
 import {
+  ACTIVE_INSTRUMENT_HOLD_STATUSES,
   canAssignInstrument,
   canCancelRequest,
   canNotifyBorrower,
   confirmedExtensionCount,
+  formatNameWithNickname,
+  formatSharedLocation,
   getRequestStep,
+  hasAvailableSlot,
   LOAN_STEP_LABELS,
+  resolveMaxConcurrentLoans,
 } from "@/lib/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
@@ -49,14 +54,64 @@ export default async function RequestDetailPage({
     },
   });
 
-  const candidates = await prisma.instrument.findMany({
+  const instrumentCandidates = await prisma.instrument.findMany({
     where: {
-      status: "available",
+      status: { notIn: ["placed", "unavailable"] },
       condition: { in: ["ok", "need_repair"] },
       isLoanable: true,
       type: { contains: request.instrumentTypeRequested, mode: "insensitive" },
     },
+    include: {
+      borrowingRequests: {
+        where: { status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] } },
+        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
+      },
+    },
   });
+
+  const typeSlots = await prisma.instrumentTypeSlot.findMany();
+
+  const candidates = instrumentCandidates
+    .filter((inst) =>
+      hasAvailableSlot(
+        inst.borrowingRequests.length,
+        resolveMaxConcurrentLoans(inst.type, typeSlots),
+      ),
+    )
+    .map((inst) => ({
+      ...inst,
+      activeHolders: inst.borrowingRequests.length,
+      maxConcurrentLoans: resolveMaxConcurrentLoans(inst.type, typeSlots),
+      displayLocation: formatSharedLocation(
+        inst.borrowingRequests,
+        inst.location,
+      ),
+    }));
+
+  const currentInstrumentHolders = request.instrumentId
+    ? await prisma.borrowingRequest.findMany({
+        where: {
+          instrumentId: request.instrumentId,
+          status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+        },
+        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
+      })
+    : [];
+
+  const currentInstrumentWithSlot = request.instrument
+    ? {
+        ...request.instrument,
+        activeHolders: currentInstrumentHolders.length,
+        maxConcurrentLoans: resolveMaxConcurrentLoans(
+          request.instrument.type,
+          typeSlots,
+        ),
+        displayLocation: formatSharedLocation(
+          currentInstrumentHolders,
+          request.instrument.location,
+        ),
+      }
+    : null;
 
   const latestPeriod = await prisma.loanPeriod.findFirst({
     where: { requestId: request.id },
@@ -89,6 +144,17 @@ export default async function RequestDetailPage({
 
   const canCancel = canCancelRequest(request.status);
 
+  const remainingActiveHolders = request.instrumentId
+    ? await prisma.borrowingRequest.count({
+        where: {
+          instrumentId: request.instrumentId,
+          id: { not: request.id },
+          status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+        },
+      })
+    : 0;
+  const isLastHolder = remainingActiveHolders === 0;
+
   const isExtension = latestPeriod?.periodType === "extension";
 
   const step = getRequestStep(request.status, request.instrumentConfirmed);
@@ -107,7 +173,7 @@ export default async function RequestDetailPage({
           </span>
         </div>
         <h1 className="text-h1">
-          {request.borrowerName}{" "}
+          {formatNameWithNickname(request.borrowerName, request.borrowerNickname)}{" "}
           <span className="tabular text-muted-foreground">
             — {request.ticketId}
           </span>
@@ -222,7 +288,7 @@ export default async function RequestDetailPage({
               <CardContent>
                 <AssignSection
                   requestId={id}
-                  currentInstrument={request.instrument}
+                  currentInstrument={currentInstrumentWithSlot}
                   candidates={candidates}
                 />
               </CardContent>
@@ -372,50 +438,63 @@ export default async function RequestDetailPage({
                   className="flex flex-col gap-3 rounded-md border border-border p-4"
                 >
                   <div className="text-sm font-semibold">Confirm Return</div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="condition">Condition</Label>
-                      <Select name="condition" defaultValue="ok">
-                        <SelectTrigger id="condition" className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ok">OK</SelectItem>
-                          <SelectItem value="need_repair">
-                            Need Repair
-                          </SelectItem>
-                          <SelectItem value="retired">Retired</SelectItem>
-                          <SelectItem value="lost">Lost</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="status">Status</Label>
-                      <Select name="status" defaultValue="available">
-                        <SelectTrigger id="status" className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="available">Available</SelectItem>
-                          <SelectItem value="unavailable">
-                            Unavailable
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-foreground-2">
-                        Ignored if Retired/Lost — forced Unavailable.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      name="location"
-                      defaultValue="Sekre"
-                      required
-                    />
-                  </div>
+                  {isLastHolder ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="condition">Condition</Label>
+                          <Select name="condition" defaultValue="ok">
+                            <SelectTrigger id="condition" className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ok">OK</SelectItem>
+                              <SelectItem value="need_repair">
+                                Need Repair
+                              </SelectItem>
+                              <SelectItem value="retired">Retired</SelectItem>
+                              <SelectItem value="lost">Lost</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="status">Status</Label>
+                          <Select name="status" defaultValue="available">
+                            <SelectTrigger id="status" className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="available">
+                                Available
+                              </SelectItem>
+                              <SelectItem value="unavailable">
+                                Unavailable
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-foreground-2">
+                            Ignored if Retired/Lost — forced Unavailable.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="location">Location</Label>
+                        <Input
+                          id="location"
+                          name="location"
+                          defaultValue="Sekre"
+                          required
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-foreground-2">
+                      Instrumen ini masih dipegang {remainingActiveHolders}{" "}
+                      peminjam lain — kondisi/status/lokasi instrumen gak
+                      diminta di sini, cuma nutup pengembalian{" "}
+                      {formatNameWithNickname(request.borrowerName, request.borrowerNickname)}.
+                    </p>
+                  )}
                   <SubmitButton
                     pendingText="Confirming..."
                     className="self-start"

@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Instrument, InstrumentStatus } from "@/generated/prisma/client";
+import type { InstrumentStatus } from "@/generated/prisma/client";
 import { DataTable } from "@/components/DataTable";
-import { columns } from "./columns";
+import { columns, type InstrumentWithDisplayLocation } from "./columns";
 import {
   StatusBadge,
   getStatusLabel,
@@ -33,7 +33,11 @@ const STATUS_VALUES: InstrumentStatus[] = [
   "unavailable",
 ];
 
-function InstrumentCard({ instrument }: { instrument: Instrument }) {
+function InstrumentCard({
+  instrument,
+}: {
+  instrument: InstrumentWithDisplayLocation;
+}) {
   return (
     <EntityCard
       href={`/admin/instruments/${instrument.id}`}
@@ -43,7 +47,7 @@ function InstrumentCard({ instrument }: { instrument: Instrument }) {
         <StatusBadge status={instrument.status} condition={instrument.condition} />
       }
       metaLeft={[{ icon: Hash, text: instrument.serialNumber }]}
-      metaGrow={{ icon: MapPin, text: instrument.location }}
+      metaGrow={{ icon: MapPin, text: instrument.displayLocation }}
     />
   );
 }
@@ -52,7 +56,7 @@ export function InstrumentsExplorer({
   instruments,
   action,
 }: {
-  instruments: Instrument[];
+  instruments: InstrumentWithDisplayLocation[];
   action?: React.ReactNode;
 }) {
   const [search, setSearch] = useState("");
@@ -114,7 +118,7 @@ export function InstrumentsExplorer({
         instrument.type,
         instrument.brand,
         instrument.serialNumber,
-        instrument.location,
+        instrument.displayLocation,
         getStatusLabel(instrument.status),
         getConditionLabel(instrument.condition),
       ]
@@ -134,7 +138,7 @@ export function InstrumentsExplorer({
 
   const mobileGroups = useMemo(() => {
     if (mobileSort !== "section") return null;
-    const map = new Map<string, Instrument[]>();
+    const map = new Map<string, InstrumentWithDisplayLocation[]>();
     for (const instrument of mobileFiltered) {
       const list = map.get(instrument.section) ?? [];
       list.push(instrument);

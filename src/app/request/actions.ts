@@ -7,6 +7,7 @@ import { generateTicketId, generateAccessCode } from "@/lib/id-generators";
 import { z } from "zod";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { escapeHtml } from "@/lib/format";
+import { formatNameWithNickname, resolveNickname } from "@/lib/loan-rules";
 import * as Sentry from "@sentry/nextjs";
 import { Prisma } from "@/generated/prisma/client";
 
@@ -20,6 +21,7 @@ type State = {
 
 const submitRequestSchema = z.object({
   name: z.string().trim().min(1, "Nama wajib diisi").max(100),
+  nickname: z.string().trim().max(100).nullable(),
   email: z.email("Alamat email tidak valid"),
   phone: z.string().trim().min(1, "Nomor HP wajib diisi").max(20),
   lineId: z.string().trim().min(1, "ID LINE wajib diisi").max(20),
@@ -39,6 +41,7 @@ export async function submitRequest(
 ): Promise<State> {
   const fields = {
     name: String(formData.get("name") ?? ""),
+    nickname: String(formData.get("nickname") ?? ""),
     email: String(formData.get("email") ?? ""),
     phone: String(formData.get("phone") ?? ""),
     lineId: String(formData.get("lineId") ?? ""),
@@ -60,6 +63,7 @@ export async function submitRequest(
 
   const parsed = submitRequestSchema.safeParse({
     name: formData.get("name"),
+    nickname: formData.get("nickname") || null,
     email: formData.get("email"),
     phone: formData.get("phone"),
     lineId: formData.get("lineId"),
@@ -77,8 +81,10 @@ export async function submitRequest(
     };
   }
 
-  const { name, email, phone, lineId, instrumentType, year } = parsed.data;
-  const safeName = escapeHtml(name);
+  const { name, nickname, email, phone, lineId, instrumentType, year } =
+    parsed.data;
+  const safeNickname = escapeHtml(resolveNickname(name, nickname));
+  const safeNameWithNickname = escapeHtml(formatNameWithNickname(name, nickname));
 
   let ticketId = "";
   let accessCode = "";
@@ -94,6 +100,7 @@ export async function submitRequest(
           accessCode,
           instrumentTypeRequested: instrumentType,
           borrowerName: name,
+          borrowerNickname: nickname,
           borrowerEmail: email,
           borrowerPhone: phone,
           borrowerLineId: lineId,
@@ -114,7 +121,7 @@ export async function submitRequest(
       to: email,
       subject: `Pengajuan peminjaman diterima — tiket ${ticketId}`,
       html: `
-        <p>Halo ${safeName}!</p>
+        <p>Halo ${safeNickname}!</p>
         <p>Pengajuan peminjaman instrumen kamu sudah kami terima dan akan direview oleh staf Logistik OSUI.</p>
         <p>Simpan informasi berikut untuk cek status pengajuan kamu kapan saja:</p>
         <p>
@@ -133,7 +140,7 @@ export async function submitRequest(
       to: process.env.GMAIL_USER!,
       subject: `Pengajuan baru masuk — tiket ${ticketId}`,
       html: `
-        <p>Ada pengajuan peminjaman baru dari ${safeName}.</p>
+        <p>Ada pengajuan peminjaman baru dari ${safeNameWithNickname}.</p>
         <p>Instrumen diminati: ${instrumentType}</p>
         <p>Mohon di-review di laman requests web.</p>
       `,

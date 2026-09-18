@@ -12,6 +12,11 @@ import {
   getRequestActionLabel,
   getRequestStep,
   getDocumentTypeLabel,
+  hasAvailableSlot,
+  formatSharedLocation,
+  resolveMaxConcurrentLoans,
+  resolveNickname,
+  formatNameWithNickname,
 } from "./loan-rules";
 import { todayInJakarta } from "./format";
 
@@ -325,5 +330,124 @@ describe("getRequestActionLabel", () => {
         loanPeriods: [],
       }),
     ).toBe("Needs handover confirmation");
+  });
+});
+
+describe("hasAvailableSlot", () => {
+  it("has room when active count is below the max", () => {
+    expect(hasAvailableSlot(1, 2)).toBe(true);
+  });
+
+  it("has no room once active count reaches the max", () => {
+    expect(hasAvailableSlot(2, 2)).toBe(false);
+  });
+
+  it("has no room for the default single-slot instrument", () => {
+    expect(hasAvailableSlot(1, 1)).toBe(false);
+  });
+});
+
+describe("formatSharedLocation", () => {
+  it("falls back to the stored location when nobody holds it", () => {
+    expect(formatSharedLocation([], "Sekre")).toBe("Sekre");
+  });
+
+  it("shows a single holder's name and year", () => {
+    expect(
+      formatSharedLocation(
+        [{ borrowerName: "Adit", borrowerNickname: null, borrowerYear: "2020" }],
+        "Sekre",
+      ),
+    ).toBe("Adit (2020)");
+  });
+
+  it("joins multiple concurrent holders with '&'", () => {
+    expect(
+      formatSharedLocation(
+        [
+          { borrowerName: "Adit", borrowerNickname: null, borrowerYear: "2020" },
+          { borrowerName: "David", borrowerNickname: null, borrowerYear: "2022" },
+        ],
+        "Sekre",
+      ),
+    ).toBe("Adit (2020) & David (2022)");
+  });
+
+  it("uses each holder's nickname when present", () => {
+    expect(
+      formatSharedLocation(
+        [
+          {
+            borrowerName: "Salsabila Putri Alisa",
+            borrowerNickname: "Aca",
+            borrowerYear: "2024",
+          },
+          { borrowerName: "David", borrowerNickname: null, borrowerYear: "2022" },
+        ],
+        "Sekre",
+      ),
+    ).toBe("Aca (2024) & David (2022)");
+  });
+});
+
+describe("resolveNickname", () => {
+  it("uses the nickname when present", () => {
+    expect(resolveNickname("Salsabila Putri Alisa", "Aca")).toBe("Aca");
+  });
+
+  it("falls back to the full name when nickname is null", () => {
+    expect(resolveNickname("Salsabila Putri Alisa", null)).toBe(
+      "Salsabila Putri Alisa",
+    );
+  });
+
+  it("falls back to the full name when nickname is blank", () => {
+    expect(resolveNickname("Salsabila Putri Alisa", "   ")).toBe(
+      "Salsabila Putri Alisa",
+    );
+  });
+});
+
+describe("formatNameWithNickname", () => {
+  it("combines full name and nickname when both present", () => {
+    expect(formatNameWithNickname("Salsabila Putri Alisa", "Aca")).toBe(
+      "Salsabila Putri Alisa (Aca)",
+    );
+  });
+
+  it("shows only the full name when nickname is null", () => {
+    expect(formatNameWithNickname("Salsabila Putri Alisa", null)).toBe(
+      "Salsabila Putri Alisa",
+    );
+  });
+
+  it("shows only the full name when nickname is blank", () => {
+    expect(formatNameWithNickname("Salsabila Putri Alisa", "   ")).toBe(
+      "Salsabila Putri Alisa",
+    );
+  });
+});
+
+describe("resolveMaxConcurrentLoans", () => {
+  const slots = [
+    { instrumentType: "French Horn", maxConcurrentLoans: 2 },
+    { instrumentType: "Contrabass", maxConcurrentLoans: 3 },
+  ];
+
+  it("matches an instrument type identical to the canonical name", () => {
+    expect(resolveMaxConcurrentLoans("French Horn", slots)).toBe(2);
+  });
+
+  it("matches a variant that contains the canonical name (regression: Double/Single French Horn)", () => {
+    expect(resolveMaxConcurrentLoans("Double French Horn", slots)).toBe(2);
+    expect(resolveMaxConcurrentLoans("Single French Horn", slots)).toBe(2);
+  });
+
+  it("matches case-insensitively", () => {
+    expect(resolveMaxConcurrentLoans("double french horn", slots)).toBe(2);
+  });
+
+  it("falls back to 1 when no configured type matches", () => {
+    expect(resolveMaxConcurrentLoans("Triangle", slots)).toBe(1);
   });
 });

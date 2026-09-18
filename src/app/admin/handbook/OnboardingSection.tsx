@@ -50,9 +50,10 @@ export function OnboardingSection() {
         </p>
         <p>
           <strong>Super admin</strong> — cuma gw dan ketua Logistik tiap
-          tahunnya. Bisa semua yang admin bisa + edit Loan Settings dan
-          aktif/nonaktifin admin lain. Kalau ada yang kerasa &quot;kok gw nggak
-          bisa X&quot;, kemungkinan itu emang fitur khusus super admin.
+          tahunnya. Bisa semua yang admin bisa + edit Loan Settings, edit slot
+          sharing instrumen (Settings juga), dan aktif/nonaktifin admin lain.
+          Kalau ada yang kerasa &quot;kok gw nggak bisa X&quot;, kemungkinan
+          itu emang fitur khusus super admin.
         </p>
       </TaskCard>
 

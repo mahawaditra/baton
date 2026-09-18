@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import {
+  ACTIVE_INSTRUMENT_HOLD_STATUSES,
+  formatSharedLocation,
+  resolveMaxConcurrentLoans,
+  resolveNickname,
+} from "@/lib/loan-rules";
 import { EditInstrumentForm } from "./EditInstrumentForm";
 import { uploadInstrumentPhoto } from "./actions";
 import {
@@ -37,15 +43,29 @@ export default async function InstrumentDetailPage({
     where: { id },
   });
 
-  const activeRequest =
-    instrument.status === "borrowed"
-      ? await prisma.borrowingRequest.findFirst({
-          where: { instrumentId: id, status: { in: ["active", "overdue"] } },
-        })
-      : null;
+  const activeHolders = await prisma.borrowingRequest.findMany({
+    where: {
+      instrumentId: id,
+      status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+    },
+    select: {
+      id: true,
+      borrowerName: true,
+      borrowerNickname: true,
+      borrowerYear: true,
+    },
+  });
+  const statusLocked = activeHolders.length > 0;
+  const displayLocation = formatSharedLocation(
+    activeHolders,
+    instrument.location,
+  );
 
-  const statusLocked =
-    instrument.status === "reserved" || instrument.status === "borrowed";
+  const typeSlots = await prisma.instrumentTypeSlot.findMany();
+  const maxConcurrentLoans = resolveMaxConcurrentLoans(
+    instrument.type,
+    typeSlots,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,7 +82,7 @@ export default async function InstrumentDetailPage({
         </CardHeader>
         <CardContent>
           {!isEditing ? (
-            <div className="flex flex-col gap-5 sm:flex-row sm:gap-6">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
               <ItemPhotoField
                 fileId={instrument.photoDriveFileId}
                 alt={instrument.type}
@@ -98,8 +118,16 @@ export default async function InstrumentDetailPage({
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Location</dt>
-                    <dd className="mt-0.5 font-medium">{instrument.location}</dd>
+                    <dd className="mt-0.5 font-medium">{displayLocation}</dd>
                   </div>
+                  {maxConcurrentLoans > 1 && (
+                    <div>
+                      <dt className="text-muted-foreground">Slot</dt>
+                      <dd className="tabular mt-0.5 font-medium">
+                        {activeHolders.length}/{maxConcurrentLoans}
+                      </dd>
+                    </div>
+                  )}
                   <div className="col-span-2">
                     <dt className="text-muted-foreground">Notes</dt>
                     <dd className="mt-0.5 font-medium">
@@ -108,17 +136,22 @@ export default async function InstrumentDetailPage({
                   </div>
                 </dl>
 
-                {activeRequest && (
-                  <Link
-                    href={`/admin/requests/${activeRequest.id}`}
-                    className={cn(
-                      buttonVariants({ variant: "outline", size: "sm" }),
-                      "self-start",
-                    )}
-                  >
-                    Lihat peminjaman aktif
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-                  </Link>
+                {activeHolders.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {activeHolders.map((holder) => (
+                      <Link
+                        key={holder.id}
+                        href={`/admin/requests/${holder.id}`}
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                          "self-start",
+                        )}
+                      >
+                        {resolveNickname(holder.borrowerName, holder.borrowerNickname)}
+                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      </Link>
+                    ))}
+                  </div>
                 )}
 
                 <Link
@@ -133,6 +166,7 @@ export default async function InstrumentDetailPage({
             <EditInstrumentForm
               instrument={instrument}
               statusLocked={statusLocked}
+              displayLocation={displayLocation}
             />
           )}
         </CardContent>

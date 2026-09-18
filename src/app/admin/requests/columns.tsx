@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import type { Prisma } from "@/generated/prisma/client";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
-import { confirmedExtensionCount } from "@/lib/loan-rules";
+import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan-rules";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +22,12 @@ export const columns: ColumnDef<RequestRow>[] = [
       <span className="tabular font-medium">{row.original.ticketId}</span>
     ),
   },
-  { accessorKey: "borrowerName", header: "Name" },
+  {
+    id: "borrowerName",
+    header: "Name",
+    accessorFn: (row) =>
+      formatNameWithNickname(row.borrowerName, row.borrowerNickname),
+  },
   { accessorKey: "borrowerYear", header: "Year" },
   { accessorKey: "instrumentTypeRequested", header: "Instrument" },
   {

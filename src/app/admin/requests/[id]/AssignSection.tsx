@@ -7,14 +7,20 @@ import { ConditionIndicator, getConditionLabel } from "@/components/StatusBadge"
 import { toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
+type InstrumentWithSlot = Instrument & {
+  activeHolders: number;
+  maxConcurrentLoans: number;
+  displayLocation: string;
+};
+
 export function AssignSection({
   requestId,
   currentInstrument,
   candidates,
 }: {
   requestId: string;
-  currentInstrument: Instrument | null;
-  candidates: Instrument[];
+  currentInstrument: InstrumentWithSlot | null;
+  candidates: InstrumentWithSlot[];
 }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
 
@@ -54,6 +60,13 @@ export function AssignSection({
             <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
               <ConditionIndicator condition={currentInstrument.condition} />
               {getConditionLabel(currentInstrument.condition)}
+              <span> · {currentInstrument.displayLocation}</span>
+              {currentInstrument.maxConcurrentLoans > 1 && (
+                <span className="tabular">
+                  · {currentInstrument.activeHolders}/
+                  {currentInstrument.maxConcurrentLoans} slot
+                </span>
+              )}
             </div>
           </div>
           <span className="shrink-0 text-xs font-semibold text-navy">
@@ -100,7 +113,12 @@ export function AssignSection({
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <ConditionIndicator condition={inst.condition} />
                   {getConditionLabel(inst.condition)}
-                  {inst.location && <span> · {inst.location}</span>}
+                  <span> · {inst.displayLocation}</span>
+                  {inst.maxConcurrentLoans > 1 && (
+                    <span className="tabular">
+                      · {inst.activeHolders}/{inst.maxConcurrentLoans} slot
+                    </span>
+                  )}
                 </div>
               </div>
               <span className="shrink-0 text-xs font-medium text-navy">

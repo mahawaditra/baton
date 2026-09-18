@@ -1,13 +1,15 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { cn } from "@/lib/utils";
+import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SubmitButton } from "@/components/SubmitButton";
 import { headers } from "next/headers";
 import { LoanSettingsForm } from "./LoanSettingsForm";
+import { InstrumentTypeSlotsPanel } from "./InstrumentTypeSlotsPanel";
 import { AddAdminForm } from "./AddAdminForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck } from "lucide-react";
 import { setAdminActive } from "./actions";
-import { SubmitButton } from "@/components/SubmitButton";
-import { cn } from "@/lib/utils";
+import { ShieldCheck } from "lucide-react";
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -19,11 +21,27 @@ export default async function SettingsPage() {
 
   const loanSettings = await prisma.loanSetting.findFirst();
 
+  const instrumentTypeSlots = await prisma.instrumentTypeSlot.findMany();
+  const slotByType = new Map(
+    instrumentTypeSlots.map((s) => [s.instrumentType, s.maxConcurrentLoans]),
+  );
+  const instrumentTypeSlotRows = REQUESTABLE_INSTRUMENT_TYPES.map((type) => ({
+    type,
+    maxConcurrentLoans: slotByType.get(type) ?? 1,
+  }));
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="hidden text-h1 lg:block">Settings</h1>
 
-      <LoanSettingsForm loanSettings={loanSettings} isSuperAdmin={isSuperAdmin} />
+      <LoanSettingsForm
+        loanSettings={loanSettings}
+        isSuperAdmin={isSuperAdmin}
+      />
+      <InstrumentTypeSlotsPanel
+        rows={instrumentTypeSlotRows}
+        isSuperAdmin={isSuperAdmin}
+      />
 
       {isSuperAdmin && (
         <Card>

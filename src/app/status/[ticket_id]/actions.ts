@@ -13,6 +13,7 @@ import { driveTimestamp, escapeHtml } from "@/lib/format";
 import {
   documentTypesNeedingUpload,
   computeCanExtend,
+  formatNameWithNickname,
   requiredDocumentTypesForPeriod,
 } from "@/lib/loan-rules";
 import { RequestData } from "./types";
@@ -68,6 +69,7 @@ export async function verifyAccessCode(
       ticketId: true,
       accessCode: true,
       borrowerName: true,
+      borrowerNickname: true,
       status: true,
       createdAt: true,
       rejectionReason: true,
@@ -686,7 +688,7 @@ export async function submitDocument(
           ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
           : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
         html: `
-        <p>Peminjam ${escapeHtml(request.borrowerName)} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
+        <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
         <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
       `,
       });
@@ -894,6 +896,21 @@ export async function submitAddendum(
       notes,
     },
   });
+
+  if (timing === "final") {
+    try {
+      await sendEmail({
+        to: process.env.GMAIL_USER!,
+        subject: `Pengembalian menunggu konfirmasi — tiket ${request.ticketId}`,
+        html: `
+        <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah mengisi addendum kondisi akhir dan siap dikonfirmasi pengembaliannya.</p>
+        <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
+      `,
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+    }
+  }
 
   return { success: true, error: null, generalError: null, fields: {} };
 }

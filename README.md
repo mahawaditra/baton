@@ -28,6 +28,8 @@ A web platform for OSUI Mahawaditra's Logistics division to manage instrument bo
     - [From one combined upload to one-per-document](#from-one-combined-upload-to-one-per-document)
     - ["Ongoing loans" is a timestamp, not a status](#ongoing-loans-is-a-timestamp-not-a-status)
     - [Two inputs for one field](#two-inputs-for-one-field)
+    - [Sharing one instrument between two borrowers](#sharing-one-instrument-between-two-borrowers)
+    - [One name, more than one display](#one-name-more-than-one-display)
   - [Tech Stack](#tech-stack)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
@@ -74,6 +76,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 
 - Dashboard: requests needing action, recent activity, and the active loan roster — with a one-click carry-over that moves long-running loans into a separate _ongoing_ roster before each intake season
 - Real-time instrument inventory, sortable/filterable, edited from a per-instrument detail page, each with a catalog photo (crop and rotate on upload)
+- Configurable instrument sharing: how many borrowers a given instrument type can have on loan at once — super admin only, visible but locked for other admins
 - A separate goods inventory (manual CRUD), catalog photos and all
 - One-click inventory snapshot export to XLSX, saved to Drive and downloaded
 - Prefilled contract PDF generation
@@ -109,7 +112,7 @@ flowchart TD
 
 Not in the diagram, three exceptions branch off the main path:
 
-- **Reject** — an admin can reject a request any time before it's `active` (typically: no matching instrument in stock). Any reserved instrument goes back to `available`.
+- **Reject** — an admin can reject a request any time before it's `active` (typically: no matching instrument in stock). Any reserved instrument goes back to `available` — unless it's [shared](#sharing-one-instrument-between-two-borrowers) and another borrower is still actively holding it, in which case its status is left alone,
 - **Cancel** — a borrower can cancel their own request any time up through `ready_to_pickup`. Once the instrument is physically handed over (`active`), it can no longer be cancelled.
 - **Overdue** — not a manual action at all. A daily cron job flips `active` requests past their `due_date` to `overdue`; a return can still be confirmed from there.
 
@@ -144,6 +147,24 @@ So "ongoing" is just a nullable `carriedOverAt` timestamp on the request. One ad
 ### Two inputs for one field
 
 The borrower's faculty and major are stored — and printed on the contract — as a single `Faculty/Major` string, and the form used to collect them that way too: one text box, with a rule that there be exactly one slash in it. People kept failing that rule — a fullwidth `／` from a phone keyboard, no slash at all, a stray trailing one. It's now two separate inputs, joined on the server. The stored value and the contract come out identical to before, so there was nothing to migrate.
+
+### Sharing one instrument between two borrowers
+
+A handful of instrument types — Contrabass being the recurring example — exist in numbers too small for demand, so the org's actual practice is to let a second borrower take one on while the first is still holding it, each signing their own contract and addendum for that same physical unit. That last part matters: if the second borrower is the one who damages it, they're liable for it, not whoever borrowed it first. Before this was built in, the workaround was a note in the instrument's Notes field and asking the second borrower to just wait.
+
+`Instrument.status` and `location` were both built assuming exactly one borrower at a time: a single enum value, a single string overwritten on every handover. Neither can represent "two people currently have an active claim on this Contrabass." Making that representable meant treating both as _derived_ rather than _stored_ — `location` is computed at read time from every `BorrowingRequest` currently attached to that instrument, instead of being written by whichever borrower's handover happens to run last (which would just clobber the other borrower's name). Whether a new request can be assigned an instrument at all works the same way: a count against `InstrumentTypeSlot.maxConcurrentLoans` (configurable per instrument type, default 1) instead of a plain `status === "available"` check. An instrument's condition and status only get their final, post-loan value recorded once the _last_ remaining borrower returns it — anyone returning while someone else still holds it just closes out their own loan, nothing on the instrument itself changes.
+
+The one thing that turned out not to need any change at all was liability tracking: each borrower already gets their own `BorrowingRequest` → `LoanPeriod` → `Addendum` chain, so two people sharing one instrument were always going to end up with two separate contracts and two separate condition reports. That part of the data model was right from the start — the gap was purely in how the shared instrument's own state got represented.
+
+### One name, more than one display
+
+Borrowers fill in their name in full, but that's rarely how anyone actually refers to them day to day — and once an instrument can have two active borrowers at once, showing two full names side by side in one place gets long enough to be genuinely hard to read. The fix is a second, optional `borrowerNickname` field — but which of the two gets shown isn't the same everywhere, because the display rule depends on who's looking and why:
+
+- To the borrower themselves (their emails, their own status page, the shared instrument's location) — nickname, falling back to the full name if they left it blank.
+- To admin staff trying to recognize a specific person (the requests/archive tables, a request's detail page, an instrument's borrower history, the internal notification emails) — both, as `Full Name (Nickname)`.
+- Anywhere that's effectively a legal record (the contract PDF, the Drive folder a borrower's documents get archived under) — full name only, untouched.
+
+Two small pure functions in `loan-rules.ts`, `resolveNickname` and `formatNameWithNickname`, encode those two display rules; every call site picks whichever one matches its audience rather than reading `borrowerName` directly. Requests submitted before this field existed just have a `null` nickname — both functions fall back to the full name for those, so nothing looks broken for old data.
 
 ## Tech Stack
 
@@ -237,7 +258,7 @@ src/
   lib/           Business logic and integrations — Prisma client, Google Drive, email,
                  PDF generation, rate limiting, and pure rule functions (loan-rules.ts)
 prisma/
-  schema.prisma  Database schema (14 models)
+  schema.prisma  Database schema (15 models)
   migrations/    Migration history
   seed.ts        Seed data for local development
 ```
@@ -251,7 +272,7 @@ npm run test:watch # watch mode
 
 Coverage is aimed at the business-logic layer that would cause real problems if it silently broke, rather than at a coverage percentage:
 
-- `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period
+- `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, and name/nickname display resolution
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
 - `format.ts` / `mail.ts` — date/timezone handling, email content generation
 

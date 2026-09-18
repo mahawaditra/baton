@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { exportInventorySnapshot } from "./actions";
 import { AnnualReportPanel } from "./AnnualReportPanel";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/SubmitButton";
 import {
   Card,
   CardContent,
@@ -49,7 +50,9 @@ export default async function ReportsPage() {
                   placeholder="Label (e.g. Post Calang 2026)"
                 />
               </div>
-              <Button type="submit">Export Snapshot</Button>
+              <SubmitButton pendingText="Exporting...">
+                Export Snapshot
+              </SubmitButton>
             </form>
 
             {snapshots.length > 0 && (

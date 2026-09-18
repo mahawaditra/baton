@@ -80,7 +80,7 @@ export function LoanStepper({
                 <span
                   className={cn(
                     "absolute top-4 -left-1/2 right-1/2 h-0.5",
-                    stepNumber < current ? "bg-navy" : "bg-border",
+                    stepNumber <= current ? "bg-navy" : "bg-border",
                   )}
                 />
               )}

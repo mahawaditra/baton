@@ -7,6 +7,7 @@ import {
   confirmedExtensionCount,
   getRequestActionLabel,
   requestNeedsAction,
+  resolveNickname,
 } from "@/lib/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import {
@@ -134,7 +135,7 @@ function LoanRosterTable({ rows }: { rows: RosterRow[] }) {
                   href={`/admin/requests/${req.id}`}
                   className="font-medium text-navy hover:underline"
                 >
-                  {req.borrowerName}
+                  {resolveNickname(req.borrowerName, req.borrowerNickname)}
                 </Link>
               </td>
               <td className="px-4 py-3">{req.borrowerYear}</td>
