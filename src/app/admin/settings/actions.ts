@@ -153,6 +153,7 @@ export async function addAdmin(
       action: "add_admin",
       entityType: "admin",
       entityId: newAdmin.id,
+      metadata: { name: newAdmin.name, email: newAdmin.email },
     },
   });
 
@@ -404,7 +405,7 @@ export async function setAdminActive(adminId: string, isActive: boolean) {
     throw new Error("You can't deactivate your own account.");
   }
 
-  await prisma.admin.update({
+  const targetAdmin = await prisma.admin.update({
     where: { id: adminId },
     data: { isActive },
   });
@@ -415,6 +416,7 @@ export async function setAdminActive(adminId: string, isActive: boolean) {
       action: isActive ? "reactivate_admin" : "deactivate_admin",
       entityType: "admin",
       entityId: adminId,
+      metadata: { name: targetAdmin.name, email: targetAdmin.email },
     },
   });
 

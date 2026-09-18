@@ -29,7 +29,12 @@ type ActivityLogLike = {
 type ActivityMetadataByAction =
   | {
       action: "assign_instrument";
-      metadata: { instrumentId: string; previousInstrumentId: string | null };
+      metadata: {
+        instrumentId: string;
+        previousInstrumentId: string | null;
+        instrumentType: string | null;
+        instrumentSerial: string | null;
+      };
     }
   | { action: "notify_available"; metadata: { notifiedEmail: string } }
   | {
@@ -41,11 +46,16 @@ type ActivityMetadataByAction =
         | "confirm_ready"
         | "confirm_handover"
         | "confirm_extension"
-        | "revert_from_ongoing"
-        | "add_admin"
-        | "deactivate_admin"
-        | "reactivate_admin";
+        | "revert_from_ongoing";
       metadata: null;
+    }
+  | {
+      action: "add_admin" | "deactivate_admin" | "reactivate_admin";
+      metadata: { name: string; email: string };
+    }
+  | {
+      action: "update_instrument_type_slot";
+      metadata: { instrumentType: string; before: number; after: number };
     }
   | {
       action: "confirm_return";
@@ -106,8 +116,11 @@ export function formatActivityLog(log: ActivityLogLike): string {
         ? `updated instrument (${changes.join(", ")})`
         : "updated instrument";
     }
-    case "assign_instrument":
-      return "assigned an instrument";
+    case "assign_instrument": {
+      const { instrumentType, instrumentSerial } = typed.metadata;
+      if (!instrumentType) return "assigned an instrument";
+      return `assigned ${instrumentType}${instrumentSerial ? ` (${instrumentSerial})` : ""}`;
+    }
     case "reject_request":
       return `rejected request${typed.metadata.reason ? `: ${typed.metadata.reason}` : ""}`;
     case "cancel_request":
@@ -134,8 +147,47 @@ export function formatActivityLog(log: ActivityLogLike): string {
         ? `updated goods (${changes.join(", ")})`
         : "updated goods";
     }
-    case "update_loan_settings":
-      return "updated loan settings";
+    case "update_loan_settings": {
+      const { before, after } = typed.metadata;
+      const changes = diffFields(before, after, [
+        "depositAmount",
+        "depositPartialAmount",
+        "depositGraceDays",
+        "bankName",
+        "bankAccount",
+        "bankHolder",
+        "signatoryName",
+        "signatoryPhone",
+        "signatoryLineId",
+        "signatoryAddressKtp",
+        "signatoryAddressDomicile",
+        "signatoryFaculty",
+        "signatoryYear",
+        "signatorySection",
+        "signatoryKtpNumber",
+        "signatoryPhonePublic",
+        "signatoryLineAddFriendUrl",
+        "signatoryLineAddFriendPublic",
+      ]);
+      if (before && after) {
+        if (
+          new Date(before.dueDate).getTime() !==
+          new Date(after.dueDate).getTime()
+        ) {
+          changes.push(
+            `dueDate: ${new Date(before.dueDate).toLocaleDateString("en-GB")} → ${new Date(after.dueDate).toLocaleDateString("en-GB")}`,
+          );
+        }
+        if (before.signatoryImageDriveId !== after.signatoryImageDriveId) {
+          changes.push("signature image updated");
+        }
+      }
+      return changes.length > 0
+        ? `updated loan settings (${changes.join(", ")})`
+        : "updated loan settings";
+    }
+    case "update_instrument_type_slot":
+      return `updated ${typed.metadata.instrumentType} slot (${typed.metadata.before} → ${typed.metadata.after})`;
     case "export_snapshot":
       return `exported inventory snapshot "${typed.metadata.label}" (${typed.metadata.instrumentCount} instruments)`;
     case "generate_annual_report":
@@ -147,11 +199,11 @@ export function formatActivityLog(log: ActivityLogLike): string {
     case "notify_available":
       return "notified borrower to complete Stage 2";
     case "add_admin":
-      return "added a new admin";
+      return `added a new admin (${typed.metadata.name}, ${typed.metadata.email})`;
     case "deactivate_admin":
-      return "deactivated an admin";
+      return `deactivated ${typed.metadata.name} (${typed.metadata.email})`;
     case "reactivate_admin":
-      return "reactivated an admin";
+      return `reactivated ${typed.metadata.name} (${typed.metadata.email})`;
     case "create_instrument":
       return `created instrument (${typed.metadata.after.section}/${typed.metadata.after.type})`;
     case "create_goods":

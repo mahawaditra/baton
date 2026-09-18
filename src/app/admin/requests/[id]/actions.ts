@@ -56,11 +56,14 @@ export async function assignInstrument(
     };
   }
 
+  let assignedInstrument: { type: string; serialNumber: string | null } | undefined;
+
   try {
     await prisma.$transaction(async (tx) => {
       const instrument = await tx.instrument.findUniqueOrThrow({
         where: { id: instrumentId },
       });
+      assignedInstrument = instrument;
 
       const activeHolders = await tx.borrowingRequest.count({
         where: {
@@ -131,7 +134,12 @@ export async function assignInstrument(
       action: "assign_instrument",
       entityType: "borrowing_request",
       entityId: requestId,
-      metadata: { instrumentId, previousInstrumentId: request.instrumentId },
+      metadata: {
+        instrumentId,
+        previousInstrumentId: request.instrumentId,
+        instrumentType: assignedInstrument?.type ?? null,
+        instrumentSerial: assignedInstrument?.serialNumber ?? null,
+      },
     },
   });
 
