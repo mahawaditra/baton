@@ -83,6 +83,9 @@ model LoanSetting {
   signatoryPhonePublic     Boolean @default(false) @map("signatory_phone_public")
   signatoryImageDriveId    String? @map("signatory_image_drive_id")
 
+  signatoryLineAddFriendUrl    String? @map("signatory_line_add_friend_url")
+  signatoryLineAddFriendPublic Boolean @default(false) @map("signatory_line_add_friend_public")
+
   currentYearFolderId   String? @map("current_year_folder_id")
   currentYearFolderYear Int?    @map("current_year_folder_year")
 

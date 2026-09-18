@@ -6,6 +6,7 @@ import { CompressedFileInput } from "@/components/CompressedFileInput";
 import {
   MAX_UPLOAD_SIZE_BYTES,
   MAX_UPLOAD_SIZE_LABEL,
+  validateImageUpload,
 } from "@/lib/file-validation";
 import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,8 @@ export function AddendumForm({
 }) {
   const action = submitAddendum.bind(null, ticketId, accessCode, timing);
   const [state, formAction, isPending] = useActionState(action, initialState);
-  const [totalSizeError, setTotalSizeError] = useState<string | null>(null);
+  const [clientError, setClientError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
 
   useEffect(() => {
@@ -47,19 +49,33 @@ export function AddendumForm({
     if (state.generalError) toastError(state.generalError);
   }, [state.generalError]);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    const photos = new FormData(e.currentTarget).getAll("photos") as File[];
-    const totalSize = photos.reduce((sum, file) => sum + file.size, 0);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
+    const formData = new FormData(e.currentTarget);
+    const photos = formData.getAll("photos") as File[];
+
+    const totalSize = photos.reduce((sum, file) => sum + file.size, 0);
     if (totalSize > MAX_UPLOAD_SIZE_BYTES) {
-      e.preventDefault();
-      setTotalSizeError(
+      setClientError(
         `Total ukuran semua foto (${(totalSize / (1024 * 1024)).toFixed(1)}MB) melebihi batas ${MAX_UPLOAD_SIZE_LABEL}. Kurangi jumlah atau ukuran foto.`,
       );
       return;
     }
 
-    setTotalSizeError(null);
+    setIsValidating(true);
+    for (const [index, photo] of photos.entries()) {
+      const validation = await validateImageUpload(photo);
+      if (!validation.valid) {
+        setClientError(`Foto ke-${index + 1} (${photo.name}): ${validation.error}`);
+        setIsValidating(false);
+        return;
+      }
+    }
+    setIsValidating(false);
+
+    setClientError(null);
+    formAction(formData);
   }
 
   if (state.success) {
@@ -104,9 +120,9 @@ export function AddendumForm({
           key={JSON.stringify(state.fields)}
           className="flex flex-col gap-4"
         >
-          {(totalSizeError ?? state.error) && (
+          {(clientError ?? state.error) && (
             <p className="text-sm text-destructive" aria-live="polite">
-              {totalSizeError ?? state.error}
+              {clientError ?? state.error}
             </p>
           )}
 
@@ -180,14 +196,16 @@ export function AddendumForm({
 
           <Button
             type="submit"
-            disabled={isPending || isCompressing}
+            disabled={isPending || isCompressing || isValidating}
             className="self-start"
           >
             {isCompressing
               ? "Memproses..."
-              : isPending
-                ? "Mengirim..."
-                : "Kirim Addendum"}
+              : isValidating
+                ? "Memeriksa foto..."
+                : isPending
+                  ? "Mengirim..."
+                  : "Kirim Addendum"}
           </Button>
         </form>
       </CardContent>

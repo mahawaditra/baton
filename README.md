@@ -70,7 +70,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - One-click extension request (from 30 days before the due date) and early return
 - A web form — with phone-camera photos — for condition addendums on extension
 - Automatic email notifications at each status change
-- A landing-page FAQ, and a direct WhatsApp line to the logistics head when they choose to show it
+- A landing-page FAQ, and a direct WhatsApp and/or LINE line to the logistics head, each shown independently when they choose to
 
 ### For admins
 

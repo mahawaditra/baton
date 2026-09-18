@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setSignatoryPhonePublic } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toastError } from "@/lib/toast";
 
-export function SignatoryPhonePublicToggle({
+export function PublicContactToggle({
+  id,
+  label,
   defaultValue,
   disabled,
+  action,
 }: {
+  id: string;
+  label: string;
   defaultValue: boolean;
   disabled?: boolean;
+  action: (value: boolean) => Promise<void>;
 }) {
   const [checked, setChecked] = useState(defaultValue);
   const [pending, startTransition] = useTransition();
@@ -20,7 +25,7 @@ export function SignatoryPhonePublicToggle({
     setChecked(next);
     startTransition(async () => {
       try {
-        await setSignatoryPhonePublic(next);
+        await action(next);
       } catch {
         setChecked(!next);
         toastError("Couldn't save that. Try again.");
@@ -31,27 +36,19 @@ export function SignatoryPhonePublicToggle({
   return (
     <div className="flex items-start gap-2.5">
       <Checkbox
-        id="signatoryPhonePublic"
+        id={id}
         checked={checked}
         onCheckedChange={handleChange}
         disabled={pending || disabled}
         className="mt-0.5"
       />
       <div className="flex flex-col gap-0.5">
-        <Label
-          htmlFor="signatoryPhonePublic"
-          className="font-normal text-foreground-2"
-        >
-          Show this phone number on the public landing page as a WhatsApp
-          contact button in the FAQ.
+        <Label htmlFor={id} className="font-normal text-foreground-2">
+          {label}
         </Label>
-        <span className="text-caption text-muted-foreground">
-          {disabled
-            ? "Cuma super admin yang bisa ubah ini."
-            : pending
-              ? "Saving…"
-              : "Applies immediately — independent of the Save button below."}
-        </span>
+        {pending && (
+          <span className="text-caption text-muted-foreground">Saving…</span>
+        )}
       </div>
     </div>
   );

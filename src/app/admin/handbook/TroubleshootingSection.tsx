@@ -127,6 +127,25 @@ export function TroubleshootingSection() {
         </p>
       </TaskCard>
 
+      <TaskCard title="Link LINE di landing page nggak berfungsi (Sep 2026)">
+        <p>
+          Link &quot;Add Friend&quot; LINE itu BUKAN dirakit dari LINE ID biasa
+          — itu link/token khusus yang di-generate manual dari app LINE si
+          ketua (Profile → QR code → Copy link). Token ini bisa jadi{" "}
+          <strong>kadaluarsa</strong> kalau ketua nge-klik tombol
+          &quot;Regenerate&quot; lagi di app LINE-nya setelah link lama itu
+          udah dipasang di Settings — link lama otomatis rusak begitu yang
+          baru di-generate.
+        </p>
+        <p>
+          Fix-nya: minta ketua buka app LINE-nya, generate ulang link Add
+          Friend yang baru, copy, terus paste ke field &quot;LINE Add Friend
+          Link&quot; di Settings (centang dulu &quot;Enable LINE&quot; kalau
+          belum, field-nya baru muncul), klik Save di ujung field itu — bukan
+          tombol &quot;Save Loan Settings&quot; di bawah, dua-duanya independen.
+        </p>
+      </TaskCard>
+
       <TaskCard title="Glosarium">
         <ul className="list-disc pl-5">
           <li>

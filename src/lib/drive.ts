@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { Readable } from "stream";
 import { prisma } from "@/lib/prisma";
+import { driveTimestamp } from "@/lib/format";
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -145,6 +146,29 @@ export async function replaceItemPhoto(params: {
     "image/jpeg",
     params.buffer,
     folder,
+  );
+  if (params.oldFileId) {
+    try {
+      await trashFile(params.oldFileId);
+    } catch {}
+  }
+  return newFileId;
+}
+
+export async function replaceSignatureImage(params: {
+  buffer: Buffer;
+  mimeType: string;
+  oldFileId: string | null;
+}): Promise<string> {
+  const assetsFolder = await getOrCreateFolder(
+    "Assets",
+    process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
+  );
+  const newFileId = await uploadFile(
+    `Signature_${driveTimestamp()}.png`,
+    params.mimeType,
+    params.buffer,
+    assetsFolder,
   );
   if (params.oldFileId) {
     try {

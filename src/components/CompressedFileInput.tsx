@@ -3,6 +3,21 @@
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
+const HEIC_FTYP_BRANDS = ["mif1", "msf1", "heic", "heix", "hevc", "hevx"];
+
+async function looksLikeHeic(file: File): Promise<boolean> {
+  const header = new Uint8Array(await file.slice(8, 12).arrayBuffer());
+  const brand = new TextDecoder("utf-8").decode(header).replace("\0", " ").trim();
+  return HEIC_FTYP_BRANDS.includes(brand);
+}
+
+async function convertHeicToJpeg(file: File): Promise<File> {
+  const { heicTo } = await import("heic-to/next");
+  const jpegBlob = await heicTo({ blob: file, type: "image/jpeg", quality: 0.85 });
+  const newName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([jpegBlob], newName, { type: "image/jpeg" });
+}
+
 async function compressImage(
   file: File,
   maxWidth = 1600,
@@ -53,11 +68,21 @@ export function CompressedFileInput({
 
     const processed = await Promise.all(
       Array.from(files).map(async (file) => {
-        if (!file.type.startsWith("image/")) return file;
+        let workingFile = file;
+
+        if (await looksLikeHeic(workingFile)) {
+          try {
+            workingFile = await convertHeicToJpeg(workingFile);
+          } catch {
+            // biarin lanjut apa adanya — nanti ketolak jelas di validasi format
+          }
+        }
+
+        if (!workingFile.type.startsWith("image/")) return workingFile;
         try {
-          return await compressImage(file);
+          return await compressImage(workingFile);
         } catch {
-          return file;
+          return workingFile;
         }
       }),
     );

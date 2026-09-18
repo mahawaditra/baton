@@ -4,8 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { getOrCreateFolder, uploadFile } from "@/lib/drive";
-import { driveTimestamp } from "@/lib/format";
+import { replaceSignatureImage } from "@/lib/drive";
 import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
@@ -230,16 +229,11 @@ export async function updateLoanSettings(
   const imageFile = formData.get("signatoryImage") as File;
   if (imageFile?.size) {
     const buffer = Buffer.from(await imageFile.arrayBuffer());
-    const assetsFolder = await getOrCreateFolder(
-      "Assets",
-      process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
-    );
-    signatoryImageDriveId = await uploadFile(
-      `Signature_${driveTimestamp()}.png`,
-      imageFile.type,
+    signatoryImageDriveId = await replaceSignatureImage({
       buffer,
-      assetsFolder,
-    );
+      mimeType: imageFile.type,
+      oldFileId: existing?.signatoryImageDriveId ?? null,
+    });
   }
 
   const data = {
@@ -320,6 +314,83 @@ export async function setSignatoryPhonePublic(value: boolean) {
   revalidatePath("/");
   revalidatePath("/admin/settings");
   revalidatePath("/admin/activity");
+}
+
+export async function setSignatoryLineAddFriendPublic(value: boolean) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Not logged in");
+  if (session.user.role !== "super_admin") {
+    throw new Error("Only super admin can update loan settings.");
+  }
+
+  const existing = await prisma.loanSetting.findFirst();
+  if (!existing) throw new Error("Loan settings have not been set up yet.");
+
+  const updated = await prisma.loanSetting.update({
+    where: { id: existing.id },
+    data: { signatoryLineAddFriendPublic: value },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "update_loan_settings",
+      entityType: "loan_settings",
+      entityId: updated.id,
+      metadata: { before: existing, after: updated },
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/activity");
+}
+
+export type SetSignatoryLineAddFriendUrlResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export async function setSignatoryLineAddFriendUrl(
+  value: string,
+): Promise<SetSignatoryLineAddFriendUrlResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Not logged in");
+  if (session.user.role !== "super_admin") {
+    throw new Error("Only super admin can update loan settings.");
+  }
+
+  const trimmed = value.trim();
+  const parsed = z
+    .url("Must be a valid URL (e.g. https://line.me/ti/p/...).")
+    .nullable()
+    .safeParse(trimmed === "" ? null : trimmed);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const existing = await prisma.loanSetting.findFirst();
+  if (!existing) throw new Error("Loan settings have not been set up yet.");
+
+  const updated = await prisma.loanSetting.update({
+    where: { id: existing.id },
+    data: { signatoryLineAddFriendUrl: parsed.data },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      adminId: session.user.id,
+      action: "update_loan_settings",
+      entityType: "loan_settings",
+      entityId: updated.id,
+      metadata: { before: existing, after: updated },
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/activity");
+
+  return { success: true };
 }
 
 export async function setAdminActive(adminId: string, isActive: boolean) {

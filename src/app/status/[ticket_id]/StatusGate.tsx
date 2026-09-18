@@ -14,6 +14,7 @@ import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { LoanStepper } from "@/components/LoanStepper";
 import { LoadingMarquee } from "@/components/LoadingMarquee";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -434,9 +435,9 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
               />
             </div>
 
-            <Button type="submit" className="w-full">
+            <SubmitButton pendingText="Memeriksa..." className="w-full">
               Buka
-            </Button>
+            </SubmitButton>
           </form>
         </CardContent>
       </Card>

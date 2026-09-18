@@ -2,13 +2,18 @@
 
 import { useActionState } from "react";
 import type { LoanSetting } from "@/generated/prisma/client";
-import { updateLoanSettings, UpdateLoanSettingsState } from "./actions";
+import {
+  updateLoanSettings,
+  UpdateLoanSettingsState,
+  setSignatoryPhonePublic,
+} from "./actions";
 import { CompressedImageInput } from "./CompressedImageInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SignatoryPhonePublicToggle } from "./SignatoryPhonePublicToggle";
+import { PublicContactToggle } from "./PublicContactToggle";
+import { LineContactToggle } from "./LineContactToggle";
 import { splitFacultyMajor } from "@/lib/format";
 
 const initialState: UpdateLoanSettingsState = {
@@ -261,10 +266,26 @@ export function LoanSettingsForm({
               />
             </div>
             <div className="border-t border-border pt-4 sm:col-span-2">
-              <SignatoryPhonePublicToggle
-                defaultValue={loanSettings?.signatoryPhonePublic ?? false}
-                disabled={!isSuperAdmin}
-              />
+              <p className="mb-3 text-sm text-foreground-2">
+                These show up as contact buttons on the public landing page,
+                for people with questions. This applies immediately and
+                independently from Save Loan Settings.
+                {!isSuperAdmin && " Only super admin can change this."}
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:gap-8">
+                <PublicContactToggle
+                  id="signatoryPhonePublic"
+                  label="Enable WhatsApp"
+                  defaultValue={loanSettings?.signatoryPhonePublic ?? false}
+                  disabled={!isSuperAdmin}
+                  action={setSignatoryPhonePublic}
+                />
+                <LineContactToggle
+                  defaultChecked={loanSettings?.signatoryLineAddFriendPublic ?? false}
+                  defaultUrl={loanSettings?.signatoryLineAddFriendUrl ?? ""}
+                  disabled={!isSuperAdmin}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
