@@ -26,7 +26,7 @@ export function ThemeToggle() {
         onClick={() => setTheme(isDark ? "light" : "dark")}
         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
         className={cn(
-          "fixed top-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-lg transition-colors hover:bg-muted",
+          "fixed top-[calc(env(safe-area-inset-top,0px)+1.5rem)] right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-lg transition-colors hover:bg-muted",
           isAdminShell && "hidden lg:flex",
         )}
       >

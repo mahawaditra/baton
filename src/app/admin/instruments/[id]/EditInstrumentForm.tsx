@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import type { Instrument } from "@/generated/prisma/client";
+import { useActionState, useState } from "react";
+import type { Instrument, ItemCondition } from "@/generated/prisma/client";
 import { updateInstrument, UpdateInstrumentState } from "./actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { LoanableCheckbox } from "@/components/LoanableCheckbox";
 import {
   Select,
   SelectContent,
@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CONDITION_OPTIONS, STATUS_OPTIONS } from "@/components/StatusBadge";
+import { isOutOfServiceCondition } from "@/lib/loan-rules";
 import { cn } from "@/lib/utils";
 
 const initialState: UpdateInstrumentState = {
@@ -33,6 +35,10 @@ export function EditInstrumentForm({
 }) {
   const action = updateInstrument.bind(null, instrument.id);
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const [condition, setCondition] = useState<ItemCondition>(
+    instrument.condition,
+  );
+  const [isLoanable, setIsLoanable] = useState(instrument.isLoanable);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -61,20 +67,48 @@ export function EditInstrumentForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <Label htmlFor="status">Status</Label>
+          <Select
+            name="status"
+            items={STATUS_OPTIONS}
+            defaultValue={instrument.status}
+            disabled={statusLocked}
+          >
+            <SelectTrigger id="status" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {statusLocked && (
+            <p className="text-xs text-destructive">
+              Status cannot be changed while instrument is reserved or borrowed.
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="condition">Condition</Label>
           <Select
             name="condition"
-            defaultValue={instrument.condition}
+            items={CONDITION_OPTIONS}
+            value={condition}
+            onValueChange={(value) => setCondition(value as ItemCondition)}
             disabled={statusLocked}
           >
             <SelectTrigger id="condition" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ok">OK</SelectItem>
-              <SelectItem value="need_repair">Need Repair</SelectItem>
-              <SelectItem value="retired">Retired</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
+              {CONDITION_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {statusLocked && (
@@ -86,69 +120,37 @@ export function EditInstrumentForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="status">Status</Label>
-          <Select
-            name="status"
-            defaultValue={instrument.status}
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            name="location"
+            defaultValue={statusLocked ? displayLocation : instrument.location}
             disabled={statusLocked}
-          >
-            <SelectTrigger id="status" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="reserved">Reserved</SelectItem>
-              <SelectItem value="borrowed">Borrowed</SelectItem>
-              <SelectItem value="placed">Placed</SelectItem>
-              <SelectItem value="unavailable">Unavailable</SelectItem>
-            </SelectContent>
-          </Select>
+          />
           {statusLocked && (
             <p className="text-xs text-destructive">
-              Status cannot be changed while instrument is reserved or borrowed.
+              Location cannot be changed while instrument is reserved or
+              borrowed.
             </p>
           )}
         </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox
-            name="isLoanable"
-            value="true"
-            defaultChecked={instrument.isLoanable}
+        <div className="flex flex-col gap-1.5">
+          <span aria-hidden className="hidden h-5 sm:block" />
+          <LoanableCheckbox
+            blocked={isOutOfServiceCondition(condition)}
+            checked={isLoanable}
+            onCheckedChange={setIsLoanable}
           />
-          Loanable
-        </label>
-        <p className="text-xs text-foreground-2">
-          Note: setting Condition to Retired or Lost will force this off
-          automatically, regardless of this checkbox.
-        </p>
-      </div>
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="location">Location</Label>
-        <Input
-          id="location"
-          name="location"
-          defaultValue={statusLocked ? displayLocation : instrument.location}
-          disabled={statusLocked}
-        />
-        {statusLocked && (
-          <p className="text-xs text-destructive">
-            Location cannot be changed while instrument is reserved or
-            borrowed.
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          name="notes"
-          defaultValue={instrument.notes ?? ""}
-        />
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea
+            id="notes"
+            name="notes"
+            defaultValue={instrument.notes ?? ""}
+          />
+        </div>
       </div>
 
       <div className="flex gap-2">

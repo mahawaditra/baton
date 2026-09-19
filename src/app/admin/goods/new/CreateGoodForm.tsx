@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CONDITION_OPTIONS } from "@/components/StatusBadge";
 import { cn } from "@/lib/utils";
 
 const initialState: CreateGoodState = {
@@ -44,61 +45,61 @@ export function CreateGoodForm({ locations }: { locations: string[] }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
+          <Label htmlFor="brand">Brand</Label>
+          <Input id="brand" name="brand" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="registrationNo">Reg. No.</Label>
+          <Input id="registrationNo" name="registrationNo" />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="name">Name</Label>
           <Input id="name" name="name" required />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="brand">Brand</Label>
-          <Input id="brand" name="brand" />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="quantity">Quantity</Label>
-          <Input id="quantity" name="quantity" type="number" defaultValue={1} />
-        </div>
-        <div className="flex flex-col gap-1.5">
           <Label htmlFor="condition">Condition</Label>
-          <Select name="condition" defaultValue="ok">
+          <Select name="condition" items={CONDITION_OPTIONS} defaultValue="ok">
             <SelectTrigger id="condition" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ok">OK</SelectItem>
-              <SelectItem value="need_repair">Need Repair</SelectItem>
-              <SelectItem value="retired">Retired</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
+              {CONDITION_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="location">Location</Label>
-        <Autocomplete name="location" items={locations} defaultValue="RB1">
-          <AutocompleteInput id="location" required />
-          <AutocompleteContent>
-            <AutocompleteEmpty>
-              No match — will be saved as a new location.
-            </AutocompleteEmpty>
-            <AutocompleteList>
-              {(item: string) => (
-                <AutocompleteItem key={item} value={item}>
-                  {item}
-                </AutocompleteItem>
-              )}
-            </AutocompleteList>
-          </AutocompleteContent>
-        </Autocomplete>
-      </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="location">Location</Label>
+          <Autocomplete name="location" items={locations} defaultValue="RB1">
+            <AutocompleteInput id="location" required />
+            <AutocompleteContent>
+              <AutocompleteEmpty>
+                No match — will be saved as a new location.
+              </AutocompleteEmpty>
+              <AutocompleteList>
+                {(item: string) => (
+                  <AutocompleteItem key={item} value={item}>
+                    {item}
+                  </AutocompleteItem>
+                )}
+              </AutocompleteList>
+            </AutocompleteContent>
+          </Autocomplete>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="quantity">Quantity</Label>
+          <Input id="quantity" name="quantity" type="number" defaultValue={1} />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="registrationNo">Reg. No.</Label>
-        <Input id="registrationNo" name="registrationNo" />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" name="notes" />
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea id="notes" name="notes" />
+        </div>
       </div>
 
       <div className="flex gap-2">

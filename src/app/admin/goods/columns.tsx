@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { Good, ItemCondition } from "@/generated/prisma/client";
-import { ConditionIndicator } from "@/components/StatusBadge";
+import { ConditionIndicator, getConditionLabel } from "@/components/StatusBadge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,10 @@ export const columns: ColumnDef<Good>[] = [
     header: "Condition",
     accessorFn: (row) => CONDITION_TRIAGE_ORDER[row.condition],
     cell: ({ row }) => (
-      <ConditionIndicator condition={row.original.condition} />
+      <span className="inline-flex items-center gap-1.5">
+        {getConditionLabel(row.original.condition)}
+        <ConditionIndicator condition={row.original.condition} />
+      </span>
     ),
   },
   { accessorKey: "location", header: "Location" },

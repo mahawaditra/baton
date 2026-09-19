@@ -227,7 +227,7 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
   <li>PIHAK PERTAMA mewakili OSUI Mahawaditra adalah kepala divisi perlengkapan OSUI Mahawaditra sebagai penanggung jawab dalam peminjaman INSTRUMEN kepada PIHAK KEDUA.</li>
   <li>PIHAK KEDUA adalah calon anggota aktif/anggota aktif OSUI Mahawaditra yang bermaksud untuk meminjam instrumen milik OSUI Mahawaditra dan disetujui oleh PIHAK PERTAMA.</li>
   <li>DEPOSIT adalah uang sebesar ${formatRupiah(data.depositAmount)} yang diberikan oleh PIHAK KEDUA kepada PIHAK PERTAMA sebelum surat ini ditandatangani sebagai jaminan agar PIHAK KEDUA mengembalikan INSTRUMEN tepat pada waktunya. DEPOSIT akan dikembalikan pada saat INSTRUMEN dikembalikan.</li>
-  <li>DEPOSIT telah ditransfer ke rekening bank ${bankName} dengan nomor <b>${bankAccount} atas nama ${bankHolder}</b>.</li>
+  <li>DEPOSIT telah ditransfer ke rekening bank ${bankName} dengan nomor <b>${bankAccount}</b> atas nama <b>${bankHolder}</b>.</li>
 </ol>
 
 <h2>PASAL 2</h2>
@@ -293,7 +293,7 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
 <div style="page-break-inside: avoid;">
   <p style="text-align: center; margin-top: 24px;">Mengetahui, wali / orang tua PIHAK KEDUA</p>
   <p style="text-align: center; margin-top: 40px;">Materai 10000</p>
-  <p style="text-align: center;">(${guardian.name})</p>
+  <p style="text-align: center; margin-top: 24px;">(${guardian.name})</p>
 </div>
 
 </body>

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import type { ItemCondition } from "@/generated/prisma/client";
 import { createInstrument, CreateInstrumentState } from "./actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { LoanableCheckbox } from "@/components/LoanableCheckbox";
 import {
   Autocomplete,
   AutocompleteContent,
@@ -23,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CONDITION_OPTIONS } from "@/components/StatusBadge";
+import { isOutOfServiceCondition } from "@/lib/loan-rules";
 import { cn } from "@/lib/utils";
 
 const initialState: CreateInstrumentState = {
@@ -40,6 +43,8 @@ export function CreateInstrumentForm({
     createInstrument,
     initialState,
   );
+  const [condition, setCondition] = useState<ItemCondition>("ok");
+  const [isLoanable, setIsLoanable] = useState(true);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -98,40 +103,46 @@ export function CreateInstrumentForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <Label htmlFor="location">Location</Label>
+          <Input id="location" name="location" defaultValue="Sekre" />
+        </div>
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="condition">Condition</Label>
-          <Select name="condition" defaultValue="ok">
+          <Select
+            name="condition"
+            items={CONDITION_OPTIONS}
+            value={condition}
+            onValueChange={(value) => setCondition(value as ItemCondition)}
+          >
             <SelectTrigger id="condition" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ok">OK</SelectItem>
-              <SelectItem value="need_repair">Need Repair</SelectItem>
-              <SelectItem value="retired">Retired</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
+              {CONDITION_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="location">Location</Label>
-          <Input id="location" name="location" defaultValue="Sekre" />
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <LoanableCheckbox
+            blocked={isOutOfServiceCondition(condition)}
+            checked={isLoanable}
+            onCheckedChange={setIsLoanable}
+          />
+          <p className="text-xs text-foreground-2">
+            Note: setting Condition to &quot;Pensiun&quot; or &quot;Hilang&quot;
+            will force this off automatically, regardless of this checkbox.
+          </p>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox name="isLoanable" value="true" defaultChecked />
-          Loanable
-        </label>
-        <p className="text-xs text-foreground-2">
-          Note: setting Condition to Retired or Lost will force this off
-          automatically, regardless of this checkbox.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" name="notes" />
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea id="notes" name="notes" />
+        </div>
       </div>
 
       <div className="flex gap-2">

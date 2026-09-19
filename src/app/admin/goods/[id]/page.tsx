@@ -2,10 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { EditGoodForm } from "./EditGoodForm";
 import { uploadGoodPhoto } from "./actions";
-import {
-  ConditionIndicator,
-  getConditionLabel,
-} from "@/components/StatusBadge";
+import { getConditionLabel } from "@/components/StatusBadge";
 import { ItemPhotoField } from "@/components/ItemPhotoField";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,15 +53,8 @@ export default async function GoodDetailPage({
               <div className="flex flex-1 flex-col gap-4">
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   <div>
-                    <dt className="text-muted-foreground">Condition</dt>
-                    <dd className="mt-1 inline-flex items-center gap-1.5 font-medium">
-                      <ConditionIndicator condition={good.condition} />
-                      {getConditionLabel(good.condition)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Quantity</dt>
-                    <dd className="mt-0.5 font-medium">{good.quantity}</dd>
+                    <dt className="text-muted-foreground">Brand</dt>
+                    <dd className="mt-0.5 font-medium">{good.brand || "—"}</dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Reg. No.</dt>
@@ -73,8 +63,22 @@ export default async function GoodDetailPage({
                     </dd>
                   </div>
                   <div>
+                    <dt className="text-muted-foreground">Name</dt>
+                    <dd className="mt-0.5 font-medium">{good.name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Condition</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {getConditionLabel(good.condition)}
+                    </dd>
+                  </div>
+                  <div>
                     <dt className="text-muted-foreground">Location</dt>
                     <dd className="mt-0.5 font-medium">{good.location}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Quantity</dt>
+                    <dd className="mt-0.5 font-medium">{good.quantity}</dd>
                   </div>
                   <div className="col-span-2">
                     <dt className="text-muted-foreground">Notes</dt>

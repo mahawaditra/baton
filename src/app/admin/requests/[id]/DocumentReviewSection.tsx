@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getDocumentReviewStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 function formatDocType(type: string) {
@@ -63,7 +64,7 @@ export function DocumentReviewSection({
             />
           </div>
           <span className="tabular shrink-0 text-xs font-semibold text-muted-foreground">
-            {liveApprovedCount} / {documents.length} approved
+            {liveApprovedCount} / {documents.length} disetujui
           </span>
         </div>
 
@@ -113,7 +114,7 @@ export function DocumentReviewSection({
                         style,
                       )}
                     >
-                      {doc.reviewStatus}
+                      {getDocumentReviewStatusLabel(doc.reviewStatus)}
                     </span>
                   </div>
                 </div>

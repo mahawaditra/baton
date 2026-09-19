@@ -1,4 +1,5 @@
-import { LoanFlowDiagram } from "./LoanFlowDiagram";
+import { Card, CardContent } from "@/components/ui/card";
+import { LoanFlowStepper } from "./LoanFlowStepper";
 
 export function WorkflowSection() {
   return (
@@ -7,11 +8,14 @@ export function WorkflowSection() {
         <h1 className="hidden text-h1 lg:block">Workflow</h1>
         <p className="mt-1 text-sm text-foreground-2">
           Siapa gerak di tiap tahap, dan apa yang beneran kejadian di
-          baliknya. Hover atau fokus (tab) ke tiap kotak buat lihat
-          detailnya.
+          baliknya. Klik tiap langkah buat lihat detailnya.
         </p>
       </div>
-      <LoanFlowDiagram />
+      <Card>
+        <CardContent>
+          <LoanFlowStepper />
+        </CardContent>
+      </Card>
     </div>
   );
 }

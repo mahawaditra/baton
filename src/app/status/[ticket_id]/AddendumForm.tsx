@@ -190,7 +190,7 @@ export function AddendumForm({
               required
               className="font-normal text-foreground-2"
             >
-              Saya konfirmasi data kondisi di atas benar adanya.
+              Saya konfirmasi data kondisi di atas benar adanya dan sesuai dengan kenyataan.
             </Label>
           </div>
 

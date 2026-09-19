@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { isOutOfServiceCondition } from "@/lib/loan-rules";
 
 const createInstrumentSchema = z.object({
   section: z.string().trim().min(1, "Section is required").max(100),
@@ -52,14 +53,13 @@ export async function createInstrument(
     parsed.data;
 
   let isLoanable = formData.get("isLoanable") === "true";
-  if (condition === "retired" || condition === "lost") {
+  if (isOutOfServiceCondition(condition)) {
     isLoanable = false;
   }
 
-  const status =
-    condition === "retired" || condition === "lost"
-      ? "unavailable"
-      : "available";
+  const status = isOutOfServiceCondition(condition)
+    ? "unavailable"
+    : "available";
 
   const instrument = await prisma.instrument.create({
     data: {

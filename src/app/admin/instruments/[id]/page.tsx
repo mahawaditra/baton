@@ -15,7 +15,7 @@ import {
   RiwayatPeminjam,
 } from "./tabs";
 import { ArrowRight } from "lucide-react";
-import { StatusBadge } from "@/components/StatusBadge";
+import { getConditionLabel, getStatusLabel } from "@/components/StatusBadge";
 import { ItemPhotoField } from "@/components/ItemPhotoField";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,33 +92,38 @@ export default async function InstrumentDetailPage({
               <div className="flex flex-1 flex-col gap-4">
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   <div>
-                    <dt className="text-muted-foreground">Status</dt>
-                    <dd className="mt-1">
-                      <StatusBadge
-                        status={instrument.status}
-                        condition={instrument.condition}
-                      />
-                    </dd>
-                  </div>
-                  <div>
                     <dt className="text-muted-foreground">Brand</dt>
-                    <dd className="mt-0.5 font-medium">{instrument.brand}</dd>
+                    <dd className="mt-0.5 font-medium">
+                      {instrument.brand || "—"}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Serial No.</dt>
                     <dd className="tabular mt-0.5 font-medium">
-                      {instrument.serialNumber}
+                      {instrument.serialNumber || "—"}
                     </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Status</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {getStatusLabel(instrument.status)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Condition</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {getConditionLabel(instrument.condition)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Location</dt>
+                    <dd className="mt-0.5 font-medium">{displayLocation}</dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Loanable</dt>
                     <dd className="mt-0.5 font-medium">
                       {instrument.isLoanable ? "Ya" : "Tidak"}
                     </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Location</dt>
-                    <dd className="mt-0.5 font-medium">{displayLocation}</dd>
                   </div>
                   {maxConcurrentLoans > 1 && (
                     <div>

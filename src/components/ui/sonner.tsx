@@ -43,6 +43,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={toasterTheme}
       position={isMobile ? "top-center" : "bottom-right"}
+      mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 8px)" }}
       duration={5000}
       closeButton
       icons={{

@@ -17,6 +17,7 @@ export function EmptyState({
   tone = "neutral",
   size = "default",
   className,
+  descriptionClassName,
 }: {
   icon: LucideIcon;
   title: string;
@@ -25,6 +26,7 @@ export function EmptyState({
   tone?: "neutral" | "search" | "success" | "error";
   size?: "default" | "compact";
   className?: string;
+  descriptionClassName?: string;
 }) {
   const compact = size === "compact";
 
@@ -54,6 +56,7 @@ export function EmptyState({
           className={cn(
             "max-w-xs text-foreground-2",
             compact ? "mt-1 text-xs" : "mt-2 text-sm",
+            descriptionClassName,
           )}
         >
           {description}

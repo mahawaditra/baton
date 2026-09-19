@@ -7,6 +7,7 @@ import type { ActivityAction } from "@/generated/prisma/client";
 import { PhotoViewerModal } from "@/components/PhotoViewerModal";
 import { uploadInstrumentPhoto } from "./actions";
 import { formatNameWithNickname } from "@/lib/loan-rules";
+import { getAddendumTimingLabel } from "@/lib/labels";
 
 const INSTRUMENT_RELEVANT_REQUEST_ACTIONS: ActivityAction[] = [
   "assign_instrument",
@@ -112,7 +113,9 @@ export async function RiwayatAddendum({
     <div className="flex flex-col gap-3">
       {addendums.map((a) => (
         <div key={a.id} className="rounded-md border border-border p-3">
-          <div className="text-sm font-semibold capitalize">{a.timing}</div>
+          <div className="text-sm font-semibold">
+            {getAddendumTimingLabel(a.timing)}
+          </div>
           <div className="mt-1 text-sm text-foreground-2">
             {a.bodyCondition}
           </div>

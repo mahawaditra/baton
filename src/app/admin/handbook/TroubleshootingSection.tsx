@@ -30,8 +30,8 @@ export function TroubleshootingSection() {
 
       <TaskCard title="Kenapa aku nggak bisa ubah kondisi instrumen yang lagi dipinjem?">
         <p>
-          Sengaja supaya instrumen yang lagi punya peminjam aktif (reserved,
-          borrowed, atau dua-duanya sekaligus kalau lagi di-share) di-lock di
+          Sengaja supaya instrumen yang lagi punya peminjam aktif (Dibooking,
+          Dipinjam, atau dua-duanya sekaligus kalau lagi di-share) di-lock di
           form edit — Condition, Status, DAN Location-nya nggak bisa diubah
           manual lewat form biasa sampai SEMUA peminjam aktifnya kelar
           (reject/cancel/return).
@@ -50,8 +50,8 @@ export function TroubleshootingSection() {
       <TaskCard title="Instrumen hilang atau rusak berat">
         <p>
           Kalau instrumennya lagi nggak terikat request aktif: buka detail
-          instrumennya, ubah Condition ke Lost atau Retired. Status &amp;
-          Loanable otomatis ke-set jadi Unavailable / off.
+          instrumennya, ubah Condition ke Hilang atau Pensiun. Status &amp;
+          Loanable otomatis ke-set jadi Nonaktif / off.
         </p>
         <p>
           Kalau lagi terikat request aktif, lihat entry di atas — catat di Notes
@@ -93,7 +93,7 @@ export function TroubleshootingSection() {
         <p>
           Kalau slotnya masih kosong, instrumen itu tetep muncul di assignable
           instruments, walaupun statusnya udah
-          &quot;reserved&quot;/&quot;borrowed&quot; buat peminjam lain — assign
+          &quot;Dibooking&quot;/&quot;Dipinjam&quot; buat peminjam lain — assign
           aja seperti biasa. Peminjam baru tetep isi kontrak + addendum SENDIRI,
           jadi kalau dia yang nyebabin kerusakan, dia sendiri yang tanggung
           jawab, bukan peminjam yang udah lebih dulu.
@@ -167,8 +167,8 @@ export function TroubleshootingSection() {
             deposit mulai kepotong/hangus. Diatur di Settings.
           </li>
           <li>
-            <strong>Reserved vs borrowed</strong> — status instrumen. Reserved =
-            udah di-assign ke sebuah request tapi belum di-handover. Borrowed =
+            <strong>Dibooking vs dipinjam</strong> — status instrumen. Dibooking =
+            udah di-assign ke sebuah request tapi belum di-handover. Dipinjam =
             udah di-handover, lagi beneran dipinjam. Bisa lebih dari satu
             peminjam aktif bareng-bareng kalau instrumennya lagi di-share —
             lihat <strong>Slot instrumen</strong>.

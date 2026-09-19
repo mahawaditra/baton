@@ -22,21 +22,14 @@ export const INSTRUMENT_TYPE_CODES: Record<
   Violin: "47",
   Viola: "82",
   Cello: "19",
-  Contrabass: "63",
-  Clarinet: "08",
+  Contrabass: "08",
+  Clarinet: "67",
   Oboe: "91",
   Bassoon: "35",
   Trumpet: "74",
   "French Horn": "26",
   Trombone: "59",
   Tuba: "12",
-};
-
-export const conditionColor: Record<string, string> = {
-  ok: "bg-green-100 text-green-800",
-  need_repair: "bg-yellow-100 text-yellow-800",
-  retired: "bg-gray-100 text-gray-800",
-  lost: "bg-red-100 text-red-800",
 };
 
 export const MARQUEE_TEXT =

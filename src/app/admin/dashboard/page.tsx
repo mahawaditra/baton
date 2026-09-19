@@ -331,11 +331,12 @@ export default async function DashboardPage() {
               </Link>
             </CardAction>
           </CardHeader>
-          <CardContent className="gap-0 px-0">
+          <CardContent className="flex-1 gap-0 px-0">
             {sortedPendingRequests.length === 0 ? (
               <EmptyState
                 icon={Inbox}
                 size="compact"
+                className="flex-1"
                 title="No requests in progress"
                 description="New submissions from the public form will show up here."
               />
@@ -401,11 +402,12 @@ export default async function DashboardPage() {
               </Link>
             </CardAction>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
             {recentActivity.length === 0 ? (
               <EmptyState
                 icon={Activity}
                 size="compact"
+                className="flex-1"
                 title="No activity yet"
               />
             ) : (

@@ -9,7 +9,10 @@ import { z } from "zod";
 import { replaceItemPhoto } from "@/lib/drive";
 import { driveTimestamp } from "@/lib/format";
 import { validateImageUpload } from "@/lib/file-validation";
-import { ACTIVE_INSTRUMENT_HOLD_STATUSES } from "@/lib/loan-rules";
+import {
+  ACTIVE_INSTRUMENT_HOLD_STATUSES,
+  isOutOfServiceCondition,
+} from "@/lib/loan-rules";
 
 const updateInstrumentSchema = z.object({
   brand: z.string().trim().max(100).nullable(),
@@ -77,11 +80,11 @@ export async function updateInstrument(
 
   let isLoanable = formData.get("isLoanable") === "true";
 
-  if (condition === "retired" || condition === "lost") {
+  if (isOutOfServiceCondition(condition)) {
     isLoanable = false;
   }
 
-  if (!statusLocked && (condition === "retired" || condition === "lost")) {
+  if (!statusLocked && isOutOfServiceCondition(condition)) {
     status = "unavailable";
   }
 

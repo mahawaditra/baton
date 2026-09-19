@@ -33,7 +33,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Bagaimana cara mengembalikan instrumen?",
-    a: "Koordinasikan jadwal ke Sekre lewat LINE, isi addendum kondisi akhir di halaman status, lalu bawa instrumennya ke Sekre untuk dicek admin.",
+    a: "Hubungi Ketua Logistik OSUI Mahawaditra untuk koordinasi jadwal ke Sekre, isi addendum kondisi akhir di halaman status, lalu bawa instrumennya ke Sekre untuk dicek admin.",
   },
   {
     q: "KTP dan dokumen yang aku unggah aman?",

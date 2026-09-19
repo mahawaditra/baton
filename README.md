@@ -68,7 +68,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Self-service document upload (signed contract, deposit proof, ID scan)
 - A deadline countdown that shifts from green, to yellow at 7 days out, to red once overdue
 - One-click extension request (from 30 days before the due date) and early return
-- A web form — with phone-camera photos — for condition addendums on extension
+- A web form — with phone-camera photos — for the condition addendums at pickup, extension, and return
 - Automatic email notifications at each status change
 - A landing-page FAQ, and a direct WhatsApp and/or LINE line to the logistics head, each shown independently when they choose to
 
@@ -138,7 +138,7 @@ Rate limiting fails open for the same reason: if Redis is ever unreachable, the 
 
 Document upload originally submitted all three required files: signed contract, deposit proof, and ID scan in a single form and a single `submitDocuments` call (one upload stream). That ran into a real limit: Vercel's function body cap is a hard 4.5MB, not configurable, and BATON's own setting (`next.config.ts`, `serverActions.bodySizeLimit`) sat a notch below that at 4MB. With three files sharing one request, the per-file limit had to be split three ways (~1.3MB each). But even so, a couple of large scans or high-resolution photos could push the _combined_ upload over the limit even when every individual file was valid on its own.
 
-The fix was to split the flow into one upload per document: one button per file, the server action called three times independently, each request carrying a single file with the full ~4MB budget to itself instead of a shared one. It turned out to be a UX improvement too, not just a size fix — each upload confirms on its own as it succeeds, and the completion check (the one that flips the request to `documents_uploaded` and notifies the admin) simply re-runs after every individual upload. It naturally fires at the right moment, whichever document happens to land last, without needing a separate "batch complete" step.
+The fix was to split the transport, not the form: the borrower still picks all three files and presses one button, but the client then calls the server action once per file, one after another, each request carrying a single file with the full ~4MB budget to itself instead of a shared one. Next.js dispatches Server Actions one at a time per client anyway, so the sequence is explicit (`src/lib/sequential-upload.ts`) rather than a `Promise.all` that would only pretend to be parallel. A file that is too large is caught in the browser before anything is sent (a body over the 4MB limit is rejected by Next with a 413 before the action even runs, which the client can only see as a generic failure, so the server's own size message would almost never be reached) and reported under its own field, and a file the server rejects for another reason (wrong type) is reported the same way, while the others still go through. A request-level failure such as a wrong access code stops the run so nothing else is attempted. The completion check (the one that flips the request to `documents_uploaded` and notifies the admin) lives on the server and simply re-runs after every individual upload, so it fires at the right moment whichever document happens to land last, without needing a separate "batch complete" step. When the admin rejects one document, the borrower sees only that one slot again and re-uploads just that file.
 
 ### "Ongoing loans" is a timestamp, not a status
 
@@ -258,12 +258,15 @@ src/
     admin/       Admin panel — dashboard, inventory, requests, settings.
                  Access-gated by proxy.ts (Next.js 16's replacement for middleware.ts),
                  not by per-page checks.
-    api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive)
+    api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive),
+                 /api/status/[ticket_id]/contract (contract PDF download, gated by a
+                 60-second signed token)
     request/     Public borrowing request form
     status/      Public per-ticket status page (access-code gated)
   components/    Shared UI components
   lib/           Business logic and integrations — Prisma client, Google Drive, email,
-                 PDF generation, rate limiting, and pure rule functions (loan-rules.ts)
+                 PDF generation, rate limiting, pure rule functions (loan-rules.ts),
+                 and the enum → label maps the UI reads (labels.ts)
 prisma/
   schema.prisma  Database schema (15 models)
   migrations/    Migration history
@@ -282,7 +285,10 @@ Coverage is aimed at the business-logic layer that would cause real problems if 
 
 - `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, and name/nickname display resolution
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
-- `format.ts` / `mail.ts` — date/timezone handling, email content generation
+- `format.ts` / `mail.ts` — date/timezone handling, activity-log and annual-report wording, email content generation
+- `labels.ts` / `StatusBadge` — every value of every Prisma enum the UI shows needs a human label, checked against the _generated_ enums, so a new enum value without one fails the tests instead of leaking to the screen as `need_repair`; the dropdown option lists must reuse those same labels
+- `sequential-upload.ts` — the document upload queue: strictly one request at a time, in order; a per-file error doesn't stop the others, a request-level error does
+- `download-token.ts` — the signed, expiring token behind the contract download link: valid for its own ticket only, rejected when expired, tampered with, or malformed
 
 
 #STANLOONA

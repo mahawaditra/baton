@@ -269,7 +269,7 @@ export function AdminNav({
         {userFooter}
       </aside>
 
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-surface px-4 py-3 lg:hidden">
+      <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex items-center gap-3 border-b border-border bg-surface px-4 py-3 lg:hidden">
         <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
           <Dialog.Trigger
             aria-label="Open menu"
@@ -279,7 +279,7 @@ export function AdminNav({
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Backdrop className="fixed inset-0 z-50 bg-[oklch(0.185_0.028_285_/_0.55)] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
-            <Dialog.Popup className="fixed top-0 bottom-0 left-0 z-50 flex w-[300px] max-w-[85vw] flex-col border-r border-border bg-surface shadow-lg data-open:animate-in data-open:slide-in-from-left data-open:duration-200 data-closed:animate-out data-closed:slide-out-to-left data-closed:duration-200">
+            <Dialog.Popup className="fixed top-0 bottom-0 left-0 z-50 flex w-[300px] pt-[env(safe-area-inset-top,0px)] max-w-[85vw] flex-col border-r border-border bg-surface shadow-lg data-open:animate-in data-open:slide-in-from-left data-open:duration-200 data-closed:animate-out data-closed:slide-out-to-left data-closed:duration-200">
               <div className="flex items-center gap-2.5 border-b border-border p-4">
                 <BrandMark />
                 <Dialog.Close

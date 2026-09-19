@@ -87,6 +87,7 @@ export function RequestForm() {
           
           Jangan lupa nyalakan notifikasi email supaya gak kelewatan update status peminjaman ya!'
           tone="success"
+          descriptionClassName="max-w-none"
         />
 
         <Card className="w-full">

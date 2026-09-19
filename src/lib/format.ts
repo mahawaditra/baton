@@ -1,4 +1,10 @@
 import type { Instrument, Good, LoanSetting } from "@/generated/prisma/client";
+import {
+  getConditionLabel,
+  getDocumentTypeLabel,
+  getRequestStatusLabel,
+  getStatusLabel,
+} from "@/lib/labels";
 
 export function escapeHtml(str: string): string {
   return str
@@ -91,15 +97,30 @@ type ActivityMetadataByAction =
   | { action: "create_goods"; metadata: { after: Good } }
   | { action: "transfer_to_ongoing"; metadata: { count: number } };
 
+const conditionValue = (value: unknown) => getConditionLabel(String(value));
+const statusValue = (value: unknown) => getStatusLabel(String(value));
+
 function diffFields<T extends Record<string, unknown>>(
+  before: T | undefined,
+  after: T | undefined,
+  fields: (keyof T)[],
+  formatters: Partial<Record<keyof T, (value: unknown) => string>> = {},
+): string[] {
+  if (!before || !after) return [];
+  const show = (field: keyof T, value: unknown) =>
+    formatters[field]?.(value) ?? String(value);
+  return fields
+    .filter((f) => before[f] !== after[f])
+    .map((f) => `${String(f)}: ${show(f, before[f])} → ${show(f, after[f])}`);
+}
+
+function changedFieldNames<T extends Record<string, unknown>>(
   before: T | undefined,
   after: T | undefined,
   fields: (keyof T)[],
 ): string[] {
   if (!before || !after) return [];
-  return fields
-    .filter((f) => before[f] !== after[f])
-    .map((f) => `${String(f)}: ${before[f]} → ${after[f]}`);
+  return fields.filter((f) => before[f] !== after[f]).map(String);
 }
 
 export function formatActivityLog(log: ActivityLogLike): string {
@@ -107,11 +128,12 @@ export function formatActivityLog(log: ActivityLogLike): string {
 
   switch (typed.action) {
     case "update_instrument": {
-      const changes = diffFields(typed.metadata.before, typed.metadata.after, [
-        "condition",
-        "status",
-        "location",
-      ]);
+      const changes = diffFields(
+        typed.metadata.before,
+        typed.metadata.after,
+        ["condition", "status", "location"],
+        { condition: conditionValue, status: statusValue },
+      );
       return changes.length > 0
         ? `updated instrument (${changes.join(", ")})`
         : "updated instrument";
@@ -126,9 +148,9 @@ export function formatActivityLog(log: ActivityLogLike): string {
     case "cancel_request":
       return `cancelled request${typed.metadata.reason ? `: ${typed.metadata.reason}` : ""}`;
     case "approve_documents":
-      return `approved ${typed.metadata.type}`;
+      return `approved ${getDocumentTypeLabel(typed.metadata.type)}`;
     case "reject_documents":
-      return `rejected ${typed.metadata.type}${typed.metadata.notes ? `: ${typed.metadata.notes}` : ""}`;
+      return `rejected ${getDocumentTypeLabel(typed.metadata.type)}${typed.metadata.notes ? `: ${typed.metadata.notes}` : ""}`;
     case "confirm_ready":
       return "confirmed documents, request ready for pickup";
     case "confirm_handover":
@@ -136,20 +158,21 @@ export function formatActivityLog(log: ActivityLogLike): string {
     case "confirm_extension":
       return "confirmed extension";
     case "confirm_return":
-      return `confirmed return (condition: ${typed.metadata.condition}, refund: Rp${typed.metadata.depositRefundAmount.toLocaleString("id-ID")})`;
+      return `confirmed return (condition: ${getConditionLabel(typed.metadata.condition)}, refund: Rp${typed.metadata.depositRefundAmount.toLocaleString("id-ID")})`;
     case "update_goods": {
-      const changes = diffFields(typed.metadata.before, typed.metadata.after, [
-        "condition",
-        "quantity",
-        "location",
-      ]);
+      const changes = diffFields(
+        typed.metadata.before,
+        typed.metadata.after,
+        ["condition", "quantity", "location"],
+        { condition: conditionValue },
+      );
       return changes.length > 0
         ? `updated goods (${changes.join(", ")})`
         : "updated goods";
     }
     case "update_loan_settings": {
       const { before, after } = typed.metadata;
-      const changes = diffFields(before, after, [
+      const changes = changedFieldNames(before, after, [
         "depositAmount",
         "depositPartialAmount",
         "depositGraceDays",
@@ -174,12 +197,10 @@ export function formatActivityLog(log: ActivityLogLike): string {
           new Date(before.dueDate).getTime() !==
           new Date(after.dueDate).getTime()
         ) {
-          changes.push(
-            `dueDate: ${new Date(before.dueDate).toLocaleDateString("en-GB")} → ${new Date(after.dueDate).toLocaleDateString("en-GB")}`,
-          );
+          changes.push("dueDate");
         }
         if (before.signatoryImageDriveId !== after.signatoryImageDriveId) {
-          changes.push("signature image updated");
+          changes.push("signatureImage");
         }
       }
       return changes.length > 0
@@ -211,6 +232,40 @@ export function formatActivityLog(log: ActivityLogLike): string {
     default:
       return log.action.replaceAll("_", " ");
   }
+}
+
+export function buildAnnualSummaryRows(params: {
+  year: number;
+  periodEnd: Date;
+  activeLoans: number;
+  requestsThisYear: number;
+  statusBreakdown: { status: string; _count: number }[];
+  revitalizedCount: number;
+}) {
+  const {
+    year,
+    periodEnd,
+    activeLoans,
+    requestsThisYear,
+    statusBreakdown,
+    revitalizedCount,
+  } = params;
+
+  return [
+    { Metric: "Active Loans", Value: activeLoans },
+    {
+      Metric: `Requests Created (Jan 1, ${year} - ${periodEnd.toLocaleDateString("en-GB")})`,
+      Value: requestsThisYear,
+    },
+    ...statusBreakdown.map((s) => ({
+      Metric: `  Status: ${getRequestStatusLabel(s.status)}`,
+      Value: s._count,
+    })),
+    {
+      Metric: `Instruments Repaired (${getConditionLabel("need_repair")} → ${getConditionLabel("ok")})`,
+      Value: revitalizedCount,
+    },
+  ];
 }
 
 export function getEntityUrl(

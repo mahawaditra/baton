@@ -305,7 +305,12 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     letter-spacing: 0.04em;
+    padding-top: env(safe-area-inset-top, 0px);
   }
+}
+
+.min-h-screen {
+  min-height: calc(100vh - env(safe-area-inset-top, 0px));
 }
 
 .tabular {

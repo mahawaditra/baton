@@ -16,6 +16,7 @@ const ENTITY_TYPE_LABEL: Record<string, string> = {
   admin: "Admin",
   inventory_snapshot: "Snapshot",
   loan_period: "Loan Period",
+  instrument_type_slot: "Instrument Slot",
 };
 
 function groupLogsByDay(logs: (ActivityLog & { admin: Admin })[]) {

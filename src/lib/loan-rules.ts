@@ -13,13 +13,17 @@ export function calculateDepositRefund(params: {
   return 0;
 }
 
+export function isOutOfServiceCondition(
+  condition: "ok" | "need_repair" | "retired" | "lost",
+): boolean {
+  return condition === "retired" || condition === "lost";
+}
+
 export function determineInstrumentStatusOnReturn(
   condition: "ok" | "need_repair" | "retired" | "lost",
   requestedStatus: "available" | "unavailable",
 ): "available" | "unavailable" {
-  return condition === "retired" || condition === "lost"
-    ? "unavailable"
-    : requestedStatus;
+  return isOutOfServiceCondition(condition) ? "unavailable" : requestedStatus;
 }
 
 export function documentTypesNeedingUpload(
@@ -98,11 +102,6 @@ export function hasAvailableSlot(
   return activeLoanCount < maxConcurrentLoans;
 }
 
-// `Instrument.type` is free text (e.g. "Double French Horn") and gets matched
-// against the canonical REQUESTABLE_INSTRUMENT_TYPES name (e.g. "French Horn")
-// by substring elsewhere (assign-candidate lookup) — slot resolution has to
-// use the same substring match, not an exact one, or variants silently fall
-// back to the default of 1.
 export function resolveMaxConcurrentLoans(
   instrumentType: string,
   slots: { instrumentType: string; maxConcurrentLoans: number }[],
@@ -177,15 +176,7 @@ export function requiredDocumentTypesForPeriod(
   return isExtension ? ["signed_contract"] : REQUIRED_DOCUMENT_TYPES;
 }
 
-export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  signed_contract: "Kontrak yang Ditandatangani",
-  deposit_proof: "Bukti Transfer Deposit",
-  ktp_scan: "Scan KTP",
-};
-
-export function getDocumentTypeLabel(type: string): string {
-  return DOCUMENT_TYPE_LABELS[type] ?? type;
-}
+export { DOCUMENT_TYPE_LABELS, getDocumentTypeLabel } from "@/lib/labels";
 
 export function requestNeedsAction(req: {
   status: string;

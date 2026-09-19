@@ -44,7 +44,7 @@ export function SeasonalChoreSection() {
           Ada di Dashboard, di samping tombol view all Active Loans.
         </p>
         <p>
-          Yang terjadi: semua loan active/overdue yang belum pernah
+          Yang terjadi: semua loan yang Sedang Dipinjam/Terlambat dan belum pernah
           di-carry-over ditandain &quot;ongoing&quot; — statusnya sendiri nggak
           berubah, countdown due date, reminder, extension, sama proses return
           semua tetap jalan normal. Ini cuma buat misahin roster di dashboard

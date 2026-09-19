@@ -10,7 +10,8 @@ import {
   uploadFile,
 } from "@/lib/drive";
 import { buildXlsxBuffer } from "@/lib/xlsx";
-import { toJakartaCalendarDate } from "@/lib/format";
+import { buildAnnualSummaryRows, toJakartaCalendarDate } from "@/lib/format";
+import { getConditionLabel, getStatusLabel } from "@/lib/labels";
 import {
   ACTIVE_INSTRUMENT_HOLD_STATUSES,
   formatSharedLocation,
@@ -53,21 +54,14 @@ async function computeAnnualReportSummary(year: number) {
     );
   }).length;
 
-  const summaryRows = [
-    { Metric: "Active Loans", Value: activeLoans },
-    {
-      Metric: `Requests Created (Jan 1, ${year} - ${periodEnd.toLocaleDateString("en-GB")})`,
-      Value: requestsThisYear,
-    },
-    ...statusBreakdown.map((s) => ({
-      Metric: `  Status: ${s.status}`,
-      Value: s._count,
-    })),
-    {
-      Metric: "Instruments Repaired (need_repair → ok)",
-      Value: revitalizedCount,
-    },
-  ];
+  const summaryRows = buildAnnualSummaryRows({
+    year,
+    periodEnd,
+    activeLoans,
+    requestsThisYear,
+    statusBreakdown,
+    revitalizedCount,
+  });
 
   return { year, periodEnd, summaryRows };
 }
@@ -135,8 +129,8 @@ export async function exportInventorySnapshot(formData: FormData) {
     Type: inst.type,
     Brand: inst.brand ?? "",
     "Serial Number": inst.serialNumber ?? "",
-    Condition: inst.condition,
-    Status: inst.status,
+    Condition: getConditionLabel(inst.condition),
+    Status: getStatusLabel(inst.status),
     Location: formatSharedLocation(inst.borrowingRequests, inst.location),
     Notes: inst.notes ?? "",
   }));

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import * as Sentry from "@sentry/nextjs";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
 function GoogleIcon() {
@@ -32,24 +31,29 @@ export function AdminGoogleLogin() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
+  function fail(reason: unknown) {
+    Sentry.captureException(reason);
+    setError(
+      "Login gagal. Coba lagi, atau hubungi Ketua Logistik kalau masalahnya berlanjut.",
+    );
+    setIsPending(false);
+  }
+
   async function handleLogin() {
     setError(null);
     setIsPending(true);
-    await authClient.signIn.social(
-      {
-        provider: "google",
-        callbackURL: "/admin/dashboard",
-      },
-      {
-        onError: (ctx) => {
-          Sentry.captureException(ctx.error);
-          setError(
-            "Login gagal. Coba lagi, atau hubungi Ketua Logistik kalau masalahnya berlanjut.",
-          );
-          setIsPending(false);
+    try {
+      const { authClient } = await import("@/lib/auth-client");
+      await authClient.signIn.social(
+        {
+          provider: "google",
+          callbackURL: "/admin/dashboard",
         },
-      },
-    );
+        { onError: (ctx) => fail(ctx.error) },
+      );
+    } catch (reason) {
+      fail(reason);
+    }
   }
 
   return (

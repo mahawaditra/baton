@@ -73,9 +73,7 @@ export function CompressedFileInput({
         if (await looksLikeHeic(workingFile)) {
           try {
             workingFile = await convertHeicToJpeg(workingFile);
-          } catch {
-            // biarin lanjut apa adanya — nanti ketolak jelas di validasi format
-          }
+          } catch {}
         }
 
         if (!workingFile.type.startsWith("image/")) return workingFile;

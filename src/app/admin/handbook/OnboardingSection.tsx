@@ -52,8 +52,8 @@ export function OnboardingSection() {
           <strong>Super admin</strong> — cuma gw dan ketua Logistik tiap
           tahunnya. Bisa semua yang admin bisa + edit Loan Settings, edit slot
           sharing instrumen (Settings juga), dan aktif/nonaktifin admin lain.
-          Kalau ada yang kerasa &quot;kok gw nggak bisa X&quot;, kemungkinan
-          itu emang fitur khusus super admin.
+          Kalau ada yang kerasa &quot;kok gw nggak bisa X&quot;, kemungkinan itu
+          emang fitur khusus super admin.
         </p>
       </TaskCard>
 
@@ -64,18 +64,39 @@ export function OnboardingSection() {
           ada.{" "}
         </p>
         <p>
-          TAPI BATON itu adalah PWA (Progressive Web App) — jadi kalau lu buka
-          di browser mobile, nanti bakal ada prompt untuk &quot;Add to Home
-          Screen&quot; dan BATON bakal bisa dibuka kayak app native. Gak sekedar
-          shortcut yang buka di browser, tapi actual seperti app native (gak ada
-          search bar). Nanti kalo dibuka langsung ke Landing, kalau mau akses
-          Admin Dashboard tinggal ke FAQ aja, ada jalan pintasnya{" "}
+          TAPI BATON itu adalah PWA (Progressive Web App) — Gak sekedar shortcut
+          yang buka di browser dari home screen, tapi actual seperti app native
+          (gak ada search bar). Nanti kalo dibuka langsung ke Landing, kalau mau
+          akses Admin Dashboard tinggal ke FAQ aja, ada jalan pintasnya{" "}
         </p>
+        <p>
+          Kalo mau install BATON ke home screen, tinggal buka di browser mobile:
+        </p>
+        <ul className="list-disc pl-5">
+          <li>
+            <strong>Android</strong>: klik menu (titik 3 di kanan atas or
+            something like that), pilih &quot;Add to Home Screen&quot;. Kalo
+            ditanya as shortcut or app, pilih &quot;app&quot;.
+          </li>
+          <li>
+            <strong>iOS</strong>: buka di Safari, klik Share (kotak dengan panah
+            ke atas), pilih &quot;Add to Home Screen&quot;
+          </li>
+        </ul>
         <p>
           Tapi tetep aja, BATON itu bukan app native, jadi fitur-fitur tertentu
           (misal: push notification) belum bisa. Kenapa? Karena itu entirely
           different tech stack dari web app yang gw tau cara bangunnya.
         </p>
+      </TaskCard>
+
+      <TaskCard title="Ini semua file peminjam ada di Drive Logistik?">
+        <p>
+          Yoi, semua file BATON (kontrak, addendum, foto items dll,) itu ada di Drive
+          Logistik di folder BATON (warna ungu) dan{" "}
+          <strong>JANGAN PERNAH DIHAPUS</strong>!
+        </p>
+        <p>Isinya udah organized, cek aja sendiri.</p>
       </TaskCard>
 
       <TaskCard title="Cara minta bantuan">

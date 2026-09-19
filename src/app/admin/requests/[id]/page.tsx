@@ -24,6 +24,12 @@ import {
   resolveMaxConcurrentLoans,
 } from "@/lib/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
+import { getAddendumTimingLabel } from "@/lib/labels";
+import {
+  CONDITION_OPTIONS,
+  STATUS_OPTIONS,
+  getStatusLabel,
+} from "@/components/StatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
 import { LoanStepper } from "@/components/LoanStepper";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -369,8 +375,8 @@ export default async function RequestDetailPage({
           <CardContent className="gap-4">
             {addendums.map((a) => (
               <div key={a.id} className="rounded-md border border-border p-4">
-                <div className="text-sm font-semibold capitalize">
-                  {a.timing} Condition
+                <div className="text-sm font-semibold">
+                  {getAddendumTimingLabel(a.timing)}
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-2">
                   <div className="flex flex-col gap-2.5">
@@ -443,37 +449,48 @@ export default async function RequestDetailPage({
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">
                           <Label htmlFor="condition">Condition</Label>
-                          <Select name="condition" defaultValue="ok">
+                          <Select
+                            name="condition"
+                            items={CONDITION_OPTIONS}
+                            defaultValue="ok"
+                          >
                             <SelectTrigger id="condition" className="w-full">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="ok">OK</SelectItem>
-                              <SelectItem value="need_repair">
-                                Need Repair
-                              </SelectItem>
-                              <SelectItem value="retired">Retired</SelectItem>
-                              <SelectItem value="lost">Lost</SelectItem>
+                              {CONDITION_OPTIONS.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <Label htmlFor="status">Status</Label>
-                          <Select name="status" defaultValue="available">
+                          <Select
+                            name="status"
+                            items={STATUS_OPTIONS}
+                            defaultValue="available"
+                          >
                             <SelectTrigger id="status" className="w-full">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="available">
-                                Available
+                                {getStatusLabel("available")}
                               </SelectItem>
                               <SelectItem value="unavailable">
-                                Unavailable
+                                {getStatusLabel("unavailable")}
                               </SelectItem>
                             </SelectContent>
                           </Select>
                           <p className="text-xs text-foreground-2">
-                            Ignored if Retired/Lost — forced Unavailable.
+                            Ignored if Condition is &quot;Pensiun&quot; or
+                            &quot;Hilang&quot; — forced to &quot;Nonaktif&quot;.
                           </p>
                         </div>
                       </div>

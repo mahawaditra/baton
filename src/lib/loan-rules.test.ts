@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   calculateDepositRefund,
   determineInstrumentStatusOnReturn,
+  isOutOfServiceCondition,
   documentTypesNeedingUpload,
   canAssignInstrument,
   canNotifyBorrower,
@@ -42,6 +43,15 @@ describe("calculateDepositRefund", () => {
   });
   it("no refund beyond grace period", () => {
     expect(calculateDepositRefund({ ...base, daysLate: 15 })).toBe(0);
+  });
+});
+
+describe("isOutOfServiceCondition", () => {
+  it("is true only for retired and lost", () => {
+    expect(isOutOfServiceCondition("retired")).toBe(true);
+    expect(isOutOfServiceCondition("lost")).toBe(true);
+    expect(isOutOfServiceCondition("ok")).toBe(false);
+    expect(isOutOfServiceCondition("need_repair")).toBe(false);
   });
 });
 

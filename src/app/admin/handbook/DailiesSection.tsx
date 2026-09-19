@@ -14,7 +14,7 @@ export function DailiesSection() {
       <TaskCard title="Proses request baru">
         <p>
           Buka <strong>Requests</strong>, cari yang statusnya{" "}
-          <strong>submitted</strong>. Cek jenis instrumen yang diminta, lihat
+          <strong>Diajukan</strong>. Cek jenis instrumen yang diminta, lihat
           ketersediaan di <strong>Instruments</strong>. Kalau ada yang cocok,
           assign dari detail request-nya.
         </p>

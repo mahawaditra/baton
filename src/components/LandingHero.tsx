@@ -43,7 +43,7 @@ export function LandingHero() {
 
   return (
     <>
-      <div className="absolute top-6 right-20 left-6 z-10 lg:hidden">
+      <div className="absolute top-[calc(env(safe-area-inset-top,0px)+1.5rem)] right-20 left-6 z-10 lg:hidden">
         <p className="m-0 text-body-lg tracking-[0.06em] text-hero-fg/75 uppercase">
           Base (for) Assets X Tools X Orchestral Needs
         </p>
