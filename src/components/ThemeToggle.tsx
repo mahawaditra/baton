@@ -17,8 +17,7 @@ export function ThemeToggle() {
   }
 
   const isDark = resolvedTheme === "dark";
-  const isAdminShell =
-    pathname.startsWith("/admin") && pathname !== "/admin/login";
+  const isAdminShell = pathname.startsWith("/admin");
 
   return (
     <FixedPortal>

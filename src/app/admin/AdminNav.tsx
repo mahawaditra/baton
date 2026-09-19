@@ -131,7 +131,7 @@ export function AdminNav({
   async function handleLogout() {
     await authClient.signOut();
     router.refresh();
-    router.push("/admin/login");
+    router.push("/");
   }
 
   const isDark = mounted && resolvedTheme === "dark";

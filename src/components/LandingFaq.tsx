@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { AdminGoogleLogin } from "@/components/AdminGoogleLogin";
 
 const FAQ_ITEMS = [
   {
@@ -49,14 +49,8 @@ const ADMIN_ITEM = {
   q: "Bagaimana kalau aku admin?",
   a: (
     <>
-      Sini{" "}
-      <Link
-        href="/admin"
-        className="font-medium text-foreground underline underline-offset-2 hover:text-navy"
-      >
-        masuk
-      </Link>
-      .
+      Sini masuk.
+      <AdminGoogleLogin />
     </>
   ),
 };
@@ -73,7 +67,7 @@ function FaqItem({ item }: { item: { q: string; a: ReactNode } }) {
           <ChevronDown className="h-4 w-4" strokeWidth={1.75} />
         </span>
       </summary>
-      <p className="mt-3 text-body text-foreground-2">{item.a}</p>
+      <div className="mt-3 text-body text-foreground-2">{item.a}</div>
     </details>
   );
 }
