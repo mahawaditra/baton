@@ -307,6 +307,9 @@
     letter-spacing: 0.04em;
     padding-top: env(safe-area-inset-top, 0px);
   }
+  html:not(.dark):has([data-landing-hero]) {
+    background-color: var(--hero-bg);
+  }
 }
 
 .min-h-screen {

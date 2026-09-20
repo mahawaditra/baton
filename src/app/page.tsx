@@ -106,7 +106,9 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative isolate -mt-[env(safe-area-inset-top,0px)] flex min-h-[100vh] items-end justify-center overflow-hidden bg-hero-bg pt-[env(safe-area-inset-top,0px)] select-none">
+      <section
+        data-landing-hero
+        className="relative isolate -mt-[env(safe-area-inset-top,0px)] flex min-h-[100vh] items-end justify-center overflow-hidden bg-hero-bg pt-[env(safe-area-inset-top,0px)] select-none">
         <HeroMarquee />
         <div
           aria-hidden
