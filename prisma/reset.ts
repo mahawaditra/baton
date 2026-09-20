@@ -87,17 +87,17 @@ async function main() {
     ["Name"],
   );
 
-  const superAdmins = await prisma.admin.findMany({
-    where: { role: "super_admin" },
-    select: { id: true, email: true },
+  const protectedAdmins = await prisma.admin.findMany({
+    where: { role: { in: ["overlord", "pengurus_inti"] } },
+    select: { id: true, email: true, role: true },
   });
 
-  if (superAdmins.length === 0) {
+  if (!protectedAdmins.some((a) => a.role === "overlord")) {
     throw new Error(
-      "No super_admin found. Refusing to reset: nobody could log in afterwards.",
+      "No overlord found. Refusing to reset: nobody could manage the admins afterwards.",
     );
   }
-  const superAdminIds = superAdmins.map((a) => a.id);
+  const protectedIds = protectedAdmins.map((a) => a.id);
 
   const counts = {
     "borrowing requests (+ periods, documents, addendums)":
@@ -108,9 +108,10 @@ async function main() {
     "instrument type slots": await prisma.instrumentTypeSlot.count(),
     instruments: await prisma.instrument.count(),
     goods: await prisma.good.count(),
-    "non-super admins": await prisma.admin.count({
-      where: { id: { notIn: superAdminIds } },
-    }),
+    "admins that are not overlord or pengurus_inti (ketua, staff)":
+      await prisma.admin.count({
+        where: { id: { notIn: protectedIds } },
+      }),
   };
 
   const host = new URL(process.env.DATABASE_URL!).host;
@@ -120,7 +121,9 @@ async function main() {
     console.log(`  ${String(count).padStart(5)}  ${label}`);
   }
   console.log("\nWill KEEP (untouched, except email_verified/is_active set to true):");
-  for (const admin of superAdmins) console.log(`  super_admin  ${admin.email}`);
+  for (const admin of protectedAdmins) {
+    console.log(`  ${admin.role.padEnd(13)}  ${admin.email}`);
+  }
   console.log("  loan settings (bank, deposit, signatory, LINE/WhatsApp toggles)\n");
 
   if (!process.stdin.isTTY) {
@@ -146,15 +149,15 @@ async function main() {
     await tx.instrumentTypeSlot.deleteMany({});
     await tx.loanSetting.updateMany({
       where: {
-        AND: [{ updatedBy: { not: null } }, { updatedBy: { notIn: superAdminIds } }],
+        AND: [{ updatedBy: { not: null } }, { updatedBy: { notIn: protectedIds } }],
       },
       data: { updatedBy: null },
     });
     await tx.instrument.deleteMany({});
     await tx.good.deleteMany({});
-    await tx.admin.deleteMany({ where: { id: { notIn: superAdminIds } } });
+    await tx.admin.deleteMany({ where: { id: { notIn: protectedIds } } });
     await tx.admin.updateMany({
-      where: { id: { in: superAdminIds } },
+      where: { id: { in: protectedIds } },
       data: { emailVerified: true, isActive: true },
     });
   }, { timeout: 30_000, maxWait: 10_000 });

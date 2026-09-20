@@ -10,11 +10,11 @@ import { toastError } from "@/lib/toast";
 function InstrumentTypeSlotRow({
   type,
   initialSlot,
-  isSuperAdmin,
+  canEdit,
 }: {
   type: string;
   initialSlot: number;
-  isSuperAdmin: boolean;
+  canEdit: boolean;
 }) {
   const [slot, setSlot] = useState(initialSlot);
   const [pending, startTransition] = useTransition();
@@ -48,7 +48,7 @@ function InstrumentTypeSlotRow({
           type="button"
           variant="outline"
           size="icon-xs"
-          disabled={!isSuperAdmin || pending || slot <= 1}
+          disabled={!canEdit || pending || slot <= 1}
           onClick={() => adjust("decrease")}
         >
           <Minus className="h-3.5 w-3.5" />
@@ -58,7 +58,7 @@ function InstrumentTypeSlotRow({
           type="button"
           variant="outline"
           size="icon-xs"
-          disabled={!isSuperAdmin || pending}
+          disabled={!canEdit || pending}
           onClick={() => adjust("increase")}
         >
           <Plus className="h-3.5 w-3.5" />
@@ -70,10 +70,10 @@ function InstrumentTypeSlotRow({
 
 export function InstrumentTypeSlotsPanel({
   rows,
-  isSuperAdmin,
+  canEdit,
 }: {
   rows: { type: string; maxConcurrentLoans: number }[];
-  isSuperAdmin: boolean;
+  canEdit: boolean;
 }) {
   return (
     <Card>
@@ -81,10 +81,10 @@ export function InstrumentTypeSlotsPanel({
         <CardTitle>Instrument Availability Slots</CardTitle>
       </CardHeader>
       <CardContent className="gap-3">
-        {!isSuperAdmin && (
+        {!canEdit && (
           <p className="text-sm text-foreground-2">
-            Hanya Super Admin yang bisa ubah slot ini. Kamu bisa liat isinya,
-            tapi nggak bisa ubah.
+            Hanya Ketua (atau Overlord) yang bisa ubah slot ini. Kamu bisa liat
+            isinya, tapi nggak bisa ubah.
           </p>
         )}
         <div className="flex flex-col gap-2">
@@ -93,7 +93,7 @@ export function InstrumentTypeSlotsPanel({
               key={row.type}
               type={row.type}
               initialSlot={row.maxConcurrentLoans}
-              isSuperAdmin={isSuperAdmin}
+              canEdit={canEdit}
             />
           ))}
         </div>

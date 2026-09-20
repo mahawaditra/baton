@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   AddendumTiming,
+  AdminRole,
   BorrowingRequestStatus,
   DocumentReviewStatus,
   DocumentType,
@@ -13,12 +14,14 @@ import {
   DOCUMENT_REVIEW_STATUS_LABELS,
   DOCUMENT_TYPE_LABELS,
   REQUEST_STATUS_LABELS,
+  ROLE_LABELS,
   STATUS_LABELS,
   getAddendumTimingLabel,
   getConditionLabel,
   getDocumentReviewStatusLabel,
   getDocumentTypeLabel,
   getRequestStatusLabel,
+  getRoleLabel,
   getStatusLabel,
 } from "./labels";
 
@@ -29,6 +32,7 @@ const LABEL_MAPS: [string, Record<string, string>, Record<string, string>][] = [
   ["DocumentReviewStatus", DocumentReviewStatus, DOCUMENT_REVIEW_STATUS_LABELS],
   ["AddendumTiming", AddendumTiming, ADDENDUM_TIMING_LABELS],
   ["DocumentType", DocumentType, DOCUMENT_TYPE_LABELS],
+  ["AdminRole", AdminRole, ROLE_LABELS],
 ];
 
 describe("label coverage", () => {
@@ -82,6 +86,15 @@ describe("addendum timing labels", () => {
   });
 });
 
+describe("role labels", () => {
+  it("labels each role the way it is shown in the admin list", () => {
+    expect(getRoleLabel("staff")).toBe("Staff");
+    expect(getRoleLabel("pengurus_inti")).toBe("Pengurus Inti");
+    expect(getRoleLabel("ketua")).toBe("Ketua");
+    expect(getRoleLabel("overlord")).toBe("Overlord");
+  });
+});
+
 describe("label lookups", () => {
   it("fall back to the raw value for anything unknown instead of throwing", () => {
     expect(getConditionLabel("something_new")).toBe("something_new");
@@ -90,5 +103,6 @@ describe("label lookups", () => {
     expect(getDocumentTypeLabel("something_new")).toBe("something_new");
     expect(getDocumentReviewStatusLabel("something_new")).toBe("something_new");
     expect(getAddendumTimingLabel("something_new")).toBe("something_new");
+    expect(getRoleLabel("something_new")).toBe("something_new");
   });
 });

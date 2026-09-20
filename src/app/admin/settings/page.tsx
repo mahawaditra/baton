@@ -5,17 +5,29 @@ import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitButton } from "@/components/SubmitButton";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { LoanSettingsForm } from "./LoanSettingsForm";
 import { InstrumentTypeSlotsPanel } from "./InstrumentTypeSlotsPanel";
 import { AddAdminForm } from "./AddAdminForm";
 import { setAdminActive } from "./actions";
 import { ShieldCheck } from "lucide-react";
+import { getRoleLabel } from "@/lib/labels";
+import {
+  assignableRoles,
+  canEditSettings,
+  canSetActive,
+  canViewAdminManagement,
+} from "@/lib/roles";
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const isSuperAdmin = session?.user.role === "super_admin";
+  if (!session) redirect("/");
 
-  const admins = isSuperAdmin
+  const role = session.user.role;
+  const canEdit = canEditSettings(role);
+  const showAdminManagement = canViewAdminManagement(role);
+
+  const admins = showAdminManagement
     ? await prisma.admin.findMany({ orderBy: { createdAt: "asc" } })
     : [];
 
@@ -34,22 +46,19 @@ export default async function SettingsPage() {
     <div className="flex flex-col gap-6">
       <h1 className="hidden text-h1 lg:block">Settings</h1>
 
-      <LoanSettingsForm
-        loanSettings={loanSettings}
-        isSuperAdmin={isSuperAdmin}
-      />
+      <LoanSettingsForm loanSettings={loanSettings} canEdit={canEdit} />
       <InstrumentTypeSlotsPanel
         rows={instrumentTypeSlotRows}
-        isSuperAdmin={isSuperAdmin}
+        canEdit={canEdit}
       />
 
-      {isSuperAdmin && (
+      {showAdminManagement && (
         <Card>
           <CardHeader>
             <CardTitle>Admin Management</CardTitle>
           </CardHeader>
           <CardContent className="gap-4">
-            <AddAdminForm />
+            <AddAdminForm roles={assignableRoles(role)} />
 
             <div className="flex flex-col gap-2 border-t border-border pt-4">
               <div className="text-sm font-semibold">Admin List</div>
@@ -73,10 +82,10 @@ export default async function SettingsPage() {
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      {admin.role === "super_admin" && (
+                      {admin.role !== "staff" && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-2 py-0.5 text-micro text-gold-soft-foreground">
                           <ShieldCheck className="h-3 w-3" strokeWidth={2} />
-                          Super Admin
+                          {getRoleLabel(admin.role)}
                         </span>
                       )}
                       {!admin.isActive && (
@@ -84,7 +93,7 @@ export default async function SettingsPage() {
                           Inactive
                         </span>
                       )}
-                      {admin.id !== session?.user.id && (
+                      {canSetActive(session.user, admin) && (
                         <form
                           action={setAdminActive.bind(
                             null,

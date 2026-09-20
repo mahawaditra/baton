@@ -48,7 +48,7 @@ I'm an alumnus of OSUI Mahawaditra year 2020. I happened to be the Deputy Head (
 - Contracts were filled in by hand — typos and inconsistent file & document conventions were common
 - Deadline reminders and deposit status were both tracked manually, that is, not tracked at all until the admin team realized an instrument was still witheld by someone (now who's at fault for that really?)
 
-BATON is built halfly as a handoff tool and a personal project that I'll keep maintaining for... As long as I can remember, or needed, really. Whoever holds the head-of-logistics position each year becomes a **super admin** — day-to-day access to requests, inventory, and document review, plus full control over configuration (Loan Settings, deposit amounts, the signatory data printed on every contract) and their own team's admin accounts, so they can onboard incoming staff and deactivate outgoing ones themselves at handoff. Their staff get plain **admin** access — same day-to-day work, minus configuration and admin management. I stay on as a super admin too, permanently — I'm the only one who can actually grant that role in the first place, since it's a direct database change, not something the UI exposes.
+BATON is built halfly as a handoff tool and a personal project that I'll keep maintaining for... As long as I can remember, or needed, really. Whoever holds the head-of-logistics position each year becomes **Ketua** — day-to-day access to requests, inventory, and document review, plus full control over configuration (Loan Settings, deposit amounts, the signatory data printed on every contract) and their own team's accounts, so they can onboard incoming staff and deactivate outgoing ones themselves. Their team gets plain **Staff** access — same day-to-day work, minus configuration and admin management. Above them sit **Pengurus Inti** (OSUI's core board), who share the day-to-day access but can add and deactivate any Ketua or Staff, and me as **Overlord**, permanently — the only role that can deactivate a Pengurus Inti. Pengurus Inti and Overlord are direct database changes, not something the UI exposes.
 
 It's also deliberately still hybrid with the existing Google ecosystem, not a full replacement of it: files still live in the shared logistics division's Drive folder, admins still log in with their Google account, and the physical, stamped contract is still the document that's actually legally binding. BATON's job is to make the process **_around_** that. Tracking, reminders, status, history — structured and hard to get wrong (I hope), not to throw away what already worked.
 
@@ -76,7 +76,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 
 - Dashboard: requests needing action, recent activity, and the active loan roster — with a one-click carry-over that moves long-running loans into a separate _ongoing_ roster before each intake season
 - Real-time instrument inventory, sortable/filterable, edited from a per-instrument detail page, each with a catalog photo (crop and rotate on upload)
-- Configurable instrument sharing: how many borrowers a given instrument type can have on loan at once — super admin only, visible but locked for other admins
+- Configurable instrument sharing: how many borrowers a given instrument type can have on loan at once — Ketua and Overlord only, visible but locked for everyone else
 - A separate goods inventory (manual CRUD), catalog photos and all
 - One-click inventory snapshot export to XLSX, saved to Drive and downloaded
 - Prefilled contract PDF generation
@@ -84,8 +84,8 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Deposit tracking
 - Extension and return handling
 - Per-instrument history page
-- Annual settings (due dates, bank details, deposit amount, signatory data) — super admin only, visible but locked for other admins
-- Admin management (super admin only)
+- Annual settings (due dates, bank details, deposit amount, signatory data) — Ketua and Overlord only, visible but locked for everyone else
+- Admin management — Ketua (staff only), Pengurus Inti and Overlord (staff and Ketua), each limited to deactivating roles below their own
 
 ### Borrowing Flow
 
@@ -240,7 +240,7 @@ npx prisma db seed
 
 The seed reads the real inventory from `prisma/seed-data/instruments.xlsx` and `prisma/seed-data/goods.xlsx`. Those two files are gitignored — they're the org's actual inventory — so a fresh clone needs its own copies, with the same column headers `prisma/seed.ts` reads.
 
-To wipe a database back to a clean slate and re-seed it (after a round of testing, say), run `npm run db:reset`. It validates both spreadsheets before touching anything, lists exactly what it is about to delete, keeps super admins and Loan Settings, and only continues if you type `RESET` in an interactive terminal. Afterwards it prints which Drive folders are safe to clear by hand, since a database reset doesn't touch Drive.
+To wipe a database back to a clean slate and re-seed it (after a round of testing, say), run `npm run db:reset`. It validates both spreadsheets before touching anything, lists exactly what it is about to delete, keeps Overlord and Pengurus Inti accounts and Loan Settings (and refuses to run without at least one Overlord), and only continues if you type `RESET` in an interactive terminal. Afterwards it prints which Drive folders are safe to clear by hand, since a database reset doesn't touch Drive.
 
 Run the dev server:
 
@@ -271,7 +271,7 @@ prisma/
   schema.prisma  Database schema (15 models)
   migrations/    Migration history
   seed.ts        Seeds instruments and goods from prisma/seed-data/*.xlsx (gitignored)
-  reset.ts       Guarded wipe behind `npm run db:reset` — keeps super admins and Loan Settings
+  reset.ts       Guarded wipe behind `npm run db:reset` — keeps Overlord, Pengurus Inti and Loan Settings
 ```
 
 ## Testing

@@ -3,6 +3,7 @@ import {
   getConditionLabel,
   getDocumentTypeLabel,
   getRequestStatusLabel,
+  getRoleLabel,
   getStatusLabel,
 } from "@/lib/labels";
 
@@ -57,7 +58,7 @@ type ActivityMetadataByAction =
     }
   | {
       action: "add_admin" | "deactivate_admin" | "reactivate_admin";
-      metadata: { name: string; email: string };
+      metadata: { name: string; email: string; role?: string };
     }
   | {
       action: "update_instrument_type_slot";
@@ -220,7 +221,7 @@ export function formatActivityLog(log: ActivityLogLike): string {
     case "notify_available":
       return "notified borrower to complete Stage 2";
     case "add_admin":
-      return `added a new admin (${typed.metadata.name}, ${typed.metadata.email})`;
+      return `added a new ${typed.metadata.role ? getRoleLabel(typed.metadata.role) : "admin"} (${typed.metadata.name}, ${typed.metadata.email})`;
     case "deactivate_admin":
       return `deactivated ${typed.metadata.name} (${typed.metadata.email})`;
     case "reactivate_admin":

@@ -239,15 +239,17 @@ model Addendum {
 }
 
 enum AdminRole {
-  super_admin
-  admin
+  staff
+  pengurus_inti
+  ketua
+  overlord
 }
 
 model Admin {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email         String    @unique
   name          String
-  role          AdminRole @default(admin)
+  role          AdminRole @default(staff)
   emailVerified Boolean   @default(false) @map("email_verified")
   isActive      Boolean   @default(true) @map("is_active")
   createdAt     DateTime  @default(now()) @map("created_at")

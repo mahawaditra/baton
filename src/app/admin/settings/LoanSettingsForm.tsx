@@ -23,10 +23,10 @@ const initialState: UpdateLoanSettingsState = {
 
 export function LoanSettingsForm({
   loanSettings,
-  isSuperAdmin,
+  canEdit,
 }: {
   loanSettings: LoanSetting | null;
-  isSuperAdmin: boolean;
+  canEdit: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(
     updateLoanSettings,
@@ -49,14 +49,14 @@ export function LoanSettingsForm({
           Loan settings saved.
         </p>
       )}
-      {!isSuperAdmin && (
+      {!canEdit && (
         <p className="text-sm text-foreground-2">
-          Cuma super admin yang bisa ubah Loan Settings. Kamu bisa liat
-          isinya, tapi nggak bisa nyimpen perubahan.
+          Cuma Ketua (atau Overlord) yang bisa ubah Loan Settings. Kamu bisa
+          liat isinya, tapi nggak bisa nyimpen perubahan.
         </p>
       )}
 
-      <fieldset disabled={!isSuperAdmin} className="contents">
+      <fieldset disabled={!canEdit} className="contents">
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -262,7 +262,7 @@ export function LoanSettingsForm({
                 id="signatoryImage"
                 name="signatoryImage"
                 format="image/png"
-                disabled={!isSuperAdmin}
+                disabled={!canEdit}
               />
             </div>
             <div className="border-t border-border pt-4 sm:col-span-2">
@@ -270,20 +270,20 @@ export function LoanSettingsForm({
                 These show up as contact buttons on the public landing page,
                 for people with questions. This applies immediately and
                 independently from Save Loan Settings.
-                {!isSuperAdmin && " Only super admin can change this."}
+                {!canEdit && " Only Ketua or Overlord can change this."}
               </p>
               <div className="flex flex-col gap-4 sm:flex-row sm:gap-8">
                 <PublicContactToggle
                   id="signatoryPhonePublic"
                   label="Enable WhatsApp"
                   defaultValue={loanSettings?.signatoryPhonePublic ?? false}
-                  disabled={!isSuperAdmin}
+                  disabled={!canEdit}
                   action={setSignatoryPhonePublic}
                 />
                 <LineContactToggle
                   defaultChecked={loanSettings?.signatoryLineAddFriendPublic ?? false}
                   defaultUrl={loanSettings?.signatoryLineAddFriendUrl ?? ""}
-                  disabled={!isSuperAdmin}
+                  disabled={!canEdit}
                 />
               </div>
             </div>

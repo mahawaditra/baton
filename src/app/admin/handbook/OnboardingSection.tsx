@@ -23,13 +23,15 @@ export function OnboardingSection() {
         <p>
           BATON ini setengah alat handoff, setengah proyek pribadi yang bakal
           terus gw maintain selama masih inget atau dibutuhin. Siapa pun yang
-          jadi staf Logistik tahun itu otomatis jadi <strong>admin</strong> —
+          jadi staf Logistik tahun itu otomatis jadi <strong>Staff</strong> —
           akses harian ke requests, inventaris, review dokumen, yaa job desc
-          logistik biasa lah. Gw sendiri tetep pegang{" "}
-          <strong>super admin</strong> — akses penuh ke konfigurasi & data
-          historis, tapi bukan yang jalanin operasionalnya sehari-hari. Ketua
-          Logistik juga super admin, tapi akan dicabut akses ketika masa
-          jabatannya habis.
+          logistik biasa lah. Ketua Logistik pegang <strong>Ketua</strong> —
+          Staff plus akses konfigurasi di Settings, tapi aksesnya akan dicabut
+          ketika masa jabatannya habis. Gw sendiri tetep pegang{" "}
+          <strong>Overlord</strong> — akses penuh ke konfigurasi & data
+          historis, tapi bukan yang jalanin operasionalnya sehari-hari. Di atas
+          semuanya ada <strong>Pengurus Inti</strong> OSUI yang bisa
+          ngawasin, termasuk aktif/nonaktifin Ketua dan Staff.
         </p>
         <p>
           BATON ini juga sengaja masih hybrid sama ekosistem Google, bukan
@@ -41,19 +43,29 @@ export function OnboardingSection() {
         </p>
       </TaskCard>
 
-      <TaskCard title="Admin vs Super Admin">
+      <TaskCard title="Role di BATON">
         <p>
-          <strong>Admin</strong> — kalo lu staf logistik tahun ini, ya lu
-          otomatis admin (harusnya). Bisa proses request, assign instrumen,
+          <strong>Staff</strong> — kalo lu staf logistik tahun ini, ya lu
+          otomatis Staff (harusnya). Bisa proses request, assign instrumen,
           review dokumen, confirm handover/return, dan akses semua fitur
-          operasional harian.
+          operasional harian. Settings cuma bisa dilihat, nggak bisa diubah.
         </p>
         <p>
-          <strong>Super admin</strong> — cuma gw dan ketua Logistik tiap
-          tahunnya. Bisa semua yang admin bisa + edit Loan Settings, edit slot
-          sharing instrumen (Settings juga), dan aktif/nonaktifin admin lain.
-          Kalau ada yang kerasa &quot;kok gw nggak bisa X&quot;, kemungkinan itu
-          emang fitur khusus super admin.
+          <strong>Ketua</strong> — Ketua Logistik tahun berjalan. Bisa semua
+          yang Staff bisa + edit Loan Settings, edit slot sharing instrumen
+          (Settings juga), tambah Staff baru, dan aktif/nonaktifin Staff.
+        </p>
+        <p>
+          <strong>Pengurus Inti</strong> — pengurus inti OSUI. Akses
+          operasionalnya sama kayak Staff (Settings cuma bisa dilihat), tapi
+          bisa tambah Staff atau Ketua baru dan aktif/nonaktifin Ketua dan
+          Staff.
+        </p>
+        <p>
+          <strong>Overlord</strong> — gw, developer BATON. Semua yang Ketua
+          bisa + aktif/nonaktifin Pengurus Inti. Kalau ada yang kerasa
+          &quot;kok gw nggak bisa X&quot;, kemungkinan itu emang fitur khusus
+          role di atas lu.
         </p>
       </TaskCard>
 

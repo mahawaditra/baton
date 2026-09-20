@@ -1,5 +1,6 @@
 import type {
   AddendumTiming,
+  AdminRole,
   BorrowingRequestStatus,
   DocumentReviewStatus,
   InstrumentStatus,
@@ -48,6 +49,13 @@ export const STATUS_LABELS: Record<InstrumentStatus, string> = {
   unavailable: "Nonaktif",
 };
 
+export const ROLE_LABELS: Record<AdminRole, string> = {
+  staff: "Staff",
+  pengurus_inti: "Pengurus Inti",
+  ketua: "Ketua",
+  overlord: "Overlord",
+};
+
 export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   signed_contract: "Kontrak yang Ditandatangani",
   deposit_proof: "Bukti Transfer Deposit",
@@ -78,4 +86,8 @@ export function getDocumentReviewStatusLabel(status: string): string {
 
 export function getAddendumTimingLabel(timing: string): string {
   return ADDENDUM_TIMING_LABELS[timing as AddendumTiming] ?? timing;
+}
+
+export function getRoleLabel(role: string): string {
+  return ROLE_LABELS[role as AdminRole] ?? role;
 }

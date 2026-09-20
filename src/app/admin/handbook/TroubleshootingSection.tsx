@@ -84,8 +84,8 @@ export function TroubleshootingSection() {
       <TaskCard title="Instrumen terbatas, pemegang double gimana? (Sep 2026)">
         <p>
           Slot per tipe instrumen diatur di Settings, bagian{" "}
-          <strong>Instrument Sharing Slots</strong> — super admin doang yang
-          bisa ubah, tapi semua admin bisa lihat. By default 1 slot buat semua
+          <strong>Instrument Sharing Slots</strong> — Ketua (atau Overlord)
+          doang yang bisa ubah, tapi semua admin bisa lihat. By default 1 slot buat semua
           tipe instrumen; naikin manual (button +) buat tipe yang emang perlu
           di-share (misal Contrabass jadi 2). Nggak bisa diturunin lagi kalau
           ada unit yang saat ini beneran lagi dipegang sejumlah itu.
@@ -118,12 +118,12 @@ export function TroubleshootingSection() {
         </p>
       </TaskCard>
 
-      <TaskCard title="Nambahin super admin baru">
+      <TaskCard title="Nambahin Pengurus Inti atau Overlord baru">
         <p>
-          Admin biasa nggak bisa naikin dirinya sendiri atau orang lain jadi
-          super admin dari UI — ini disengaja. Sekarang yang konsisten super
-          admin cuma Zenka sebagai developer BATON dan ketua Logistik tiap
-          tahunnya.
+          Role Pengurus Inti dan Overlord nggak bisa ditambahin dari UI — ini
+          disengaja, dibuat manual di database sama Zenka. Dari Settings, Ketua
+          cuma bisa nambahin Staff, sedangkan Pengurus Inti dan Overlord bisa
+          nambahin Staff atau Ketua.
         </p>
       </TaskCard>
 
@@ -177,7 +177,7 @@ export function TroubleshootingSection() {
             <strong>Slot instrumen</strong> — berapa banyak peminjam aktif yang
             boleh nempel ke instrumen dari SATU tipe yang sama secara bersamaan
             (misal Violin slotnya 1, Contrabass bisa diset 2). Diatur per tipe
-            di Settings, super admin doang yang bisa ubah.
+            di Settings, Ketua (atau Overlord) doang yang bisa ubah.
           </li>
           <li>
             <strong>Ongoing</strong> — sebutan buat loan yang udah di-carry

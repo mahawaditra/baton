@@ -9,10 +9,17 @@ import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 import { ACTIVE_INSTRUMENT_HOLD_STATUSES } from "@/lib/loan-rules";
+import {
+  assignableRoles,
+  canEditSettings,
+  canSetActive,
+  canViewAdminManagement,
+} from "@/lib/roles";
 
 const addAdminSchema = z.object({
   email: z.email("Invalid email address"),
   name: z.string().trim().min(1, "Name is required").max(100),
+  role: z.enum(["staff", "ketua"], "Invalid role"),
 });
 
 const updateLoanSettingsSchema = z
@@ -105,17 +112,18 @@ export async function addAdmin(
 ): Promise<AddAdminState> {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (session?.user.role !== "super_admin") {
+  if (!session || assignableRoles(session.user.role).length === 0) {
     return {
       success: false,
       error: null,
-      generalError: "Only super admin can add new admin",
+      generalError: "You don't have permission to add admins.",
     };
   }
 
   const parsed = addAdminSchema.safeParse({
     email: formData.get("email"),
     name: formData.get("name"),
+    role: formData.get("role") ?? "staff",
   });
 
   if (!parsed.success) {
@@ -126,12 +134,20 @@ export async function addAdmin(
     };
   }
 
-  const { email, name } = parsed.data;
+  const { email, name, role } = parsed.data;
+
+  if (!assignableRoles(session.user.role).includes(role)) {
+    return {
+      success: false,
+      error: null,
+      generalError: "You can't add an admin with this role.",
+    };
+  }
 
   let newAdmin;
   try {
     newAdmin = await prisma.admin.create({
-      data: { email, name, emailVerified: true },
+      data: { email, name, role, emailVerified: true },
     });
   } catch (err) {
     if (
@@ -153,7 +169,11 @@ export async function addAdmin(
       action: "add_admin",
       entityType: "admin",
       entityId: newAdmin.id,
-      metadata: { name: newAdmin.name, email: newAdmin.email },
+      metadata: {
+        name: newAdmin.name,
+        email: newAdmin.email,
+        role: newAdmin.role,
+      },
     },
   });
 
@@ -174,8 +194,8 @@ export async function updateLoanSettings(
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) throw new Error("Not logged in");
-  if (session.user.role !== "super_admin") {
-    throw new Error("Only super admin can update loan settings.");
+  if (!canEditSettings(session.user.role)) {
+    throw new Error("Only Ketua or Overlord can update loan settings.");
   }
 
   const parsed = updateLoanSettingsSchema.safeParse({
@@ -289,8 +309,8 @@ export async function updateLoanSettings(
 export async function setSignatoryPhonePublic(value: boolean) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Not logged in");
-  if (session.user.role !== "super_admin") {
-    throw new Error("Only super admin can update loan settings.");
+  if (!canEditSettings(session.user.role)) {
+    throw new Error("Only Ketua or Overlord can update loan settings.");
   }
 
   const existing = await prisma.loanSetting.findFirst();
@@ -320,8 +340,8 @@ export async function setSignatoryPhonePublic(value: boolean) {
 export async function setSignatoryLineAddFriendPublic(value: boolean) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Not logged in");
-  if (session.user.role !== "super_admin") {
-    throw new Error("Only super admin can update loan settings.");
+  if (!canEditSettings(session.user.role)) {
+    throw new Error("Only Ketua or Overlord can update loan settings.");
   }
 
   const existing = await prisma.loanSetting.findFirst();
@@ -356,8 +376,8 @@ export async function setSignatoryLineAddFriendUrl(
 ): Promise<SetSignatoryLineAddFriendUrlResult> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Not logged in");
-  if (session.user.role !== "super_admin") {
-    throw new Error("Only super admin can update loan settings.");
+  if (!canEditSettings(session.user.role)) {
+    throw new Error("Only Ketua or Overlord can update loan settings.");
   }
 
   const trimmed = value.trim();
@@ -397,12 +417,23 @@ export async function setSignatoryLineAddFriendUrl(
 export async function setAdminActive(adminId: string, isActive: boolean) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (session?.user.role !== "super_admin") {
-    throw new Error("Only super admin can do this.");
+  if (!session) throw new Error("Not logged in");
+  if (!canViewAdminManagement(session.user.role)) {
+    throw new Error("You don't have permission to manage admins.");
   }
 
   if (session.user.id === adminId) {
     throw new Error("You can't deactivate your own account.");
+  }
+
+  const target = await prisma.admin.findUnique({
+    where: { id: adminId },
+    select: { id: true, role: true },
+  });
+  if (!target) throw new Error("Admin not found.");
+
+  if (!canSetActive(session.user, target)) {
+    throw new Error("You can't change the status of this admin.");
   }
 
   const targetAdmin = await prisma.admin.update({
@@ -434,8 +465,10 @@ export async function adjustInstrumentTypeSlot(
 ): Promise<AdjustInstrumentTypeSlotResult> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Not logged in");
-  if (session.user.role !== "super_admin") {
-    throw new Error("Only super admin can update instrument slot settings.");
+  if (!canEditSettings(session.user.role)) {
+    throw new Error(
+      "Only Ketua or Overlord can update instrument slot settings.",
+    );
   }
 
   const existing = await prisma.instrumentTypeSlot.findUnique({
