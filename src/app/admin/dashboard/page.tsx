@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/admin/require-admin";
 import Link from "next/link";
 import { ActivityTimeline } from "@/components/ActivityTimeline";
 import {
@@ -8,7 +7,7 @@ import {
   getRequestActionLabel,
   requestNeedsAction,
   resolveNickname,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import {
   Card,
@@ -161,7 +160,7 @@ function LoanRosterTable({ rows }: { rows: RosterRow[] }) {
 }
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   const [
     pendingCount,

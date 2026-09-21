@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import type { LoanSetting, Instrument } from "@/generated/prisma/client";
-import { downloadFileAsBase64 } from "@/lib/drive";
-import { escapeHtml } from "@/lib/format";
+import { downloadFileAsBase64 } from "@/lib/files/drive";
+import { escapeHtml, todayInJakarta } from "@/lib/format";
 
 let cachedContractFonts: {
   regular: string;
@@ -62,9 +62,9 @@ function formatTanggalIndo(date: Date): string {
     "November",
     "Desember",
   ];
-  const tanggal = date.getDate();
-  const bulanIndex = date.getMonth();
-  const tahun = date.getFullYear();
+  const tanggal = date.getUTCDate();
+  const bulanIndex = date.getUTCMonth();
+  const tahun = date.getUTCFullYear();
   return `${tanggal} ${bulan[bulanIndex]} ${tahun}`;
 }
 
@@ -108,7 +108,7 @@ type ContractData = {
 export async function buildContractHTML(data: ContractData): Promise<string> {
   const fonts = await getContractFonts();
   const dueDateStr = formatTanggalIndo(data.dueDate);
-  const todayStr = formatTanggalIndo(new Date());
+  const todayStr = formatTanggalIndo(todayInJakarta());
 
   const signatory = {
     name: escapeHtml(data.signatory.name),

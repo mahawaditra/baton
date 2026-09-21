@@ -3,11 +3,11 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
 import { getClientIp, limitOrAllow, submitRequestLimiter } from "@/lib/rate-limit";
-import { generateTicketId, generateAccessCode } from "@/lib/id-generators";
+import { generateTicketId, generateAccessCode } from "@/lib/loan/id-generators";
 import { z } from "zod";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { escapeHtml } from "@/lib/format";
-import { formatNameWithNickname, resolveNickname } from "@/lib/loan-rules";
+import { formatNameWithNickname, resolveNickname } from "@/lib/loan/loan-rules";
 import * as Sentry from "@sentry/nextjs";
 import { Prisma } from "@/generated/prisma/client";
 

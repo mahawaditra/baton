@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
+import { escapeHtml } from "@/lib/format";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -9,14 +10,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-let cachedFooter: string | null = null;
+const FOOTER_TTL_MS = 60_000;
+
+let cachedFooter: { html: string; builtAt: number } | null = null;
 
 export function invalidateFooterCache() {
   cachedFooter = null;
 }
 
 async function buildFooter(): Promise<string> {
-  if (cachedFooter !== null) return cachedFooter;
+  if (cachedFooter !== null && Date.now() - cachedFooter.builtAt < FOOTER_TTL_MS) {
+    return cachedFooter.html;
+  }
 
   const settings = await prisma.loanSetting.findFirst();
 
@@ -24,13 +29,13 @@ async function buildFooter(): Promise<string> {
     ? `
       <p>
         Untuk informasi lebih lanjut, silakan hubungi narahubung Divisi Logistik OSUI Mahawaditra:<br/>
-        ${settings.signatoryName}<br/>
-        ${settings.signatoryPhone}${settings.signatoryLineId ? `<br/>LINE: ${settings.signatoryLineId}` : ""}
+        ${escapeHtml(settings.signatoryName)}<br/>
+        ${escapeHtml(settings.signatoryPhone)}${settings.signatoryLineId ? `<br/>LINE: ${escapeHtml(settings.signatoryLineId)}` : ""}
       </p>
     `
     : "";
 
-  cachedFooter = `
+  const html = `
     <hr style="margin: 24px 0; border: none; border-top: 1px solid #ddd;" />
     ${contactBlock}
     <p style="color: #888888; font-size: 12px; margin-top: 16px;">--</p>
@@ -41,7 +46,8 @@ async function buildFooter(): Promise<string> {
       <p>Kampus UI Depok, 14624</p>
     </div>
   `;
-  return cachedFooter;
+  cachedFooter = { html, builtAt: Date.now() };
+  return html;
 }
 
 export async function sendEmail({

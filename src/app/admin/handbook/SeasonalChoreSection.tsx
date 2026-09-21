@@ -26,7 +26,9 @@ export function SeasonalChoreSection() {
             kalau Ketua Logistik ganti: nama, HP, LINE ID, nomor KTP, alamat,
             Fakultas/Jurusan, angkatan, section/instrumen, dan gambar tanda
             tangan. Ini yang kecetak di tiap kontrak baru — kalau lupa diupdate,
-            kontrak baru masih pakai data Ketua lama.
+            kontrak baru masih pakai data Ketua lama. Buat Ketua baru ada
+            banner kuning di atas Settings yang ngingetin ini, hilang begitu
+            datanya di-Save atas nama dia.
           </li>
         </ul>
         <p>

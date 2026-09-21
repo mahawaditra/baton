@@ -1,8 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/admin/require-admin";
 import { sendEmail } from "@/lib/mail";
 import { daysBetween, escapeHtml, toJakartaCalendarDate } from "@/lib/format";
 import {
@@ -17,7 +16,7 @@ import {
   ACTIVE_INSTRUMENT_HOLD_STATUSES,
   resolveMaxConcurrentLoans,
   resolveNickname,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 import { revalidateRequestViews } from "@/lib/revalidate";
 import { z } from "zod";
 import * as Sentry from "@sentry/nextjs";
@@ -31,6 +30,10 @@ const confirmReturnSchema = z.object({
   location: z.string().trim().min(1, "Location is required").max(100),
 });
 
+const MAX_REASON_LENGTH = 1000;
+
+class AssignConflictError extends Error {}
+
 const documentDecisionSchema = z.enum(
   ["approved", "rejected"],
   "Invalid document decision value",
@@ -40,10 +43,7 @@ export async function assignInstrument(
   requestId: string,
   instrumentId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { id: requestId },
@@ -86,7 +86,9 @@ export async function assignInstrument(
         !["ok", "need_repair"].includes(instrument.condition) ||
         !hasAvailableSlot(activeHolders, maxConcurrentLoans)
       ) {
-        throw new Error("This instrument is no longer available to assign.");
+        throw new AssignConflictError(
+          "This instrument is no longer available to assign.",
+        );
       }
 
       if (request.instrumentId && request.instrumentId !== instrumentId) {
@@ -121,10 +123,13 @@ export async function assignInstrument(
       });
     });
   } catch (err) {
+    if (err instanceof AssignConflictError) {
+      return { success: false, error: err.message };
+    }
+    Sentry.captureException(err);
     return {
       success: false,
-      error:
-        err instanceof Error ? err.message : "Failed to assign instrument.",
+      error: "Failed to assign instrument. Please try again.",
     };
   }
 
@@ -151,10 +156,7 @@ export async function assignInstrument(
 }
 
 export async function confirmAvailable(requestId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { id: requestId },
@@ -210,16 +212,20 @@ export async function rejectRequest(
   prevState: RejectRequestState,
   formData: FormData,
 ): Promise<RejectRequestState> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
-  const reason = formData.get("reason") as string;
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!reason) {
     return {
       success: false,
       error: "Rejection reason is required.",
+      generalError: null,
+    };
+  }
+  if (reason.length > MAX_REASON_LENGTH) {
+    return {
+      success: false,
+      error: `Rejection reason must be ${MAX_REASON_LENGTH} characters or fewer.`,
       generalError: null,
     };
   }
@@ -236,7 +242,21 @@ export async function rejectRequest(
     };
   }
 
-  await prisma.$transaction(async (tx) => {
+  const rejected = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.borrowingRequest.updateMany({
+      where: {
+        id: requestId,
+        status: request.status,
+        instrumentConfirmed: request.instrumentConfirmed,
+        instrumentId: request.instrumentId,
+      },
+      data: {
+        status: "rejected",
+        rejectionReason: reason,
+      },
+    });
+    if (claimed.count === 0) return false;
+
     if (request.instrumentId) {
       const remainingHolders = await tx.borrowingRequest.count({
         where: {
@@ -252,15 +272,20 @@ export async function rejectRequest(
         });
       }
     }
-
-    await tx.borrowingRequest.update({
-      where: { id: requestId },
-      data: {
-        status: "rejected",
-        rejectionReason: reason,
-      },
-    });
+    return true;
   });
+
+  if (!rejected) {
+    revalidateRequestViews(requestId, {
+      instrumentIds: [request.instrumentId],
+    });
+    return {
+      success: false,
+      error: null,
+      generalError:
+        "This request was just updated by someone else. Refresh to see its current state.",
+    };
+  }
 
   try {
     await sendEmail({
@@ -303,16 +328,20 @@ export async function cancelRequest(
   prevState: CancelRequestState,
   formData: FormData,
 ): Promise<CancelRequestState> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
-  const reason = formData.get("reason") as string;
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!reason) {
     return {
       success: false,
       error: "Cancellation reason is required.",
+      generalError: null,
+    };
+  }
+  if (reason.length > MAX_REASON_LENGTH) {
+    return {
+      success: false,
+      error: `Cancellation reason must be ${MAX_REASON_LENGTH} characters or fewer.`,
       generalError: null,
     };
   }
@@ -329,7 +358,20 @@ export async function cancelRequest(
     };
   }
 
-  await prisma.$transaction(async (tx) => {
+  const cancelled = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.borrowingRequest.updateMany({
+      where: {
+        id: requestId,
+        status: request.status,
+        instrumentId: request.instrumentId,
+      },
+      data: {
+        status: "cancelled",
+        cancellationReason: reason,
+      },
+    });
+    if (claimed.count === 0) return false;
+
     if (request.instrumentId) {
       const remainingHolders = await tx.borrowingRequest.count({
         where: {
@@ -345,15 +387,20 @@ export async function cancelRequest(
         });
       }
     }
-
-    await tx.borrowingRequest.update({
-      where: { id: requestId },
-      data: {
-        status: "cancelled",
-        cancellationReason: reason,
-      },
-    });
+    return true;
   });
+
+  if (!cancelled) {
+    revalidateRequestViews(requestId, {
+      instrumentIds: [request.instrumentId],
+    });
+    return {
+      success: false,
+      error: null,
+      generalError:
+        "This request was just updated by someone else. Refresh to see its current state.",
+    };
+  }
 
   await prisma.activityLog.create({
     data: {
@@ -374,10 +421,7 @@ export async function submitDocumentReview(
   requestId: string,
   formData: FormData,
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const latestPeriod = await prisma.loanPeriod.findFirst({
     where: { requestId },
@@ -533,10 +577,7 @@ export async function submitDocumentReview(
 }
 
 export async function confirmHandover(requestId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { id: requestId },
@@ -564,7 +605,13 @@ export async function confirmHandover(requestId: string) {
     throw new Error("Borrower has not submitted the initial addendum yet.");
   }
 
-  await prisma.$transaction(async (tx) => {
+  const handedOver = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.borrowingRequest.updateMany({
+      where: { id: requestId, status: "ready_to_pickup" },
+      data: { status: "active" },
+    });
+    if (claimed.count === 0) return false;
+
     await tx.instrument.update({
       where: { id: request.instrumentId! },
       data: { status: "borrowed" },
@@ -573,11 +620,15 @@ export async function confirmHandover(requestId: string) {
       where: { id: latestPeriod.id },
       data: { startDate: new Date() },
     });
-    await tx.borrowingRequest.update({
-      where: { id: requestId },
-      data: { status: "active" },
-    });
+    return true;
   });
+
+  if (!handedOver) {
+    revalidateRequestViews(requestId, {
+      instrumentIds: [request.instrumentId],
+    });
+    return;
+  }
 
   await prisma.activityLog.create({
     data: {
@@ -592,10 +643,7 @@ export async function confirmHandover(requestId: string) {
 }
 
 export async function confirmExtension(requestId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const latestPeriod = await prisma.loanPeriod.findFirst({
     where: { requestId },
@@ -612,10 +660,14 @@ export async function confirmExtension(requestId: string) {
     throw new Error("Borrower has not submitted the initial addendum yet.");
   }
 
-  await prisma.loanPeriod.update({
-    where: { id: latestPeriod.id },
+  const confirmed = await prisma.loanPeriod.updateMany({
+    where: { id: latestPeriod.id, startDate: null },
     data: { startDate: new Date() },
   });
+  if (confirmed.count === 0) {
+    revalidateRequestViews(requestId);
+    return;
+  }
 
   await prisma.borrowingRequest.updateMany({
     where: { id: requestId, carriedOverAt: null },
@@ -635,10 +687,7 @@ export async function confirmExtension(requestId: string) {
 }
 
 export async function revertFromOngoing(requestId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const result = await prisma.borrowingRequest.updateMany({
     where: { id: requestId, carriedOverAt: { not: null } },
@@ -662,10 +711,7 @@ export async function revertFromOngoing(requestId: string) {
 }
 
 export async function confirmReturn(requestId: string, formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const request = await prisma.borrowingRequest.findUniqueOrThrow({
     where: { id: requestId },
@@ -729,20 +775,31 @@ export async function confirmReturn(requestId: string, formData: FormData) {
       requestedStatus,
     );
 
-    await prisma.$transaction([
-      prisma.loanPeriod.update({
+    const instrumentId = request.instrumentId;
+    const returned = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.borrowingRequest.updateMany({
+        where: { id: requestId, status: { in: ["active", "overdue"] } },
+        data: { status: "returned", depositRefundAmount },
+      });
+      if (claimed.count === 0) return false;
+
+      await tx.loanPeriod.update({
         where: { id: latestPeriod.id },
         data: { actualReturnDate },
-      }),
-      prisma.borrowingRequest.update({
-        where: { id: requestId },
-        data: { status: "returned", depositRefundAmount },
-      }),
-      prisma.instrument.update({
-        where: { id: request.instrumentId },
+      });
+      await tx.instrument.update({
+        where: { id: instrumentId },
         data: { condition, status, location },
-      }),
-    ]);
+      });
+      return true;
+    });
+    if (!returned) {
+      revalidateRequestViews(requestId, {
+        instrumentIds: [request.instrumentId],
+        archive: true,
+      });
+      return;
+    }
     await prisma.activityLog.create({
       data: {
         adminId: session.user.id,
@@ -753,16 +810,26 @@ export async function confirmReturn(requestId: string, formData: FormData) {
       },
     });
   } else {
-    await prisma.$transaction([
-      prisma.loanPeriod.update({
+    const returned = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.borrowingRequest.updateMany({
+        where: { id: requestId, status: { in: ["active", "overdue"] } },
+        data: { status: "returned", depositRefundAmount },
+      });
+      if (claimed.count === 0) return false;
+
+      await tx.loanPeriod.update({
         where: { id: latestPeriod.id },
         data: { actualReturnDate },
-      }),
-      prisma.borrowingRequest.update({
-        where: { id: requestId },
-        data: { status: "returned", depositRefundAmount },
-      }),
-    ]);
+      });
+      return true;
+    });
+    if (!returned) {
+      revalidateRequestViews(requestId, {
+        instrumentIds: [request.instrumentId],
+        archive: true,
+      });
+      return;
+    }
     await prisma.activityLog.create({
       data: {
         adminId: session.user.id,

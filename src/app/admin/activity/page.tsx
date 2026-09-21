@@ -43,6 +43,7 @@ function groupLogsByDay(logs: ActivityLogWithAdmin[]) {
       label = "Yesterday";
     } else {
       label = day.toLocaleDateString("en-GB", {
+        timeZone: "UTC",
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -64,7 +65,9 @@ export default async function ActivityPage({
   searchParams: Promise<{ page?: string }>;
 }) {
   const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam) || 1);
+  const parsedPage = Number.parseInt(pageParam ?? "", 10);
+  const page =
+    Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
   const [logs, total] = await Promise.all([
     prisma.activityLog.findMany({

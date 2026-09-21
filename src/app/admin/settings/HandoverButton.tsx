@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { handoverKetua } from "./actions";
-import { handoverDescription, handoverTitle } from "@/lib/handover";
+import { handoverDescription, handoverTitle } from "@/lib/admin/handover";
 import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

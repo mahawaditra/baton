@@ -71,6 +71,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - A web form — with phone-camera photos — for the condition addendums at pickup, extension, and return
 - Automatic email notifications at each status change
 - A landing-page FAQ, and a direct WhatsApp and/or LINE line to the logistics head, each shown independently when they choose to
+- A small homage page (`/legacy`) to the friends who helped along the way
 
 ### For admins
 
@@ -83,10 +84,12 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Document review (approve/reject), with an in-app viewer for uploaded condition photos
 - Deposit tracking
 - Extension and return handling
-- Per-instrument history page
+- Per-instrument history page, and an activity feed of everything admins have done
+- A manually generated annual report summary
+- An in-app Handbook (onboarding, workflow, dailies, seasonal chores, troubleshooting) for whoever inherits the admin seat
 - Annual settings (due dates, bank details, deposit amount, signatory data) — Ketua and Overlord only, visible but locked for everyone else
 - Admin management — Ketua (staff only), Pengurus and Overlord (staff and Ketua), each limited to deactivating roles below their own
-- Ketua handover — the outgoing Ketua deletes all staff and seats the next Ketua in one step, then leaves BATON from a locked-down page by attaching a photo. Their name, section, term year and the staff they led stay behind as a placard on the public **BATON Legacy** page (`/legacy`); activity history keeps their names even though the accounts are gone
+- Ketua handover — when a term ends, the outgoing Ketua hands the position over in one step: the staff accounts are cleared and the next Ketua is seated. Activity history keeps everyone's names even though their accounts are gone
 
 ### Borrowing Flow
 
@@ -123,7 +126,7 @@ A few choices worth explaining, because the reasoning isn't obvious from the cod
 
 ### Puppeteer only fully works locally
 
-Generating the prefilled contract PDF renders an HTML template with Puppeteer. Regular `puppeteer` bundles a full Chromium binary, which is fine if run locally but doesn't fit inside a Vercel serverless function. I... might've found out about it a tad bit too late, the first deploy of contract generation failed because the bundled Chromium was too large for the function. The fix is a `NODE_ENV`-based branch in `src/lib/contract-pdf.ts`: `puppeteer-core` + `@sparticuz/chromium-min` (a Chromium build trimmed for serverless) in production, plain `puppeteer` locally, where a full install is no problem.
+Generating the prefilled contract PDF renders an HTML template with Puppeteer. Regular `puppeteer` bundles a full Chromium binary, which is fine if run locally but doesn't fit inside a Vercel serverless function. I... might've found out about it a tad bit too late, the first deploy of contract generation failed because the bundled Chromium was too large for the function. The fix is a `NODE_ENV`-based branch in `src/lib/files/contract-pdf.ts`: `puppeteer-core` + `@sparticuz/chromium-min` (a Chromium build trimmed for serverless) in production, plain `puppeteer` locally, where a full install is no problem.
 
 ### No login for borrowers
 
@@ -139,7 +142,7 @@ Rate limiting fails open for the same reason: if Redis is ever unreachable, the 
 
 Document upload originally submitted all three required files: signed contract, deposit proof, and ID scan in a single form and a single `submitDocuments` call (one upload stream). That ran into a real limit: Vercel's function body cap is a hard 4.5MB, not configurable, and BATON's own setting (`next.config.ts`, `serverActions.bodySizeLimit`) sat a notch below that at 4MB. With three files sharing one request, the per-file limit had to be split three ways (~1.3MB each). But even so, a couple of large scans or high-resolution photos could push the _combined_ upload over the limit even when every individual file was valid on its own.
 
-The fix was to split the transport, not the form: the borrower still picks all three files and presses one button, but the client then calls the server action once per file, one after another, each request carrying a single file with the full ~4MB budget to itself instead of a shared one. Next.js dispatches Server Actions one at a time per client anyway, so the sequence is explicit (`src/lib/sequential-upload.ts`) rather than a `Promise.all` that would only pretend to be parallel. A file that is too large is caught in the browser before anything is sent (a body over the 4MB limit is rejected by Next with a 413 before the action even runs, which the client can only see as a generic failure, so the server's own size message would almost never be reached) and reported under its own field, and a file the server rejects for another reason (wrong type) is reported the same way, while the others still go through. A request-level failure such as a wrong access code stops the run so nothing else is attempted. The completion check (the one that flips the request to `documents_uploaded` and notifies the admin) lives on the server and simply re-runs after every individual upload, so it fires at the right moment whichever document happens to land last, without needing a separate "batch complete" step. When the admin rejects one document, the borrower sees only that one slot again and re-uploads just that file.
+The fix was to split the transport, not the form: the borrower still picks all three files and presses one button, but the client then calls the server action once per file, one after another, each request carrying a single file with the full ~4MB budget to itself instead of a shared one. Next.js dispatches Server Actions one at a time per client anyway, so the sequence is explicit (`src/lib/loan/sequential-upload.ts`) rather than a `Promise.all` that would only pretend to be parallel. A file that is too large is caught in the browser before anything is sent (a body over the 4MB limit is rejected by Next with a 413 before the action even runs, which the client can only see as a generic failure, so the server's own size message would almost never be reached) and reported under its own field, and a file the server rejects for another reason (wrong type) is reported the same way, while the others still go through. A request-level failure such as a wrong access code stops the run so nothing else is attempted. The completion check (the one that flips the request to `documents_uploaded` and notifies the admin) lives on the server and simply re-runs after every individual upload, so it fires at the right moment whichever document happens to land last, without needing a separate "batch complete" step. When the admin rejects one document, the borrower sees only that one slot again and re-uploads just that file.
 
 ### "Ongoing loans" is a timestamp, not a status
 
@@ -257,22 +260,23 @@ Open [http://localhost:3000](http://localhost:3000).
 src/
   app/
     admin/       Admin panel — dashboard, inventory, requests, settings.
-                 Access-gated by proxy.ts (Next.js 16's replacement for middleware.ts),
-                 not by per-page checks.
+                 Access-gated by proxy.ts (Next.js 16's replacement for middleware.ts);
+                 the layout and every Server Action check the session again on their own.
     api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive),
                  /api/status/[ticket_id]/contract (contract PDF download, gated by a
                  60-second signed token)
-    legacy/      Public BATON Legacy wall (/legacy) and the routes that serve its photos
-    limbo/       Where a Ketua ends up after starting a handover: no exits, one photo to attach
+    legacy/      Public homage page (/legacy) to the friends who helped along the way, and the routes that serve its photos
     request/     Public borrowing request form
     status/      Public per-ticket status page (access-code gated)
   components/    Shared UI components
-  lib/           Business logic and integrations — Prisma client, Google Drive, email,
-                 PDF generation, rate limiting, pure rule functions (loan-rules.ts),
-                 role hierarchy (roles.ts), the Ketua handover transaction (handover.ts),
-                 and the enum → label maps the UI reads (labels.ts)
-scripts/         One-off maintenance scripts, e.g. upload-legacy-crew.ts (puts the founding
-                 crew's photos on Drive) and cleanup-legacy-test.ts (removes test tombstones)
+  lib/           Business logic and integrations, grouped by feature with each module's
+                 tests beside it:
+                   admin/    role hierarchy, the Ketua handover transaction, admin deletion
+                   files/    Google Drive, PDF generation, image processing, upload validation, XLSX
+                   legacy/   the crew list and photo helpers behind the /legacy page
+                   loan/     pure loan rules, ticket ids, the signed download token, the upload queue
+                 Shared basics stay at the top level: Prisma client, auth, email, rate limiting,
+                 formatting, and the enum → label maps the UI reads (labels.ts)
 prisma/
   schema.prisma  Database schema (16 models)
   migrations/    Migration history
@@ -289,7 +293,7 @@ npm run test:watch # watch mode
 
 Coverage is aimed at the business-logic layer that would cause real problems if it silently broke, rather than at a coverage percentage:
 
-- `roles.ts` / `handover.ts` — who may manage whom (the full role-versus-role matrix), and the two-step Ketua handover run against a fake transaction: staff are removed before the new Ketua is created, every refusal happens before anything is written, and a second tab cannot complete a handover twice
+- `roles.ts` / `handover.ts` / `admin-deletion.ts` — who may manage whom (the full role-versus-role matrix), and the Ketua handover run against a fake transaction: staff are removed before the new Ketua is created, every refusal happens before anything is written, and an admin's name is copied into the history rows before their account is deleted
 - `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, and name/nickname display resolution
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
 - `format.ts` / `mail.ts` — date/timezone handling, activity-log and annual-report wording, email content generation

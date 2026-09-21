@@ -5,7 +5,7 @@ import {
   formatSharedLocation,
   resolveMaxConcurrentLoans,
   resolveNickname,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 import { EditInstrumentForm } from "./EditInstrumentForm";
 import { uploadInstrumentPhoto } from "./actions";
 import {

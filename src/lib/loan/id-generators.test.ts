@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateTicketId, generateAccessCode } from "./id-generators";
-import { INSTRUMENT_TYPE_CODES } from "./constants";
+import { INSTRUMENT_TYPE_CODES } from "@/lib/constants";
+import { currentYearInJakarta } from "@/lib/format";
 
 describe("generateTicketId", () => {
   it("generates an 8-digit numeric ID", () => {
@@ -10,7 +11,7 @@ describe("generateTicketId", () => {
   });
 
   it("starts with the current 2-digit year", () => {
-    const yy = String(new Date().getFullYear() % 100).padStart(2, "0");
+    const yy = String(currentYearInJakarta() % 100).padStart(2, "0");
     expect(generateTicketId("Cello").slice(0, 2)).toBe(yy);
   });
 

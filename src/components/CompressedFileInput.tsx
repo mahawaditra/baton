@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { prepareImageFile } from "@/lib/image-processing";
+import { prepareImageFile } from "@/lib/files/image-processing";
 
 export function CompressedFileInput({
   id,

@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { submitAddendum } from "./actions";
 import { CompressedFileInput } from "@/components/CompressedFileInput";
 import {
   MAX_UPLOAD_SIZE_BYTES,
   MAX_UPLOAD_SIZE_LABEL,
   validateImageUpload,
-} from "@/lib/file-validation";
+} from "@/lib/files/file-validation";
 import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,7 +75,9 @@ export function AddendumForm({
     setIsValidating(false);
 
     setClientError(null);
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   if (state.success) {
@@ -88,8 +90,8 @@ export function AddendumForm({
           />
           <p className="text-body text-foreground-2">
             {timing === "initial"
-              ? "Addendum terkirim! Peminjaman kamu lagi difinalisasi admin."
-              : "Addendum terkirim! Bawa instrumennya ke Sekre biar admin cek kondisinya dan konfirmasi pengembalian."}
+              ? "Addendum terkirim! Peminjaman kamu lagi difinalisasi staf."
+              : "Addendum terkirim! Bawa instrumennya ke Sekre biar staf cek kondisinya dan konfirmasi pengembalian."}
           </p>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 import type { AdminRole, Prisma } from "@/generated/prisma/client";
-import { deleteAdminsKeepingHistory } from "@/lib/admin-deletion";
+import { deleteAdminsKeepingHistory } from "@/lib/admin/admin-deletion";
 import { toJakartaCalendarDate } from "@/lib/format";
 import { getRoleLabel } from "@/lib/labels";
 

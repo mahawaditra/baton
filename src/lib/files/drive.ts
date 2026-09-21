@@ -174,7 +174,7 @@ export async function replaceSignatureImage(params: {
     process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
   );
   const newFileId = await uploadFile(
-    `Signature_${driveTimestamp()}.png`,
+    `Signature_${driveTimestamp()}.${params.mimeType === "image/jpeg" ? "jpg" : "png"}`,
     params.mimeType,
     params.buffer,
     assetsFolder,

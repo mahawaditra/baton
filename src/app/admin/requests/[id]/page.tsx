@@ -22,9 +22,10 @@ import {
   hasAvailableSlot,
   LOAN_STEP_LABELS,
   resolveMaxConcurrentLoans,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { getAddendumTimingLabel } from "@/lib/labels";
+import { formatJakartaDate } from "@/lib/format";
 import {
   CONDITION_OPTIONS,
   STATUS_OPTIONS,
@@ -175,7 +176,7 @@ export default async function RequestDetailPage({
           <RequestStatusBadge status={request.status} variant="pill" />
           <ExtensionBadge count={confirmedExtensionCount(latestPeriod)} />
           <span className="tabular text-xs text-muted-foreground">
-            Submitted {request.createdAt.toLocaleDateString("en-GB")}
+            Submitted {formatJakartaDate(request.createdAt)}
           </span>
         </div>
         <h1 className="text-h1">
@@ -339,7 +340,7 @@ export default async function RequestDetailPage({
                       </span>{" "}
                       <span className="text-sm text-muted-foreground">
                         — since{" "}
-                        {request.carriedOverAt.toLocaleDateString("en-GB")}.
+                        {formatJakartaDate(request.carriedOverAt)}.
                       </span>
                     </div>
                     <form action={revertFromOngoing.bind(null, id)}>

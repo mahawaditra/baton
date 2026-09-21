@@ -127,27 +127,12 @@ export function TroubleshootingSection() {
         </p>
       </TaskCard>
 
-      <TaskCard title="Ketua nyangkut di halaman limbo (Handover nggak kelar)">
-        <p>
-          Kalau Ketua udah klik Handover tapi belum upload foto (tab ketutup,
-          fotonya error, dll), tiap buka <code>/admin</code> dia bakal dilempar
-          balik ke halaman upload foto itu — ini disengaja. Solusi paling
-          gampang: suruh dia login lagi dan selesaikan upload fotonya (JPEG,
-          PNG, atau HEIC dari iPhone — dikompres otomatis).
-        </p>
-        <p>
-          Kalau dia beneran nggak bisa nyelesaiin, hubungi Zenka. Ini
-          diberesin lewat database, nggak bisa dari admin panel.
-        </p>
-      </TaskCard>
-
       <TaskCard title="Ubah atau tambah orang di halaman BATON Legacy">
         <p>
-          Bagian atas halaman <code>/legacy</code> (tim awal BATON) itu statis —
-          daftar nama dan fotonya ada di kode dan di Drive, bukan di database.
-          Buat ganti foto atau nambah orang, hubungi Zenka. Bagian bawah
-          (BATON Sacrifices, placard per Ketua) terisi otomatis tiap ada
-          Handover yang kelar, dan nggak bisa diedit dari admin panel.
+          Halaman <code>/legacy</code> itu tribute kecil buat temen-temen yang
+          bantuin Zenka pas jadi pengurus Logistik. Daftar nama dan fotonya
+          statis — ada di kode dan di Drive, bukan di database. Buat ganti foto
+          atau nambah orang, hubungi Zenka.
         </p>
       </TaskCard>
 

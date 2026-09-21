@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { LEGACY_CREW } from "./legacy-crew";
 import { patchLegacyCrewSource } from "./legacy-crew-file";
 
-const source = fs.readFileSync("src/lib/legacy-crew.ts", "utf8");
+const source = fs.readFileSync("src/lib/legacy/legacy-crew.ts", "utf8");
 
 function entryOf(text: string, slug: string) {
   const start = text.indexOf(`slug: "${slug}"`);

@@ -1,25 +1,27 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getAdminSession, requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { replaceSignatureImage } from "@/lib/drive";
-import { runHandover } from "@/lib/handover";
+import { replaceSignatureImage } from "@/lib/files/drive";
+import { runHandover } from "@/lib/admin/handover";
+import { adminEmailSchema } from "@/lib/admin/email";
 import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
-import { ACTIVE_INSTRUMENT_HOLD_STATUSES } from "@/lib/loan-rules";
+import { ACTIVE_INSTRUMENT_HOLD_STATUSES } from "@/lib/loan/loan-rules";
+import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
+import { validateImageUpload } from "@/lib/files/file-validation";
 import {
   assignableRoles,
   canEditSettings,
   canSetActive,
   canViewAdminManagement,
-} from "@/lib/roles";
+} from "@/lib/admin/roles";
 
 const addAdminSchema = z.object({
-  email: z.email("Invalid email address"),
+  email: adminEmailSchema,
   name: z.string().trim().min(1, "Name is required").max(100),
   role: z.enum(["staff", "ketua"], "Invalid role"),
 });
@@ -114,7 +116,7 @@ export async function addAdmin(
   prevState: AddAdminState,
   formData: FormData,
 ): Promise<AddAdminState> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getAdminSession();
 
   if (!session || assignableRoles(session.user.role).length === 0) {
     return {
@@ -191,7 +193,7 @@ export type HandoverState = { error: string | null };
 export async function handoverKetua(
   formData: FormData,
 ): Promise<HandoverState> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getAdminSession();
 
   if (!session || session.user.role !== "ketua") {
     return { error: "Only the Ketua can hand over the position." };
@@ -238,9 +240,7 @@ export async function updateLoanSettings(
   prevState: UpdateLoanSettingsState,
   formData: FormData,
 ): Promise<UpdateLoanSettingsState> {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
   if (!canEditSettings(session.user.role)) {
     throw new Error("Only Ketua or Overlord can update loan settings.");
   }
@@ -294,12 +294,16 @@ export async function updateLoanSettings(
 
   let signatoryImageDriveId = existing?.signatoryImageDriveId ?? null;
 
-  const imageFile = formData.get("signatoryImage") as File;
-  if (imageFile?.size) {
-    const buffer = Buffer.from(await imageFile.arrayBuffer());
+  const signatureUpload = formData.get("signatoryImage");
+  if (signatureUpload instanceof File && signatureUpload.size) {
+    const validation = await validateImageUpload(signatureUpload);
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
+    }
+    const buffer = Buffer.from(await signatureUpload.arrayBuffer());
     signatoryImageDriveId = await replaceSignatureImage({
       buffer,
-      mimeType: imageFile.type,
+      mimeType: validation.mimeType,
       oldFileId: existing?.signatoryImageDriveId ?? null,
     });
   }
@@ -347,6 +351,7 @@ export async function updateLoanSettings(
 
   invalidateFooterCache();
 
+  revalidatePath("/");
   revalidatePath("/admin/settings");
   revalidatePath("/admin/activity");
 
@@ -354,8 +359,7 @@ export async function updateLoanSettings(
 }
 
 export async function setSignatoryPhonePublic(value: boolean) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
   if (!canEditSettings(session.user.role)) {
     throw new Error("Only Ketua or Overlord can update loan settings.");
   }
@@ -385,8 +389,7 @@ export async function setSignatoryPhonePublic(value: boolean) {
 }
 
 export async function setSignatoryLineAddFriendPublic(value: boolean) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
   if (!canEditSettings(session.user.role)) {
     throw new Error("Only Ketua or Overlord can update loan settings.");
   }
@@ -421,8 +424,7 @@ export type SetSignatoryLineAddFriendUrlResult =
 export async function setSignatoryLineAddFriendUrl(
   value: string,
 ): Promise<SetSignatoryLineAddFriendUrlResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
   if (!canEditSettings(session.user.role)) {
     throw new Error("Only Ketua or Overlord can update loan settings.");
   }
@@ -462,9 +464,9 @@ export async function setSignatoryLineAddFriendUrl(
 }
 
 export async function setAdminActive(adminId: string, isActive: boolean) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await requireAdmin();
 
-  if (!session) throw new Error("Not logged in");
+  if (!z.uuid().safeParse(adminId).success) throw new Error("Admin not found.");
   if (!canViewAdminManagement(session.user.role)) {
     throw new Error("You don't have permission to manage admins.");
   }
@@ -510,12 +512,15 @@ export async function adjustInstrumentTypeSlot(
   instrumentType: string,
   direction: "increase" | "decrease",
 ): Promise<AdjustInstrumentTypeSlotResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
   if (!canEditSettings(session.user.role)) {
     throw new Error(
       "Only Ketua or Overlord can update instrument slot settings.",
     );
+  }
+
+  if (!(REQUESTABLE_INSTRUMENT_TYPES as readonly string[]).includes(instrumentType)) {
+    return { success: false, error: "Unknown instrument type." };
   }
 
   const existing = await prisma.instrumentTypeSlot.findUnique({

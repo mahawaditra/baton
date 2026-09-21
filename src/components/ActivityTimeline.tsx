@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   formatActivityLog,
+  formatJakartaDateTime,
+  formatJakartaTime,
   getEntityUrl,
   resolveActorName,
 } from "@/lib/format";
@@ -50,12 +52,9 @@ export function ActivityTimeline({
               </div>
               <div className="mt-0.5 flex items-center gap-2 text-caption text-muted-foreground">
                 <span className="tabular">
-                  {log.createdAt.toLocaleString(
-                    "en-GB",
-                    showDate
-                      ? { dateStyle: "short", timeStyle: "short" }
-                      : { timeStyle: "short" },
-                  )}
+                  {showDate
+                    ? formatJakartaDateTime(log.createdAt)
+                    : formatJakartaTime(log.createdAt)}
                 </span>
                 {tag && (
                   <span className="tabular rounded-sm bg-muted px-1.5 py-0.5 font-medium">

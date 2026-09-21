@@ -7,16 +7,21 @@ import {
   getGeneratedContractFolder,
   getBorrowerArchiveFolder,
   getOrCreateFolder,
-} from "@/lib/drive";
-import { renderBorrowerContractPdf } from "@/lib/contract-pdf";
-import { signDownloadToken } from "@/lib/download-token";
-import { driveTimestamp, escapeHtml, toWhatsAppNumber } from "@/lib/format";
+} from "@/lib/files/drive";
+import { renderBorrowerContractPdf } from "@/lib/files/contract-pdf";
+import { signDownloadToken } from "@/lib/loan/download-token";
+import {
+  currentYearInJakarta,
+  driveTimestamp,
+  escapeHtml,
+  toWhatsAppNumber,
+} from "@/lib/format";
 import {
   documentTypesNeedingUpload,
   computeCanExtend,
   formatNameWithNickname,
   requiredDocumentTypesForPeriod,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
 import { accessCodeLimiter, limitOrAllow } from "@/lib/rate-limit";
@@ -24,7 +29,7 @@ import { z } from "zod";
 import {
   validateDocumentUpload,
   validateImageUpload,
-} from "@/lib/file-validation";
+} from "@/lib/files/file-validation";
 import * as Sentry from "@sentry/nextjs";
 
 type VerifyResult =
@@ -47,6 +52,18 @@ type UploadState = {
   error: string | null;
   generalError: string | null;
 };
+
+class StageConflictError extends Error {}
+
+async function trashQuietly(fileIds: string[]) {
+  await Promise.all(
+    fileIds.map(async (fileId) => {
+      try {
+        await trashFile(fileId);
+      } catch {}
+    }),
+  );
+}
 
 async function requireTicketAccess(ticketId: string, accessCode: string) {
   const request = await prisma.borrowingRequest.findUnique({
@@ -104,38 +121,52 @@ export async function verifyAccessCode(
     where: { requestId: request.id },
     orderBy: { sequence: "desc" },
   });
-  const hasInitialAddendum = latestPeriod
-    ? (await prisma.addendum.count({
-        where: { periodId: latestPeriod.id, timing: "initial" },
-      })) > 0
-    : false;
+  const isExtensionPeriod = latestPeriod?.periodType === "extension";
 
-  const canFillExtensionAddendum =
-    latestPeriod?.periodType === "extension" && !hasInitialAddendum
-      ? (await prisma.document.count({
+  const [
+    initialAddendumCount,
+    finalAddendumCount,
+    approvedSignedContractCount,
+    existingDocuments,
+    contactSettings,
+  ] = await Promise.all([
+    latestPeriod
+      ? prisma.addendum.count({
+          where: { periodId: latestPeriod.id, timing: "initial" },
+        })
+      : 0,
+    latestPeriod
+      ? prisma.addendum.count({
+          where: { periodId: latestPeriod.id, timing: "final" },
+        })
+      : 0,
+    latestPeriod && isExtensionPeriod
+      ? prisma.document.count({
           where: {
             periodId: latestPeriod.id,
             type: "signed_contract",
             reviewStatus: "approved",
           },
-        })) > 0
-      : false;
+        })
+      : 0,
+    latestPeriod
+      ? prisma.document.findMany({
+          where: { periodId: latestPeriod.id },
+          distinct: ["type"],
+          orderBy: { uploadedAt: "desc" },
+        })
+      : [],
+    request.status === "ready_to_pickup"
+      ? prisma.loanSetting.findFirst({
+          select: { signatoryPhone: true, signatoryLineAddFriendUrl: true },
+        })
+      : null,
+  ]);
 
-  const hasFinalAddendum = latestPeriod
-    ? (await prisma.addendum.count({
-        where: { periodId: latestPeriod.id, timing: "final" },
-      })) > 0
-    : false;
-
-  const isExtensionPeriod = latestPeriod?.periodType === "extension";
-
-  const existingDocuments = latestPeriod
-    ? await prisma.document.findMany({
-        where: { periodId: latestPeriod.id },
-        distinct: ["type"],
-        orderBy: { uploadedAt: "desc" },
-      })
-    : [];
+  const hasInitialAddendum = initialAddendumCount > 0;
+  const hasFinalAddendum = finalAddendumCount > 0;
+  const canFillExtensionAddendum =
+    isExtensionPeriod && !hasInitialAddendum && approvedSignedContractCount > 0;
 
   const requiredDocumentTypes =
     requiredDocumentTypesForPeriod(isExtensionPeriod);
@@ -159,16 +190,15 @@ export async function verifyAccessCode(
     computeCanExtend(request.status, dueDate) && !hasPendingExtension;
 
   let pickupContact: RequestData["pickupContact"] = null;
-  if (request.status === "ready_to_pickup" && !hasInitialAddendum) {
-    const contactSettings = await prisma.loanSetting.findFirst({
-      select: { signatoryPhone: true, signatoryLineAddFriendUrl: true },
-    });
-    if (contactSettings) {
-      pickupContact = {
-        whatsappUrl: `https://wa.me/${toWhatsAppNumber(contactSettings.signatoryPhone)}`,
-        lineUrl: contactSettings.signatoryLineAddFriendUrl,
-      };
-    }
+  if (
+    request.status === "ready_to_pickup" &&
+    !hasInitialAddendum &&
+    contactSettings
+  ) {
+    pickupContact = {
+      whatsappUrl: `https://wa.me/${toWhatsAppNumber(contactSettings.signatoryPhone)}`,
+      lineUrl: contactSettings.signatoryLineAddFriendUrl,
+    };
   }
 
   const { accessCode, id, ...safeData } = request;
@@ -336,7 +366,7 @@ export async function submitStage2(
     },
   });
 
-  const year = new Date().getFullYear();
+  const year = currentYearInJakarta();
   const folderId = await getGeneratedContractFolder(year);
   const driveFileId = await uploadFile(
     `Kontrak ${request.borrowerName}_${request.ticketId}.pdf`,
@@ -352,7 +382,9 @@ export async function submitStage2(
       });
 
       if (current.status !== "reviewing") {
-        throw new Error("Pengajuan ini sudah diproses di tab/perangkat lain.");
+        throw new StageConflictError(
+          "Pengajuan ini sudah diproses di tab/perangkat lain.",
+        );
       }
 
       await tx.borrowingRequest.update({
@@ -379,11 +411,21 @@ export async function submitStage2(
         },
       });
     });
-  } catch {
+  } catch (err) {
+    await trashQuietly([driveFileId]);
+    if (err instanceof StageConflictError) {
+      return {
+        success: false,
+        error: null,
+        generalError: err.message,
+        fields: {},
+      };
+    }
+    Sentry.captureException(err);
     return {
       success: false,
       error: null,
-      generalError: "Pengajuan ini sudah diproses di tab/perangkat lain.",
+      generalError: "Data kontrak belum tersimpan. Coba lagi sebentar lagi.",
       fields: {},
     };
   }
@@ -478,7 +520,7 @@ export async function submitExtension(
       success: false,
       error: null,
       generalError:
-        "Perpanjangan untuk pengajuan ini masih menunggu konfirmasi admin.",
+        "Perpanjangan untuk pengajuan ini masih menunggu konfirmasi staf.",
       fields,
     };
   }
@@ -503,7 +545,7 @@ export async function submitExtension(
   });
 
   const nextSequence = latestPeriod.sequence + 1;
-  const year = new Date().getFullYear();
+  const year = currentYearInJakarta();
   const folderId = await getGeneratedContractFolder(year);
   const driveFileId = await uploadFile(
     `Kontrak ${request.borrowerName}_${request.ticketId}_Ext${nextSequence}.pdf`,
@@ -512,29 +554,34 @@ export async function submitExtension(
     folderId,
   );
 
-  await prisma.$transaction([
-    prisma.borrowingRequest.update({
-      where: { ticketId },
-      data: {
-        borrowerKtpNumber: ktpNumber,
-        borrowerAddressKtp: addressKtp,
-        borrowerAddressDomicile: addressDomicile,
-        borrowerFaculty: facultyMajor,
-        guardianName,
-        guardianPhone,
-        guardianAddressKtp,
-      },
-    }),
-    prisma.loanPeriod.create({
-      data: {
-        requestId: request.id,
-        periodType: "extension",
-        sequence: nextSequence,
-        dueDate: settings.dueDate,
-        contractDriveFileId: driveFileId,
-      },
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.borrowingRequest.update({
+        where: { ticketId },
+        data: {
+          borrowerKtpNumber: ktpNumber,
+          borrowerAddressKtp: addressKtp,
+          borrowerAddressDomicile: addressDomicile,
+          borrowerFaculty: facultyMajor,
+          guardianName,
+          guardianPhone,
+          guardianAddressKtp,
+        },
+      }),
+      prisma.loanPeriod.create({
+        data: {
+          requestId: request.id,
+          periodType: "extension",
+          sequence: nextSequence,
+          dueDate: settings.dueDate,
+          contractDriveFileId: driveFileId,
+        },
+      }),
+    ]);
+  } catch (err) {
+    await trashQuietly([driveFileId]);
+    throw err;
+  }
 
   return { success: true, error: null, generalError: null, fields: {} };
 }
@@ -639,7 +686,7 @@ export async function submitDocument(
     return { success: false, error: validation.error, generalError: null };
   }
 
-  const year = new Date().getFullYear();
+  const year = currentYearInJakarta();
   const folderId = await getBorrowerArchiveFolder(
     year,
     ticketId,
@@ -699,6 +746,9 @@ export async function submitDocument(
     }
 
     return complete;
+  }).catch(async (err) => {
+    await trashQuietly([driveFileId]);
+    throw err;
   });
 
   if (previousDocument) {
@@ -809,7 +859,7 @@ export async function submitAddendum(
         return {
           success: false,
           error: null,
-          generalError: "Kontrak yang kamu tanda tangani masih direview admin.",
+          generalError: "Kontrak yang kamu tanda tangani masih direview staf.",
           fields: {},
         };
       }
@@ -866,7 +916,7 @@ export async function submitAddendum(
   const { completeness, bodyCondition, accessoriesCondition, notes } =
     parsed.data;
 
-  const year = new Date().getFullYear();
+  const year = currentYearInJakarta();
   const archiveFolder = await getBorrowerArchiveFolder(
     year,
     ticketId,
@@ -877,7 +927,9 @@ export async function submitAddendum(
     archiveFolder,
   );
 
-  const photos = formData.getAll("photos") as File[];
+  const photos = formData
+    .getAll("photos")
+    .filter((photo): photo is File => photo instanceof File);
 
   const validatedPhotos: { file: File; mimeType: string }[] = [];
   for (const photo of photos) {
@@ -907,22 +959,27 @@ export async function submitAddendum(
     driveFileIds.push(driveFileId);
   }
 
-  await prisma.addendum.create({
-    data: {
-      periodId: latestPeriod.id,
-      timing,
-      instrumentType:
-        request.instrument?.type ?? request.instrumentTypeRequested,
-      instrumentBrand: request.instrument?.brand,
-      instrumentSerial: request.instrument?.serialNumber,
-      completeness,
-      bodyCondition,
-      accessoriesCondition,
-      driveFileIds,
-      confirmedTruthful: true,
-      notes,
-    },
-  });
+  try {
+    await prisma.addendum.create({
+      data: {
+        periodId: latestPeriod.id,
+        timing,
+        instrumentType:
+          request.instrument?.type ?? request.instrumentTypeRequested,
+        instrumentBrand: request.instrument?.brand,
+        instrumentSerial: request.instrument?.serialNumber,
+        completeness,
+        bodyCondition,
+        accessoriesCondition,
+        driveFileIds,
+        confirmedTruthful: true,
+        notes,
+      },
+    });
+  } catch (err) {
+    await trashQuietly(driveFileIds);
+    throw err;
+  }
 
   if (timing === "final") {
     try {

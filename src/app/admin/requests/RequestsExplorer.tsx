@@ -9,13 +9,14 @@ import {
   getRequestStatusLabel,
 } from "@/components/RequestStatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
-import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan-rules";
+import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { EntityCard } from "@/components/EntityCard";
 import { CollapsibleGroup } from "@/components/CollapsibleGroup";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
 import { FileText, SearchX, Hash, Calendar } from "lucide-react";
 import { toggleSetValue } from "@/lib/utils";
+import { formatJakartaDate } from "@/lib/format";
 
 const STATUS_GROUP_PRIORITY: BorrowingRequestStatus[] = [
   "overdue",
@@ -52,7 +53,7 @@ function RequestCard({ request }: { request: RequestRow }) {
       metaLeft={[{ icon: Hash, text: request.ticketId }]}
       metaGrow={{
         icon: Calendar,
-        text: request.createdAt.toLocaleDateString("en-GB"),
+        text: formatJakartaDate(request.createdAt),
       }}
     />
   );
@@ -79,7 +80,7 @@ export function RequestsExplorer({
         request.borrowerYear,
         request.instrumentTypeRequested,
         getRequestStatusLabel(request.status),
-        request.createdAt.toLocaleDateString("en-GB"),
+        formatJakartaDate(request.createdAt),
       ]
         .filter(Boolean)
         .join(" ")

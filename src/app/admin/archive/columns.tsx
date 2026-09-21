@@ -9,7 +9,7 @@ import type {
   LoanPeriod,
 } from "@/generated/prisma/client";
 import { buttonVariants } from "@/components/ui/button";
-import { formatNameWithNickname } from "@/lib/loan-rules";
+import { formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { cn } from "@/lib/utils";
 
 export type ArchivedRequest = BorrowingRequest & {

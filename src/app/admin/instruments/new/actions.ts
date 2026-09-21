@@ -1,12 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { isOutOfServiceCondition } from "@/lib/loan-rules";
+import { isOutOfServiceCondition } from "@/lib/loan/loan-rules";
 
 const createInstrumentSchema = z.object({
   section: z.string().trim().min(1, "Section is required").max(100),
@@ -29,11 +28,7 @@ export async function createInstrument(
   prevState: CreateInstrumentState,
   formData: FormData,
 ): Promise<CreateInstrumentState> {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const parsed = createInstrumentSchema.safeParse({
     section: formData.get("section"),

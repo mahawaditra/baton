@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 import {
   MAX_UPLOAD_SIZE_BYTES,
   MAX_UPLOAD_SIZE_LABEL,
-} from "@/lib/file-validation";
-import { getDocumentTypeLabel } from "@/lib/loan-rules";
-import { uploadSequentially, type UploadOutcome } from "@/lib/sequential-upload";
+} from "@/lib/files/file-validation";
+import { getDocumentTypeLabel } from "@/lib/loan/loan-rules";
+import { uploadSequentially, type UploadOutcome } from "@/lib/loan/sequential-upload";
 import { toastError } from "@/lib/toast";
 
 export type DocumentType = "signed_contract" | "deposit_proof" | "ktp_scan";

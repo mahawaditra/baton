@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getDocumentReviewStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { formatJakartaDate } from "@/lib/format";
 
 function formatDocType(type: string) {
   return type
@@ -94,7 +95,7 @@ export function DocumentReviewSection({
                         {formatDocType(doc.type)}
                       </div>
                       <div className="tabular mt-0.5 text-xs text-muted-foreground">
-                        {doc.uploadedAt.toLocaleDateString("en-GB")}
+                        {formatJakartaDate(doc.uploadedAt)}
                       </div>
                     </div>
                   </div>

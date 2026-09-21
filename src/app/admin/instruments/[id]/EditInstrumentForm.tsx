@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CONDITION_OPTIONS, STATUS_OPTIONS } from "@/components/StatusBadge";
-import { isOutOfServiceCondition } from "@/lib/loan-rules";
+import { isOutOfServiceCondition } from "@/lib/loan/loan-rules";
 import { cn } from "@/lib/utils";
 
 const initialState: UpdateInstrumentState = {

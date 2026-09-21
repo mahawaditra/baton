@@ -5,7 +5,7 @@ import Image from "next/image";
 import { unstable_rethrow } from "next/navigation";
 import { Camera } from "lucide-react";
 import { completeHandover } from "./actions";
-import { prepareImageFile } from "@/lib/image-processing";
+import { prepareImageFile } from "@/lib/files/image-processing";
 import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

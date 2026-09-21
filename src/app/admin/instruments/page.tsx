@@ -7,7 +7,7 @@ import { AdminHeaderAction } from "@/components/AdminHeaderAction";
 import {
   ACTIVE_INSTRUMENT_HOLD_STATUSES,
   formatSharedLocation,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 
 export default async function InstrumentsPage() {
   const instrumentsRaw = await prisma.instrument.findMany({

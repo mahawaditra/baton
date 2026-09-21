@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Archive, ArchiveX, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toJakartaCalendarDate } from "@/lib/format";
 
 export default async function ArchivePage({
   searchParams,
@@ -24,7 +25,9 @@ export default async function ArchivePage({
     select: { createdAt: true },
   });
   const availableYears = [
-    ...new Set(allReturned.map((r) => r.createdAt.getFullYear())),
+    ...new Set(
+      allReturned.map((r) => toJakartaCalendarDate(r.createdAt).getUTCFullYear()),
+    ),
   ].sort((a, b) => b - a);
 
   const requests = await prisma.borrowingRequest.findMany({
@@ -32,8 +35,8 @@ export default async function ArchivePage({
       status: "returned",
       ...(parsedYear && {
         createdAt: {
-          gte: new Date(`${parsedYear}-01-01`),
-          lt: new Date(`${parsedYear + 1}-01-01`),
+          gte: new Date(Date.UTC(parsedYear, 0, 1, -7)),
+          lt: new Date(Date.UTC(parsedYear + 1, 0, 1, -7)),
         },
       }),
       ...(borrower && {

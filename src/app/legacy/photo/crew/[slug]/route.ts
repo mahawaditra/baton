@@ -1,6 +1,6 @@
-import { fetchFileBytes } from "@/lib/drive";
-import { LEGACY_CREW } from "@/lib/legacy-crew";
-import { legacyPhotoNotFound, legacyPhotoResponse } from "@/lib/legacy-photo";
+import { fetchFileBytes } from "@/lib/files/drive";
+import { LEGACY_CREW } from "@/lib/legacy/legacy-crew";
+import { legacyPhotoNotFound, legacyPhotoResponse } from "@/lib/legacy/legacy-photo";
 
 export async function GET(
   _req: Request,

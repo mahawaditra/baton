@@ -71,7 +71,7 @@ const STEPS = [
     icon: Clock,
     title: "Tunggu Konfirmasi",
     description:
-      "Admin Logistik cek ketersediaan dan siapkan instrumen untuk kamu.",
+      "Staf Logistik cek ketersediaan dan siapkan instrumen untuk kamu.",
   },
   {
     icon: SignatureIcon,

@@ -8,8 +8,9 @@ import { UploadDocumentsForm } from "./UploadDocumentsForm";
 import { RequestData } from "./types";
 import { AddendumForm } from "./AddendumForm";
 import { ExtendForm } from "./ExtendForm";
-import { getRequestStep, LOAN_STEP_LABELS, resolveNickname } from "@/lib/loan-rules";
+import { getRequestStep, LOAN_STEP_LABELS, resolveNickname } from "@/lib/loan/loan-rules";
 import { toastError } from "@/lib/toast";
+import { formatCalendarDate, formatJakartaDate } from "@/lib/format";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { LoanStepper } from "@/components/LoanStepper";
 import { LoadingMarquee } from "@/components/LoadingMarquee";
@@ -132,7 +133,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             <div className="mb-2 flex items-center gap-3">
               <RequestStatusBadge status={data.status} variant="pill" />
               <span className="tabular text-xs text-muted-foreground">
-                Diajukan {new Date(data.createdAt).toLocaleDateString("en-GB")}
+                Diajukan {formatJakartaDate(data.createdAt)}
               </span>
             </div>
             <h1 className="font-heading text-h1 text-foreground">
@@ -239,7 +240,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             <p className="text-sm text-muted-foreground">
               Jatuh Tempo:{" "}
               <span className="tabular font-medium text-foreground">
-                {new Date(data.dueDate).toLocaleDateString("id-ID")}
+                {formatCalendarDate(data.dueDate, "id-ID")}
               </span>
             </p>
           )}
@@ -247,18 +248,18 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
           {(data.status === "submitted" || data.status === "reviewing") &&
             !data.instrumentConfirmed && (
               <StatusNote>
-                Admin sedang mereview pengajuan dan mengecek ketersediaan
+                Staf sedang mereview pengajuan dan mengecek ketersediaan
                 instrumen kamu.
               </StatusNote>
             )}
 
           {data.status === "documents_uploaded" && (
-            <StatusNote>Dokumen kamu sedang direview admin.</StatusNote>
+            <StatusNote>Dokumen kamu sedang direview staf.</StatusNote>
           )}
 
           {data.status === "ready_to_pickup" && data.hasInitialAddendum && (
             <StatusNote>
-              Addendum sudah dikirim. Menunggu konfirmasi admin.
+              Addendum sudah dikirim. Menunggu konfirmasi staf.
             </StatusNote>
           )}
 
@@ -267,14 +268,14 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             !data.canFillExtensionAddendum &&
             !data.hasInitialAddendum && (
               <StatusNote>
-                Dokumen perpanjangan sedang direview admin.
+                Dokumen perpanjangan sedang direview staf.
               </StatusNote>
             )}
 
           {(data.status === "active" || data.status === "overdue") &&
             data.hasFinalAddendum && (
               <StatusNote>
-                Addendum pengembalian sudah dikirim. Menunggu admin konfirmasi
+                Addendum pengembalian sudah dikirim. Menunggu staf konfirmasi
                 pengembalian di Sekre.
               </StatusNote>
             )}

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { resolveActorName } from "@/lib/format";
+import { formatJakartaDate, resolveActorName } from "@/lib/format";
 import { exportInventorySnapshot } from "./actions";
 import { AnnualReportPanel } from "./AnnualReportPanel";
 import { buttonVariants } from "@/components/ui/button";
@@ -67,7 +67,7 @@ export default async function ReportsPage() {
                     >
                       <span className="text-foreground-2">
                         {s.label} — by {resolveActorName(s.creator, s.creatorName)} —{" "}
-                        {s.createdAt.toLocaleDateString("en-GB")}
+                        {formatJakartaDate(s.createdAt)}
                       </span>
                       <a
                         href={`https://drive.google.com/file/d/${s.driveFileId}/view`}

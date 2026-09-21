@@ -125,7 +125,7 @@ export function RequestForm() {
           Ajukan peminjaman alat
         </h1>
         <p className="mt-2 text-body-lg text-foreground-2">
-          Peminjaman akan diverifikasi admin OSUI Mahawaditra dalam 1×24 jam.
+          Peminjaman akan diverifikasi staf Logistik OSUI Mahawaditra dalam 1×24 jam.
           Kode akses status dikirim ke email yang kamu masukkan.
         </p>
       </div>

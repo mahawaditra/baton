@@ -6,7 +6,7 @@ import { Users, History, ClipboardList, Activity } from "lucide-react";
 import type { ActivityAction } from "@/generated/prisma/client";
 import { PhotoViewerModal } from "@/components/PhotoViewerModal";
 import { uploadInstrumentPhoto } from "./actions";
-import { formatNameWithNickname } from "@/lib/loan-rules";
+import { formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { getAddendumTimingLabel } from "@/lib/labels";
 
 const INSTRUMENT_RELEVANT_REQUEST_ACTIONS: ActivityAction[] = [

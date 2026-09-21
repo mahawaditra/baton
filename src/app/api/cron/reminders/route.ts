@@ -2,8 +2,13 @@ import { NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
-import { daysBetween, escapeHtml, todayInJakarta } from "@/lib/format";
-import { resolveNickname } from "@/lib/loan-rules";
+import {
+  daysBetween,
+  escapeHtml,
+  formatCalendarDate,
+  todayInJakarta,
+} from "@/lib/format";
+import { resolveNickname } from "@/lib/loan/loan-rules";
 import * as Sentry from "@sentry/nextjs";
 
 export async function GET(request: NextRequest) {
@@ -42,7 +47,7 @@ export async function GET(request: NextRequest) {
           subject: `Reminder: ${daysUntilDue} hari lagi jatuh tempo peminjaman`,
           html: `
             <p>Halo ${escapeHtml(resolveNickname(req.borrowerName, req.borrowerNickname))},</p>
-            <p>Peminjaman instrumen kamu (tiket ${req.ticketId}) akan jatuh tempo dalam <strong>${daysUntilDue} hari</strong> (${latestPeriod.dueDate.toLocaleDateString("id-ID")}).</p>
+            <p>Peminjaman instrumen kamu (tiket ${req.ticketId}) akan jatuh tempo dalam <strong>${daysUntilDue} hari</strong> (${formatCalendarDate(latestPeriod.dueDate, "id-ID")}).</p>
             <p>Sesuai Pasal 2 ayat (5) kontrak kamu, deposit dikembalikan penuh (Rp${settings.depositAmount.toLocaleString("id-ID")}) jika instrumen dikembalikan tepat waktu atau lebih awal. Telat walau 1 hari, deposit otomatis berkurang jadi Rp${settings.depositPartialAmount.toLocaleString("id-ID")} sesuai Pasal 2 ayat (6).</p>
             <p>Jika kamu masih membutuhkan instrumen tersebut, kamu bisa ajukan perpanjangan lewat <a href="${process.env.BETTER_AUTH_URL}/status/${req.ticketId}">halaman status kamu</a>.</p>
           `,
@@ -65,7 +70,7 @@ export async function GET(request: NextRequest) {
           subject: "Peminjaman kamu sudah lewat jatuh tempo",
           html: `
             <p>Halo ${escapeHtml(resolveNickname(req.borrowerName, req.borrowerNickname))},</p>
-            <p>Peminjaman instrumen kamu (tiket ${req.ticketId}) sudah melewati tanggal jatuh tempo (${latestPeriod.dueDate.toLocaleDateString("id-ID")}).</p>
+            <p>Peminjaman instrumen kamu (tiket ${req.ticketId}) sudah melewati tanggal jatuh tempo (${formatCalendarDate(latestPeriod.dueDate, "id-ID")}).</p>
             <p>Sesuai Pasal 2 ayat (6) kontrak kamu, deposit yang akan dikembalikan sekarang berkurang jadi <strong>Rp${settings.depositPartialAmount.toLocaleString("id-ID")}</strong> (dari Rp${settings.depositAmount.toLocaleString("id-ID")}).</p>
             <p>Segera kembalikan instrumen dalam <strong>${settings.depositGraceDays} hari</strong> sejak jatuh tempo — lewat dari itu, sesuai Pasal 2 ayat (7), deposit tidak akan dikembalikan sama sekali.</p>
             <p><a href="${process.env.BETTER_AUTH_URL}/status/${req.ticketId}">Lihat halaman status</a></p>

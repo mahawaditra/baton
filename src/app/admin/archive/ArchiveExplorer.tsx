@@ -1,7 +1,7 @@
 import { RotateCcw } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import { EntityCard } from "@/components/EntityCard";
-import { formatNameWithNickname } from "@/lib/loan-rules";
+import { formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { columns, type ArchivedRequest } from "./columns";
 
 function ArchiveCard({ request }: { request: ArchivedRequest }) {

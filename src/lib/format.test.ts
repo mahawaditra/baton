@@ -1,8 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import {
   buildAnnualSummaryRows,
+  currentYearInJakarta,
   daysBetween,
+  driveTimestamp,
   formatActivityLog,
+  formatCalendarDate,
+  formatJakartaDate,
+  formatJakartaDateTime,
+  formatJakartaTime,
   FORMER_MEMBER_LABEL,
   resolveActorName,
   toWhatsAppNumber,
@@ -345,5 +351,46 @@ describe("formatActivityLog", () => {
     expect(formatActivityLog(log("some_future_action", null))).toBe(
       "some future action",
     );
+  });
+});
+
+describe('Jakarta date and time display', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows the Jakarta calendar day, not the UTC day', () => {
+    expect(formatJakartaDate(new Date('2026-01-04T22:00:00Z'))).toBe('05/01/2026');
+    expect(formatJakartaDate(new Date('2026-01-04T16:59:00Z'))).toBe('04/01/2026');
+  });
+
+  it('shows the Jakarta wall-clock time in 24-hour form', () => {
+    expect(formatJakartaTime(new Date('2026-01-04T22:30:00Z'))).toBe('05:30');
+    expect(formatJakartaTime(new Date('2026-01-05T16:59:00Z'))).toBe('23:59');
+    expect(formatJakartaTime(new Date('2026-01-05T17:00:00Z'))).toBe('00:00');
+  });
+
+  it('joins date and time for the activity feed', () => {
+    expect(formatJakartaDateTime(new Date('2026-01-04T22:30:00Z'))).toBe(
+      '05/01/2026, 05:30',
+    );
+  });
+
+  it('shows a date-only column as stored, whatever timezone the reader is in', () => {
+    const dueDate = new Date('2026-09-14T00:00:00Z');
+    expect(formatCalendarDate(dueDate)).toBe('14/09/2026');
+    expect(formatCalendarDate(dueDate, 'id-ID')).toBe('14/9/2026');
+  });
+
+  it('rolls the year over at midnight Jakarta time, not midnight UTC', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-12-31T16:59:00Z'));
+    expect(currentYearInJakarta()).toBe(2025);
+    vi.setSystemTime(new Date('2025-12-31T17:00:00Z'));
+    expect(currentYearInJakarta()).toBe(2026);
+  });
+
+  it('stamps Drive file names with the Jakarta date', () => {
+    expect(driveTimestamp(new Date('2026-01-04T22:00:00Z'))).toBe('20260105');
   });
 });

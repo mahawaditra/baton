@@ -6,9 +6,10 @@ import { ArrowRight } from "lucide-react";
 import type { Prisma } from "@/generated/prisma/client";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
-import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan-rules";
+import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatJakartaDate } from "@/lib/format";
 
 export type RequestRow = Prisma.BorrowingRequestGetPayload<{
   include: { loanPeriods: { select: { sequence: true; startDate: true } } };
@@ -47,7 +48,7 @@ export const columns: ColumnDef<RequestRow>[] = [
     header: "Submitted",
     cell: ({ row }) => (
       <span className="tabular">
-        {row.original.createdAt.toLocaleDateString("en-GB")}
+        {formatJakartaDate(row.original.createdAt)}
       </span>
     ),
   },

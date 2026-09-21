@@ -18,10 +18,50 @@ export function escapeHtml(str: string): string {
 
 export function driveTimestamp(date = new Date()): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
-  const y = date.getFullYear();
-  const m = pad(date.getMonth() + 1);
-  const d = pad(date.getDate());
+  const jakarta = toJakartaCalendarDate(date);
+  const y = jakarta.getUTCFullYear();
+  const m = pad(jakarta.getUTCMonth() + 1);
+  const d = pad(jakarta.getUTCDate());
   return `${y}${m}${d}`;
+}
+
+const JAKARTA_TIME_ZONE = "Asia/Jakarta";
+
+const jakartaDateFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: JAKARTA_TIME_ZONE,
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+const jakartaTimeFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: JAKARTA_TIME_ZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+export function formatJakartaDate(date: Date | string | number): string {
+  return jakartaDateFormat.format(new Date(date));
+}
+
+export function formatJakartaTime(date: Date | string | number): string {
+  return jakartaTimeFormat.format(new Date(date));
+}
+
+export function formatJakartaDateTime(date: Date | string | number): string {
+  return `${formatJakartaDate(date)}, ${formatJakartaTime(date)}`;
+}
+
+export function formatCalendarDate(
+  date: Date | string | number,
+  locale = "en-GB",
+): string {
+  return new Date(date).toLocaleDateString(locale, { timeZone: "UTC" });
+}
+
+export function currentYearInJakarta(): number {
+  return todayInJakarta().getUTCFullYear();
 }
 
 export const FORMER_MEMBER_LABEL = "Former member";
@@ -275,7 +315,7 @@ export function buildAnnualSummaryRows(params: {
   return [
     { Metric: "Active Loans", Value: activeLoans },
     {
-      Metric: `Requests Created (Jan 1, ${year} - ${periodEnd.toLocaleDateString("en-GB")})`,
+      Metric: `Requests Created (Jan 1, ${year} - ${formatCalendarDate(periodEnd)})`,
       Value: requestsThisYear,
     },
     ...statusBreakdown.map((s) => ({

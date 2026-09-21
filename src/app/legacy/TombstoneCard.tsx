@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { Tombstone } from "@/generated/prisma/client";
-import { formatKetuaLine, usesTwoStaffColumns } from "@/lib/legacy";
+import { formatKetuaLine, usesTwoStaffColumns } from "@/lib/legacy/legacy";
 import { cn } from "@/lib/utils";
 
 export function TombstoneCard({ tombstone }: { tombstone: Tombstone }) {

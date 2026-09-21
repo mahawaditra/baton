@@ -5,7 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { ChromaticImage } from "@/components/ui/chromatic-image";
-import { fitWithin } from "@/lib/legacy";
+import { fitWithin } from "@/lib/legacy/legacy";
 import { cn } from "@/lib/utils";
 
 const MODAL_MAX_WIDTH_PX = 672;

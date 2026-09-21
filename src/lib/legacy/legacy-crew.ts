@@ -66,8 +66,8 @@ export const LEGACY_CREW: LegacyCrewMember[] = [
     slug: "sudirman-meltdown",
     name: "Sudirman Meltdown",
     lines: ["Viola '19", "Honorary"],
-    photoDriveFileId: null,
-    mimeType: "image/gif",
+    photoDriveFileId: "1wIYLG90GlhFQ50B2vbCILO1AAZ9zTUtY",
+    mimeType: "image/jpeg",
   },
   {
     slug: "alvin",

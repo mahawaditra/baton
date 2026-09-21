@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { z } from "zod";
 import { previewAnnualReport, saveAnnualReport } from "./actions";
-import { resolveActorName } from "@/lib/format";
+import {
+  formatCalendarDate,
+  formatJakartaDate,
+  resolveActorName,
+} from "@/lib/format";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -177,9 +181,9 @@ export function AnnualReportPanel({
                       )}
                       <span>
                         Report {r.year} (through{" "}
-                        {new Date(r.periodEnd).toLocaleDateString("en-GB")}) —
+                        {formatCalendarDate(r.periodEnd)}) —
                         by {resolveActorName(r.creator, r.creatorName)} —{" "}
-                        {r.createdAt.toLocaleDateString("en-GB")}
+                        {formatJakartaDate(r.createdAt)}
                       </span>
                     </button>
                     {isExpanded && (

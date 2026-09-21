@@ -5,7 +5,7 @@ import { AdminGoogleLogin } from "@/components/AdminGoogleLogin";
 const FAQ_ITEMS = [
   {
     q: "Berapa lama proses verifikasi peminjaman?",
-    a: "Pengajuan diverifikasi admin OSUI Mahawaditra dalam 1×24 jam sejak formulir dikirim.",
+    a: "Pengajuan diverifikasi staf Logistik OSUI Mahawaditra dalam 1×24 jam sejak formulir dikirim.",
   },
   {
     q: "Siapa saja yang boleh meminjam?",
@@ -33,7 +33,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Bagaimana cara mengembalikan instrumen?",
-    a: "Hubungi Ketua Logistik OSUI Mahawaditra untuk koordinasi jadwal ke Sekre, isi addendum kondisi akhir di halaman status, lalu bawa instrumennya ke Sekre untuk dicek admin.",
+    a: "Hubungi Ketua Logistik OSUI Mahawaditra untuk koordinasi jadwal ke Sekre, isi addendum kondisi akhir di halaman status, lalu bawa instrumennya ke Sekre untuk dicek staf.",
   },
   {
     q: "KTP dan dokumen yang aku unggah aman?",

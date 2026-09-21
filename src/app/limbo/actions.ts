@@ -1,13 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/admin/require-admin";
 import { prisma } from "@/lib/prisma";
-import { getLegacyFolder, trashFile, uploadFile } from "@/lib/drive";
-import { validateImageUpload } from "@/lib/file-validation";
-import { runCompleteHandover } from "@/lib/handover";
+import { getLegacyFolder, trashFile, uploadFile } from "@/lib/files/drive";
+import { validateImageUpload } from "@/lib/files/file-validation";
+import { runCompleteHandover } from "@/lib/admin/handover";
 
 export type CompleteHandoverState = { error: string | null };
 
@@ -20,7 +19,7 @@ async function trashQuietly(fileId: string) {
 export async function completeHandover(
   formData: FormData,
 ): Promise<CompleteHandoverState> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   if (
     !session ||

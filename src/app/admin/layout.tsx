@@ -1,7 +1,6 @@
 import { AdminNav } from "./AdminNav";
 import { BackToTopButton } from "@/components/BackToTopButton";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/admin/require-admin";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
@@ -10,7 +9,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   if (!session || !session.user.isActive) {
     return <>{children}</>;

@@ -8,4 +8,3 @@ export const HANDBOOK_SECTIONS = [
   { slug: "troubleshooting", title: "Troubleshooting", icon: LifeBuoy },
 ] as const;
 
-export type HandbookSectionSlug = (typeof HANDBOOK_SECTIONS)[number]["slug"];

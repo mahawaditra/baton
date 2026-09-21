@@ -1,8 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -31,9 +30,7 @@ export async function createGood(
   prevState: CreateGoodState,
   formData: FormData,
 ): Promise<CreateGoodState> {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
 
   const parsed = createGoodSchema.safeParse({
     name: formData.get("name"),

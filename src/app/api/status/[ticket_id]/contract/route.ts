@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { fetchFileBytes } from "@/lib/drive";
-import { verifyDownloadToken } from "@/lib/download-token";
+import { fetchFileBytes } from "@/lib/files/drive";
+import { verifyDownloadToken } from "@/lib/loan/download-token";
 
 export async function GET(
   req: Request,

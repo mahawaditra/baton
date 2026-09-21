@@ -1,24 +1,29 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import {
   getOrCreateYearFolder,
   getOrCreateFolder,
   uploadFile,
-} from "@/lib/drive";
-import { buildXlsxBuffer } from "@/lib/xlsx";
-import { buildAnnualSummaryRows, toJakartaCalendarDate } from "@/lib/format";
+} from "@/lib/files/drive";
+import { buildXlsxBuffer } from "@/lib/files/xlsx";
+import {
+  buildAnnualSummaryRows,
+  currentYearInJakarta,
+  formatJakartaDate,
+  toJakartaCalendarDate,
+  todayInJakarta,
+} from "@/lib/format";
 import { getConditionLabel, getStatusLabel } from "@/lib/labels";
 import {
   ACTIVE_INSTRUMENT_HOLD_STATUSES,
   formatSharedLocation,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 
 async function computeAnnualReportSummary(year: number) {
-  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const yearStart = new Date(Date.UTC(year, 0, 1, -7));
   const now = new Date();
   const periodEnd = toJakartaCalendarDate(now);
 
@@ -67,18 +72,16 @@ async function computeAnnualReportSummary(year: number) {
 }
 
 export async function previewAnnualReport() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Not logged in");
+  await requireAdmin();
 
-  const year = new Date().getFullYear();
+  const year = currentYearInJakarta();
   return computeAnnualReportSummary(year);
 }
 
 export async function saveAnnualReport() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
 
-  const year = new Date().getFullYear();
+  const year = currentYearInJakarta();
   const { periodEnd, summaryRows } = await computeAnnualReportSummary(year);
 
   const report = await prisma.annualReport.create({
@@ -106,13 +109,10 @@ export async function saveAnnualReport() {
 }
 
 export async function exportInventorySnapshot(formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
-  const rawLabel = formData.get("label") as string;
-  const label = rawLabel || `Snapshot ${new Date().toLocaleDateString("en-GB")}`;
+  const rawLabel = String(formData.get("label") ?? "").trim().slice(0, 100);
+  const label = rawLabel || `Snapshot ${formatJakartaDate(new Date())}`;
 
   const instruments = await prisma.instrument.findMany({
     orderBy: { section: "asc" },
@@ -137,7 +137,7 @@ export async function exportInventorySnapshot(formData: FormData) {
 
   const buffer = buildXlsxBuffer(rows, "Inventory");
 
-  const year = new Date().getFullYear();
+  const year = currentYearInJakarta();
   const yearFolder = await getOrCreateYearFolder(year);
   const snapshotFolder = await getOrCreateFolder(
     "Inventory Snapshots",
@@ -145,7 +145,7 @@ export async function exportInventorySnapshot(formData: FormData) {
   );
 
   const safeLabel = label.replace(/[^a-zA-Z0-9-_ ]/g, "_");
-  const fileName = `Inventarisasi_${safeLabel}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  const fileName = `Inventarisasi_${safeLabel}_${todayInJakarta().toISOString().slice(0, 10)}.xlsx`;
 
   const driveFileId = await uploadFile(
     fileName,

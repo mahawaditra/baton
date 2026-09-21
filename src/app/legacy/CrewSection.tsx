@@ -1,4 +1,4 @@
-import { LEGACY_CREW } from "@/lib/legacy-crew";
+import { LEGACY_CREW } from "@/lib/legacy/legacy-crew";
 import { cn } from "@/lib/utils";
 import { CrewPhoto } from "./CrewPhoto";
 

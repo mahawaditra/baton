@@ -1,18 +1,17 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { replaceItemPhoto } from "@/lib/drive";
+import { replaceItemPhoto } from "@/lib/files/drive";
 import { driveTimestamp } from "@/lib/format";
-import { validateImageUpload } from "@/lib/file-validation";
+import { validateImageUpload } from "@/lib/files/file-validation";
 import {
   ACTIVE_INSTRUMENT_HOLD_STATUSES,
   isOutOfServiceCondition,
-} from "@/lib/loan-rules";
+} from "@/lib/loan/loan-rules";
 
 const updateInstrumentSchema = z.object({
   brand: z.string().trim().max(100).nullable(),
@@ -38,11 +37,7 @@ export async function updateInstrument(
   prevState: UpdateInstrumentState,
   formData: FormData,
 ): Promise<UpdateInstrumentState> {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    throw new Error("Not logged in");
-  }
+  const session = await requireAdmin();
 
   const before = await prisma.instrument.findUniqueOrThrow({
     where: { id },
@@ -122,12 +117,14 @@ export async function updateInstrument(
 }
 
 export async function uploadInstrumentPhoto(id: string, formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Not logged in");
+  const session = await requireAdmin();
 
-  const file = formData.get("photo") as File;
+  const photo = formData.get("photo");
+  const file = photo instanceof File ? photo : null;
   const validation = await validateImageUpload(file);
-  if (!validation.valid) throw new Error(validation.error);
+  if (!file || !validation.valid) {
+    throw new Error(validation.valid ? "File wajib dipilih." : validation.error);
+  }
 
   const before = await prisma.instrument.findUniqueOrThrow({ where: { id } });
   const buffer = Buffer.from(await file.arrayBuffer());

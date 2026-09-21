@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { fetchFileBytes } from "@/lib/drive";
-import { ALLOWED_UPLOAD_MIME_TYPES } from "@/lib/file-validation";
+import { fetchFileBytes } from "@/lib/files/drive";
+import { ALLOWED_UPLOAD_MIME_TYPES } from "@/lib/files/file-validation";
 import { auth } from "@/lib/auth";
+import { z } from "zod";
+import { isServingAdmin } from "@/lib/admin/require-admin";
 
 const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
   "application/pdf": "pdf",
@@ -14,13 +16,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth.api.getSession({ headers: req.headers });
-  if (!session) {
+  if (!isServingAdmin(session)) {
     return new Response("Unauthorized", { status: 401 });
   }
   const { id } = await params;
-  const doc = await prisma.document.findUniqueOrThrow({
+  if (!z.uuid().safeParse(id).success) {
+    return new Response("Not found", { status: 404 });
+  }
+  const doc = await prisma.document.findUnique({
     where: { id },
   });
+  if (!doc) return new Response("Not found", { status: 404 });
 
   const buffer = await fetchFileBytes(doc.driveFileId);
 
@@ -37,6 +43,7 @@ export async function GET(
     headers: {
       "Content-Type": contentType,
       "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "private, no-store",
       "Content-Disposition": `inline; filename="${filename}"`,
     },
   });

@@ -19,7 +19,7 @@ import {
   resolveNickname,
   formatNameWithNickname,
 } from "./loan-rules";
-import { todayInJakarta } from "./format";
+import { todayInJakarta } from "@/lib/format";
 
 function daysFromToday(days: number): Date {
   const today = todayInJakarta();

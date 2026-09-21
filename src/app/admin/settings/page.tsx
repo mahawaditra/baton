@@ -1,10 +1,8 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitButton } from "@/components/SubmitButton";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { LoanSettingsForm } from "./LoanSettingsForm";
 import { InstrumentTypeSlotsPanel } from "./InstrumentTypeSlotsPanel";
@@ -12,16 +10,19 @@ import { AddAdminForm } from "./AddAdminForm";
 import { HandoverButton } from "./HandoverButton";
 import { setAdminActive } from "./actions";
 import { RoleBadge } from "./RoleBadge";
-import { needsSignatoryUpdate } from "@/lib/handover";
+import { getSession } from "@/lib/admin/require-admin";
+import { needsSignatoryUpdate } from "@/lib/admin/handover";
 import {
   assignableRoles,
   canEditSettings,
   canSetActive,
   canViewAdminManagement,
-} from "@/lib/roles";
+} from "@/lib/admin/roles";
+
+export const maxDuration = 30;
 
 export default async function SettingsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!session) redirect("/");
 
   const role = session.user.role;

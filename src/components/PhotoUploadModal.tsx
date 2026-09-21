@@ -4,7 +4,7 @@ import "react-easy-crop/react-easy-crop.css";
 import { useState, useCallback, useTransition } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { RotateCw } from "lucide-react";
-import { getCroppedImg } from "@/lib/crop-image";
+import { getCroppedImg } from "@/lib/files/crop-image";
 import {
   Dialog,
   DialogContent,

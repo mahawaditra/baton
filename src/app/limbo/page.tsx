@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/admin/require-admin";
 import { LimboForm } from "./LimboForm";
+
+export const maxDuration = 30;
 
 export const metadata: Metadata = {
   title: "The sacrifice is made.",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LimboPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   if (!session || !session.user.isActive) redirect("/");
   if (session.user.role !== "ketua" || !session.user.handoverAt) {
