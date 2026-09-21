@@ -85,10 +85,10 @@ export function TroubleshootingSection() {
         <p>
           Slot per tipe instrumen diatur di Settings, bagian{" "}
           <strong>Instrument Sharing Slots</strong> — Ketua (atau Overlord)
-          doang yang bisa ubah, tapi semua admin bisa lihat. By default 1 slot buat semua
-          tipe instrumen; naikin manual (button +) buat tipe yang emang perlu
-          di-share (misal Contrabass jadi 2). Nggak bisa diturunin lagi kalau
-          ada unit yang saat ini beneran lagi dipegang sejumlah itu.
+          doang yang bisa ubah, tapi semua admin bisa lihat. By default 1 slot
+          buat semua tipe instrumen; naikin manual (button +) buat tipe yang
+          emang perlu di-share (misal Contrabass jadi 2). Nggak bisa diturunin
+          lagi kalau ada unit yang saat ini beneran lagi dipegang sejumlah itu.
         </p>
         <p>
           Kalau slotnya masih kosong, instrumen itu tetep muncul di assignable
@@ -130,19 +130,19 @@ export function TroubleshootingSection() {
       <TaskCard title="Link LINE di landing page nggak berfungsi (Sep 2026)">
         <p>
           Link &quot;Add Friend&quot; LINE itu BUKAN dirakit dari LINE ID biasa
-          — itu link/token khusus yang di-generate manual dari app LINE si
-          ketua (Profile → QR code → Copy link). Token ini bisa jadi{" "}
+          — itu link/token khusus yang di-generate manual dari app LINE si ketua
+          (Profile → QR code → Copy link). Token ini bisa jadi{" "}
           <strong>kadaluarsa</strong> kalau ketua nge-klik tombol
-          &quot;Regenerate&quot; lagi di app LINE-nya setelah link lama itu
-          udah dipasang di Settings — link lama otomatis rusak begitu yang
-          baru di-generate.
+          &quot;Regenerate&quot; lagi di app LINE-nya setelah link lama itu udah
+          dipasang di Settings — link lama otomatis rusak begitu yang baru
+          di-generate.
         </p>
         <p>
-          Fix-nya: minta ketua buka app LINE-nya, generate ulang link Add
-          Friend yang baru, copy, terus paste ke field &quot;LINE Add Friend
-          Link&quot; di Settings (centang dulu &quot;Enable LINE&quot; kalau
-          belum, field-nya baru muncul), klik Save di ujung field itu — bukan
-          tombol &quot;Save Loan Settings&quot; di bawah, dua-duanya independen.
+          Fix-nya: minta ketua buka app LINE-nya, generate ulang link Add Friend
+          yang baru, copy, terus paste ke field &quot;LINE Add Friend Link&quot;
+          di Settings (centang dulu &quot;Enable LINE&quot; kalau belum,
+          field-nya baru muncul), klik Save di ujung field itu — bukan tombol
+          &quot;Save Loan Settings&quot; di bawah, dua-duanya independen.
         </p>
       </TaskCard>
 
@@ -167,9 +167,9 @@ export function TroubleshootingSection() {
             deposit mulai kepotong/hangus. Diatur di Settings.
           </li>
           <li>
-            <strong>Dibooking vs dipinjam</strong> — status instrumen. Dibooking =
-            udah di-assign ke sebuah request tapi belum di-handover. Dipinjam =
-            udah di-handover, lagi beneran dipinjam. Bisa lebih dari satu
+            <strong>Dibooking vs dipinjam</strong> — status instrumen. Dibooking
+            = udah di-assign ke sebuah request tapi belum di-handover. Dipinjam
+            = udah di-handover, lagi beneran dipinjam. Bisa lebih dari satu
             peminjam aktif bareng-bareng kalau instrumennya lagi di-share —
             lihat <strong>Slot instrumen</strong>.
           </li>
