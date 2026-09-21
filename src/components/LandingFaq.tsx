@@ -74,7 +74,7 @@ function FaqItem({ item }: { item: { q: string; a: ReactNode } }) {
 
 export function LandingFaq() {
   return (
-    <section className="border-t border-border bg-surface px-6 py-16">
+    <section className="border-t border-border bg-surface px-6 py-12">
       <div className="mx-auto max-w-5xl">
         <h2 className="text-center font-heading text-h2 text-foreground">
           F.A.Q

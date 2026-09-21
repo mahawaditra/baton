@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { handoverKetua } from "./actions";
 import { handoverDescription, handoverTitle } from "@/lib/admin/handover";
 import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
+import { HoldButton } from "@/components/HoldButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,6 +24,7 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,7 +54,7 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
         Handover
       </AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-[480px]">
-        <form onSubmit={handleSubmit} className="grid gap-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="grid gap-6">
           <AlertDialogHeader>
             <AlertDialogTitle>{handoverTitle(staffCount)}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -94,9 +96,14 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
             <AlertDialogCancel disabled={pending}>
               No! I&apos;m still attached!
             </AlertDialogCancel>
-            <Button type="submit" variant="destructive" disabled={pending}>
-              {pending ? "Sacrificing..." : "Handover"}
-            </Button>
+            <HoldButton
+              label="Hold to sacrifice"
+              holdingLabel="Keep holding..."
+              pendingLabel="Sacrificing..."
+              pending={pending}
+              canStart={() => formRef.current?.reportValidity() ?? false}
+              onConfirm={() => formRef.current?.requestSubmit()}
+            />
           </AlertDialogFooter>
         </form>
       </AlertDialogContent>

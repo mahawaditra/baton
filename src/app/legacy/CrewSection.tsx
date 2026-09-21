@@ -5,7 +5,8 @@ import { CrewPhoto } from "./CrewPhoto";
 export function CrewSection() {
   const featured = LEGACY_CREW.find((member) => member.featured);
   const others = LEGACY_CREW.filter((member) => !member.featured);
-  const halo = "[text-shadow:0_0_12px_var(--background),0_0_3px_var(--background)]";
+  const halo =
+    "[text-shadow:0_0_12px_var(--background),0_0_3px_var(--background)]";
 
   return (
     <section className="flex w-full max-w-[100rem] flex-col gap-10 self-center 2xl:flex-row 2xl:items-end 2xl:justify-center 2xl:gap-12">

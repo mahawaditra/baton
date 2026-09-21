@@ -7,13 +7,14 @@ import { Camera } from "lucide-react";
 import { completeHandover } from "./actions";
 import { prepareImageFile } from "@/lib/files/image-processing";
 import { toastError } from "@/lib/toast";
-import { Button } from "@/components/ui/button";
+import { HoldButton } from "@/components/HoldButton";
 import { cn } from "@/lib/utils";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png"];
 
 export function LimboForm() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -69,7 +70,11 @@ export function LimboForm() {
   const busy = processing || pending;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-5">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      className="flex flex-col items-center gap-5"
+    >
       <input
         ref={inputRef}
         type="file"
@@ -89,7 +94,7 @@ export function LimboForm() {
           "relative flex aspect-square w-56 items-center justify-center overflow-hidden rounded-2xl bg-muted transition-colors sm:w-64",
           previewUrl
             ? "border border-border"
-            : "border-2 border-dashed border-border hover:bg-muted/70",
+            : "border-2 border-dashed border-gold/40 hover:bg-muted/70",
           busy && "cursor-not-allowed opacity-60",
         )}
       >
@@ -125,14 +130,16 @@ export function LimboForm() {
         </p>
       )}
 
-      <Button
-        type="submit"
-        variant="destructive"
+      <HoldButton
+        label="Hold to sacrifice yourself"
+        holdingLabel="Keep holding..."
+        pendingLabel="Goodbye..."
+        pending={pending}
+        disabled={!file || processing}
         size="lg"
-        disabled={!file || busy}
-      >
-        {pending ? "Goodbye..." : "Sacrifice yourself"}
-      </Button>
+        className="min-w-64"
+        onConfirm={() => formRef.current?.requestSubmit()}
+      />
     </form>
   );
 }

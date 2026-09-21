@@ -119,7 +119,7 @@ export default async function Home() {
       </section>
 
       <div className="relative isolate">
-        <section className="border-t border-border bg-surface px-6 py-16">
+        <section className="border-t border-border bg-surface px-6 py-12">
           <div className="mx-auto max-w-7xl">
             <h2 className="text-center font-heading text-h2 text-foreground">
               Cara Pinjam
@@ -179,7 +179,7 @@ export default async function Home() {
 
         <LandingLegacy />
 
-        <section className="border-t border-border bg-surface px-6 py-24">
+        <section className="border-t border-border bg-surface px-6 py-12">
           <div className="mx-auto max-w-4xl">
             <div className="grid grid-cols-1 items-start gap-10 sm:grid-cols-[auto_1fr]">
               <div className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-xl bg-navy shadow-md">
@@ -268,10 +268,17 @@ export default async function Home() {
           </div>
         </section>
 
-        <footer className="bg-background px-6 py-6 text-center text-caption text-muted-foreground">
-          built with unspoken longing for a season long faded by{" "}
-          <strong className="font-semibold">haseulbintaro</strong>
-          <span className="mt-1 block text-micro text-foreground/5">
+        <footer className="bg-background px-6 py-6 text-left text-caption text-muted-foreground sm:text-center">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-heading text-body leading-[18px] font-bold text-foreground sm:flex-col sm:gap-x-0">
+            <span>BATON</span>
+            <span aria-hidden className="text-gold sm:hidden">
+              ·
+            </span>
+            <span className="font-normal">
+              <span className="uppercase">Est. 2026</span> by haseulbintaro
+            </span>
+          </div>
+          <span className="mt-1 block text-micro leading-[18px] text-foreground/5">
             #STANLOONA
           </span>
         </footer>

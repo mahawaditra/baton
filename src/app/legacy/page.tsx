@@ -15,7 +15,7 @@ export const viewport: Viewport = {
 };
 
 const LEGACY_DESCRIPTION =
-  "The people who built BATON, and every Ketua Logistik who handed over the baton.";
+  "A tribute to haseulbintaro's fellow comrades, and to every Ketua Logistik who handed over the baton.";
 
 export const metadata: Metadata = {
   title: "BATON Legacy",
@@ -56,6 +56,9 @@ export default async function LegacyPage() {
                 revealedClassName="text-foreground"
               />
             </h1>
+            <p className="max-w-xl text-center text-body text-foreground-2 italic [text-shadow:0_0_12px_var(--background),0_0_3px_var(--background)]">
+              A tribute to haseulbintaro&apos;s fellow Logistik comrades.
+            </p>
           </div>
 
           <CrewSection />

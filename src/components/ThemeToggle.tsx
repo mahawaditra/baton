@@ -12,7 +12,11 @@ export function ThemeToggle() {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
 
-  if (!mounted || pathname.startsWith("/legacy")) {
+  if (
+    !mounted ||
+    pathname.startsWith("/legacy") ||
+    pathname.startsWith("/limbo")
+  ) {
     return null;
   }
 

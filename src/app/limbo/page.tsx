@@ -1,9 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/admin/require-admin";
 import { LimboForm } from "./LimboForm";
+import { LimboShell } from "./LimboShell";
 
 export const maxDuration = 30;
+
+export const viewport: Viewport = {
+  themeColor: "#11111f",
+};
 
 export const metadata: Metadata = {
   title: "The sacrifice is made.",
@@ -19,20 +24,8 @@ export default async function LimboPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-16">
-      <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-8 text-center">
-        <h1 className="font-heading text-h1 text-foreground">
-          The sacrifice is made.
-        </h1>
-        <p className="text-body-lg text-foreground-2">
-          Your comrades have been offered up. Every eclipse they spent alongside
-          you, working hard for Mahawaditra, is remembered — thank you for your
-          patronage. I hope you never regret this. One offering remains, and it
-          is yours. Leave a piece of your soul, and your name will outlive your
-          access. There is no undoing this.
-        </p>
-        <LimboForm />
-      </div>
-    </main>
+    <LimboShell>
+      <LimboForm />
+    </LimboShell>
   );
 }

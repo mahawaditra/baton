@@ -71,7 +71,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - A web form — with phone-camera photos — for the condition addendums at pickup, extension, and return
 - Automatic email notifications at each status change
 - A landing-page FAQ, and a direct WhatsApp and/or LINE line to the logistics head, each shown independently when they choose to
-- A small homage page (`/legacy`) to the friends who helped along the way
+- A small tribute page (`/legacy`) to my fellow comrades in OSUI Mahawaditra. They had no hand in building BATON; they are there because I wanted to honor them
 
 ### For admins
 
@@ -265,7 +265,7 @@ src/
     api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive),
                  /api/status/[ticket_id]/contract (contract PDF download, gated by a
                  60-second signed token)
-    legacy/      Public homage page (/legacy) to the friends who helped along the way, and the routes that serve its photos
+    legacy/      Public tribute page (/legacy) to fellow OSUI comrades (not contributors), and the routes that serve its photos
     request/     Public borrowing request form
     status/      Public per-ticket status page (access-code gated)
   components/    Shared UI components
