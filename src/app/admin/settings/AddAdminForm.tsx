@@ -48,8 +48,8 @@ export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
           Admin added successfully.
         </p>
       )}
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-1 flex-col gap-1.5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="flex flex-col gap-1.5 sm:min-w-48 sm:flex-1">
           <Label htmlFor="newAdminEmail">Email</Label>
           <Input
             id="newAdminEmail"
@@ -59,7 +59,7 @@ export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
             required
           />
         </div>
-        <div className="flex flex-1 flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 sm:min-w-48 sm:flex-1">
           <Label htmlFor="newAdminName">Name</Label>
           <Input
             id="newAdminName"
@@ -86,7 +86,7 @@ export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
             </Select>
           </div>
         )}
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending} className="self-start sm:self-auto">
           {isPending ? "Adding..." : "Add Admin"}
         </Button>
       </div>

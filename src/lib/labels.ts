@@ -51,7 +51,7 @@ export const STATUS_LABELS: Record<InstrumentStatus, string> = {
 
 export const ROLE_LABELS: Record<AdminRole, string> = {
   staff: "Staff",
-  pengurus_inti: "Pengurus Inti",
+  pengurus: "Pengurus",
   ketua: "Ketua",
   overlord: "Overlord",
 };

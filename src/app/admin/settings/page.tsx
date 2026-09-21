@@ -9,9 +9,10 @@ import { redirect } from "next/navigation";
 import { LoanSettingsForm } from "./LoanSettingsForm";
 import { InstrumentTypeSlotsPanel } from "./InstrumentTypeSlotsPanel";
 import { AddAdminForm } from "./AddAdminForm";
+import { HandoverButton } from "./HandoverButton";
 import { setAdminActive } from "./actions";
-import { ShieldCheck } from "lucide-react";
-import { getRoleLabel } from "@/lib/labels";
+import { RoleBadge } from "./RoleBadge";
+import { needsSignatoryUpdate } from "@/lib/handover";
 import {
   assignableRoles,
   canEditSettings,
@@ -32,6 +33,7 @@ export default async function SettingsPage() {
     : [];
 
   const loanSettings = await prisma.loanSetting.findFirst();
+  const staffCount = admins.filter((a) => a.role === "staff").length;
 
   const instrumentTypeSlots = await prisma.instrumentTypeSlot.findMany();
   const slotByType = new Map(
@@ -45,6 +47,15 @@ export default async function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="hidden text-h1 lg:block">Settings</h1>
+
+      {needsSignatoryUpdate(role, session.user.id, loanSettings) && (
+        <div className="rounded-md bg-warning-soft px-4 py-3 text-sm text-warning-soft-foreground">
+          Contracts print the signatory (Pihak Pertama) data from Loan
+          Settings. It hasn&apos;t been saved under your name yet, so it may
+          still belong to the previous Ketua. Update it and save before
+          borrowers generate new contracts.
+        </div>
+      )}
 
       <LoanSettingsForm loanSettings={loanSettings} canEdit={canEdit} />
       <InstrumentTypeSlotsPanel
@@ -82,10 +93,10 @@ export default async function SettingsPage() {
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      {admin.role !== "staff" && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-2 py-0.5 text-micro text-gold-soft-foreground">
-                          <ShieldCheck className="h-3 w-3" strokeWidth={2} />
-                          {getRoleLabel(admin.role)}
+                      <RoleBadge role={admin.role} />
+                      {admin.handoverAt && (
+                        <span className="inline-flex items-center rounded-full bg-warning-soft px-2 py-0.5 text-micro text-warning-soft-foreground">
+                          Handing over
                         </span>
                       )}
                       {!admin.isActive && (
@@ -93,6 +104,11 @@ export default async function SettingsPage() {
                           Inactive
                         </span>
                       )}
+                      {admin.id === session.user.id &&
+                        admin.role === "ketua" &&
+                        !admin.handoverAt && (
+                          <HandoverButton staffCount={staffCount} />
+                        )}
                       {canSetActive(session.user, admin) && (
                         <form
                           action={setAdminActive.bind(

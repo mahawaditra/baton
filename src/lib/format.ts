@@ -24,12 +24,20 @@ export function driveTimestamp(date = new Date()): string {
   return `${y}${m}${d}`;
 }
 
+export const FORMER_MEMBER_LABEL = "Former member";
+
+export function resolveActorName(
+  live: { name: string } | null | undefined,
+  snapshotName: string | null | undefined,
+): string {
+  return live?.name ?? snapshotName ?? FORMER_MEMBER_LABEL;
+}
+
 type ActivityLogLike = {
   action: string;
   entityType: string;
   entityId: string;
   metadata: unknown;
-  admin: { name: string };
   createdAt: Date;
 };
 
@@ -53,8 +61,16 @@ type ActivityMetadataByAction =
         | "confirm_ready"
         | "confirm_handover"
         | "confirm_extension"
-        | "revert_from_ongoing";
+        | "revert_from_ongoing"
+        | "complete_handover";
       metadata: null;
+    }
+  | {
+      action: "handover_ketua";
+      metadata: {
+        newKetua: { name: string; email: string };
+        deletedStaff: string[];
+      };
     }
   | {
       action: "add_admin" | "deactivate_admin" | "reactivate_admin";
@@ -226,6 +242,10 @@ export function formatActivityLog(log: ActivityLogLike): string {
       return `deactivated ${typed.metadata.name} (${typed.metadata.email})`;
     case "reactivate_admin":
       return `reactivated ${typed.metadata.name} (${typed.metadata.email})`;
+    case "handover_ketua":
+      return `handed over the Ketua position to ${typed.metadata.newKetua.name} (${typed.metadata.newKetua.email}) and removed ${typed.metadata.deletedStaff.length} staff`;
+    case "complete_handover":
+      return "completed the handover and left BATON";
     case "create_instrument":
       return `created instrument (${typed.metadata.after.section}/${typed.metadata.after.type})`;
     case "create_goods":

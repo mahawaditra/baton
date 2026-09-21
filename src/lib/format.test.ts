@@ -3,6 +3,8 @@ import {
   buildAnnualSummaryRows,
   daysBetween,
   formatActivityLog,
+  FORMER_MEMBER_LABEL,
+  resolveActorName,
   toWhatsAppNumber,
   splitFacultyMajor,
 } from "./format";
@@ -14,10 +16,25 @@ function log(action: string, metadata: unknown) {
     entityType: "borrowing_request",
     entityId: "irrelevant",
     metadata,
-    admin: { name: "Zenka" },
     createdAt: new Date(),
   };
 }
+
+describe("resolveActorName", () => {
+  it("uses the live admin's current name while they still exist", () => {
+    expect(resolveActorName({ name: "Zenka" }, null)).toBe("Zenka");
+  });
+  it("prefers the live name over a stale snapshot", () => {
+    expect(resolveActorName({ name: "Zenka" }, "Old Name")).toBe("Zenka");
+  });
+  it("falls back to the saved name once the admin is gone", () => {
+    expect(resolveActorName(null, "Dewa")).toBe("Dewa");
+  });
+  it("falls back to a neutral label when neither exists", () => {
+    expect(resolveActorName(null, null)).toBe(FORMER_MEMBER_LABEL);
+    expect(resolveActorName(undefined, undefined)).toBe(FORMER_MEMBER_LABEL);
+  });
+});
 
 describe("daysBetween", () => {
   it("returns 0 for the same day", () => {
@@ -286,6 +303,42 @@ describe("formatActivityLog", () => {
     expect(
       formatActivityLog(log("update_loan_settings", { before: same, after: same })),
     ).toBe("updated loan settings");
+  });
+
+  it("describes a handover with the new Ketua and how many staff were removed", () => {
+    expect(
+      formatActivityLog(
+        log("handover_ketua", {
+          newKetua: { name: "Rani", email: "rani@example.com" },
+          deletedStaff: ["Dewa", "Hafizh", "Aca"],
+        }),
+      ),
+    ).toBe(
+      "handed over the Ketua position to Rani (rani@example.com) and removed 3 staff",
+    );
+  });
+
+  it("describes the final step of a handover", () => {
+    expect(formatActivityLog(log("complete_handover", null))).toBe(
+      "completed the handover and left BATON",
+    );
+  });
+
+  it("names the role when a new admin was added with one", () => {
+    expect(
+      formatActivityLog(
+        log("add_admin", {
+          name: "Rani",
+          email: "rani@example.com",
+          role: "ketua",
+        }),
+      ),
+    ).toBe("added a new Ketua (Rani, rani@example.com)");
+    expect(
+      formatActivityLog(
+        log("add_admin", { name: "Old", email: "old@example.com" }),
+      ),
+    ).toBe("added a new admin (Old, old@example.com)");
   });
 
   it("falls back to a humanized action name for actions with no dedicated message", () => {

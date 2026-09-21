@@ -89,7 +89,7 @@ describe("addendum timing labels", () => {
 describe("role labels", () => {
   it("labels each role the way it is shown in the admin list", () => {
     expect(getRoleLabel("staff")).toBe("Staff");
-    expect(getRoleLabel("pengurus_inti")).toBe("Pengurus Inti");
+    expect(getRoleLabel("pengurus")).toBe("Pengurus");
     expect(getRoleLabel("ketua")).toBe("Ketua");
     expect(getRoleLabel("overlord")).toBe("Overlord");
   });

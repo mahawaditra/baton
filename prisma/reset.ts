@@ -88,7 +88,7 @@ async function main() {
   );
 
   const protectedAdmins = await prisma.admin.findMany({
-    where: { role: { in: ["overlord", "pengurus_inti"] } },
+    where: { role: { in: ["overlord", "pengurus"] } },
     select: { id: true, email: true, role: true },
   });
 
@@ -108,7 +108,7 @@ async function main() {
     "instrument type slots": await prisma.instrumentTypeSlot.count(),
     instruments: await prisma.instrument.count(),
     goods: await prisma.good.count(),
-    "admins that are not overlord or pengurus_inti (ketua, staff)":
+    "admins that are not overlord or pengurus (ketua, staff)":
       await prisma.admin.count({
         where: { id: { notIn: protectedIds } },
       }),
@@ -124,6 +124,9 @@ async function main() {
   for (const admin of protectedAdmins) {
     console.log(`  ${admin.role.padEnd(13)}  ${admin.email}`);
   }
+  console.log(
+    `  ${String(await prisma.tombstone.count()).padStart(5)}  tombstones (Legacy wall, never deleted by reset)`,
+  );
   console.log("  loan settings (bank, deposit, signatory, LINE/WhatsApp toggles)\n");
 
   if (!process.stdin.isTTY) {

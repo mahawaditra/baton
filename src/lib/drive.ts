@@ -131,6 +131,15 @@ export async function getItemPhotosFolder(): Promise<string> {
   return getOrCreateFolder("Item Photos", assetsFolder);
 }
 
+export async function getLegacyFolder(kind: "Crew" | "Ketua"): Promise<string> {
+  const assetsFolder = await getOrCreateFolder(
+    "Assets",
+    process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
+  );
+  const legacyFolder = await getOrCreateFolder("Legacy", assetsFolder);
+  return getOrCreateFolder(kind, legacyFolder);
+}
+
 export async function trashFile(fileId: string): Promise<void> {
   await drive.files.update({ fileId, requestBody: { trashed: true } });
 }

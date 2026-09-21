@@ -2,11 +2,14 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { toJakartaCalendarDate, todayInJakarta } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
-import { ActivityTimeline } from "@/components/ActivityTimeline";
+import {
+  ActivityTimeline,
+  type ActivityLogWithAdmin,
+} from "@/components/ActivityTimeline";
 import { buttonVariants } from "@/components/ui/button";
 import { Activity, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ActivityLog, Admin } from "@/generated/prisma/client";
+import type { ActivityLog } from "@/generated/prisma/client";
 
 const PAGE_SIZE = 30;
 
@@ -19,14 +22,14 @@ const ENTITY_TYPE_LABEL: Record<string, string> = {
   instrument_type_slot: "Instrument Slot",
 };
 
-function groupLogsByDay(logs: (ActivityLog & { admin: Admin })[]) {
+function groupLogsByDay(logs: ActivityLogWithAdmin[]) {
   const today = todayInJakarta();
   const yesterday = new Date(today);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
 
   const groups = new Map<
     string,
-    { label: string; logs: (ActivityLog & { admin: Admin })[] }
+    { label: string; logs: ActivityLogWithAdmin[] }
   >();
 
   for (const log of logs) {

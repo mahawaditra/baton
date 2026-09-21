@@ -347,6 +347,68 @@ input:autofill {
   }
 }
 
+@theme inline {
+  --animate-aurora: aurora 60s linear infinite;
+
+  @keyframes aurora {
+    from {
+      background-position:
+        50% 50%,
+        50% 50%;
+    }
+    to {
+      background-position:
+        350% 50%,
+        350% 50%;
+    }
+  }
+}
+
+.legacy-plaque {
+  isolation: isolate;
+  background-color: var(--surface);
+  background-image:
+    radial-gradient(
+      ellipse 85% 50% at 50% 0%,
+      color-mix(in oklab, var(--gold) 20%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(to bottom, var(--surface-2), var(--surface) 55%);
+}
+
+.legacy-emblem {
+  background-image: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--gold) 68%, white),
+    var(--gold) 42%,
+    color-mix(in oklab, var(--gold) 70%, black)
+  );
+  -webkit-mask: url("/legacy/emblem.png") center / contain no-repeat;
+  mask: url("/legacy/emblem.png") center / contain no-repeat;
+  filter: drop-shadow(
+    0 0 5px color-mix(in oklab, var(--gold) 40%, transparent)
+  );
+}
+
+html:has([data-force-dark]),
+html:has([data-force-dark]) body {
+  color-scheme: dark;
+  background-color: oklch(0.185 0.028 285);
+}
+
+.legacy-plaque::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: soft-light;
+  background-size: 160px 160px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 @keyframes marquee-l {
   from {
     transform: translateX(0);

@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { replaceSignatureImage } from "@/lib/drive";
+import { runHandover } from "@/lib/handover";
 import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
@@ -21,6 +23,8 @@ const addAdminSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
   role: z.enum(["staff", "ketua"], "Invalid role"),
 });
+
+const handoverSchema = addAdminSchema.pick({ email: true, name: true });
 
 const updateLoanSettingsSchema = z
   .object({
@@ -180,6 +184,49 @@ export async function addAdmin(
   revalidatePath("/admin/settings");
   revalidatePath("/admin/activity");
   return { success: true, error: null, generalError: null };
+}
+
+export type HandoverState = { error: string | null };
+
+export async function handoverKetua(
+  formData: FormData,
+): Promise<HandoverState> {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session || session.user.role !== "ketua") {
+    return { error: "Only the Ketua can hand over the position." };
+  }
+
+  const parsed = handoverSchema.safeParse({
+    email: String(formData.get("email") ?? ""),
+    name: String(formData.get("name") ?? ""),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+  const { email, name } = parsed.data;
+
+  let outcome: { error: string | null };
+  try {
+    outcome = await prisma.$transaction(
+      (tx) => runHandover(tx, { adminId: session.user.id, email, name }),
+      { timeout: 30_000, maxWait: 10_000 },
+    );
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      return { error: "That email is already registered." };
+    }
+    throw err;
+  }
+
+  if (outcome.error) return { error: outcome.error };
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/activity");
+  redirect("/limbo");
 }
 
 export type UpdateLoanSettingsState = {

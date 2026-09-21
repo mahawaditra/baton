@@ -1,6 +1,12 @@
 import Link from "next/link";
-import { formatActivityLog, getEntityUrl } from "@/lib/format";
+import {
+  formatActivityLog,
+  getEntityUrl,
+  resolveActorName,
+} from "@/lib/format";
 import type { ActivityLog, Admin } from "@/generated/prisma/client";
+
+export type ActivityLogWithAdmin = ActivityLog & { admin: Admin | null };
 
 export function ActivityTimeline({
   logs,
@@ -8,7 +14,7 @@ export function ActivityTimeline({
   tags,
   showDate = true,
 }: {
-  logs: (ActivityLog & { admin: Admin })[];
+  logs: ActivityLogWithAdmin[];
   linkEntities?: boolean;
   tags?: Map<string, string>;
   showDate?: boolean;
@@ -23,7 +29,9 @@ export function ActivityTimeline({
         const tag = tags?.get(log.entityId);
         const content = (
           <>
-            <span className="font-semibold">{log.admin.name}</span>{" "}
+            <span className="font-semibold">
+              {resolveActorName(log.admin, log.adminName)}
+            </span>{" "}
             {formatActivityLog(log)}
           </>
         );

@@ -9,13 +9,13 @@ import {
   roleRank,
 } from "./roles";
 
-const ALL_ROLES: AdminRole[] = ["staff", "ketua", "pengurus_inti", "overlord"];
+const ALL_ROLES: AdminRole[] = ["staff", "ketua", "pengurus", "overlord"];
 
 describe("roleRank", () => {
-  it("orders staff < ketua < pengurus_inti < overlord", () => {
+  it("orders staff < ketua < pengurus < overlord", () => {
     expect(roleRank("staff")).toBeLessThan(roleRank("ketua"));
-    expect(roleRank("ketua")).toBeLessThan(roleRank("pengurus_inti"));
-    expect(roleRank("pengurus_inti")).toBeLessThan(roleRank("overlord"));
+    expect(roleRank("ketua")).toBeLessThan(roleRank("pengurus"));
+    expect(roleRank("pengurus")).toBeLessThan(roleRank("overlord"));
   });
 });
 
@@ -23,8 +23,8 @@ describe("canManage", () => {
   const expected: Record<AdminRole, AdminRole[]> = {
     staff: [],
     ketua: ["staff"],
-    pengurus_inti: ["staff", "ketua"],
-    overlord: ["staff", "ketua", "pengurus_inti"],
+    pengurus: ["staff", "ketua"],
+    overlord: ["staff", "ketua", "pengurus"],
   };
 
   for (const actor of ALL_ROLES) {
@@ -61,7 +61,7 @@ describe("canSetActive", () => {
     ).toBe(false);
   });
 
-  it("stops a ketua from touching pengurus_inti or overlord", () => {
+  it("stops a ketua from touching pengurus or overlord", () => {
     expect(
       canSetActive(
         { id: "a", role: "ketua" },
@@ -71,22 +71,22 @@ describe("canSetActive", () => {
     expect(
       canSetActive(
         { id: "a", role: "ketua" },
-        { id: "b", role: "pengurus_inti" },
+        { id: "b", role: "pengurus" },
       ),
     ).toBe(false);
   });
 
-  it("lets only an overlord manage a pengurus_inti", () => {
+  it("lets only an overlord manage a pengurus", () => {
     expect(
       canSetActive(
         { id: "a", role: "overlord" },
-        { id: "b", role: "pengurus_inti" },
+        { id: "b", role: "pengurus" },
       ),
     ).toBe(true);
     expect(
       canSetActive(
-        { id: "a", role: "pengurus_inti" },
-        { id: "b", role: "pengurus_inti" },
+        { id: "a", role: "pengurus" },
+        { id: "b", role: "pengurus" },
       ),
     ).toBe(false);
   });
@@ -95,7 +95,7 @@ describe("canSetActive", () => {
 describe("canEditSettings", () => {
   it("allows ketua and overlord only", () => {
     expect(canEditSettings("staff")).toBe(false);
-    expect(canEditSettings("pengurus_inti")).toBe(false);
+    expect(canEditSettings("pengurus")).toBe(false);
     expect(canEditSettings("ketua")).toBe(true);
     expect(canEditSettings("overlord")).toBe(true);
   });
@@ -104,17 +104,17 @@ describe("canEditSettings", () => {
 describe("canViewAdminManagement", () => {
   it("hides admin management from staff only", () => {
     expect(canViewAdminManagement("staff")).toBe(false);
-    expect(canViewAdminManagement("pengurus_inti")).toBe(true);
+    expect(canViewAdminManagement("pengurus")).toBe(true);
     expect(canViewAdminManagement("ketua")).toBe(true);
     expect(canViewAdminManagement("overlord")).toBe(true);
   });
 });
 
 describe("assignableRoles", () => {
-  it("gives staff nothing, ketua only staff, pengurus_inti and overlord staff or ketua", () => {
+  it("gives staff nothing, ketua only staff, pengurus and overlord staff or ketua", () => {
     expect(assignableRoles("staff")).toEqual([]);
     expect(assignableRoles("ketua")).toEqual(["staff"]);
-    expect(assignableRoles("pengurus_inti")).toEqual(["staff", "ketua"]);
+    expect(assignableRoles("pengurus")).toEqual(["staff", "ketua"]);
     expect(assignableRoles("overlord")).toEqual(["staff", "ketua"]);
   });
 

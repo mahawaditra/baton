@@ -4,6 +4,7 @@ import { ClipboardList, Clock } from "lucide-react";
 import { HeroMarquee } from "@/components/HeroMarquee";
 import { LandingHero } from "@/components/LandingHero";
 import { LandingFaq } from "@/components/LandingFaq";
+import { LandingLegacy } from "@/components/LandingLegacy";
 import { prisma } from "@/lib/prisma";
 import { toWhatsAppNumber } from "@/lib/format";
 import { ContactLink, LineIcon, WhatsAppIcon } from "@/components/ContactLink";
@@ -175,6 +176,8 @@ export default async function Home() {
         </section>
 
         <LandingFaq />
+
+        <LandingLegacy />
 
         <section className="border-t border-border bg-surface px-6 py-24">
           <div className="mx-auto max-w-4xl">

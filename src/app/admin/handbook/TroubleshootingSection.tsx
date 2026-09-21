@@ -118,12 +118,36 @@ export function TroubleshootingSection() {
         </p>
       </TaskCard>
 
-      <TaskCard title="Nambahin Pengurus Inti atau Overlord baru">
+      <TaskCard title="Nambahin Pengurus atau Overlord baru">
         <p>
-          Role Pengurus Inti dan Overlord nggak bisa ditambahin dari UI — ini
+          Role Pengurus dan Overlord nggak bisa ditambahin dari UI — ini
           disengaja, dibuat manual di database sama Zenka. Dari Settings, Ketua
-          cuma bisa nambahin Staff, sedangkan Pengurus Inti dan Overlord bisa
+          cuma bisa nambahin Staff, sedangkan Pengurus dan Overlord bisa
           nambahin Staff atau Ketua.
+        </p>
+      </TaskCard>
+
+      <TaskCard title="Ketua nyangkut di halaman limbo (Handover nggak kelar)">
+        <p>
+          Kalau Ketua udah klik Handover tapi belum upload foto (tab ketutup,
+          fotonya error, dll), tiap buka <code>/admin</code> dia bakal dilempar
+          balik ke halaman upload foto itu — ini disengaja. Solusi paling
+          gampang: suruh dia login lagi dan selesaikan upload fotonya (JPEG,
+          PNG, atau HEIC dari iPhone — dikompres otomatis).
+        </p>
+        <p>
+          Kalau dia beneran nggak bisa nyelesaiin, hubungi Zenka. Ini
+          diberesin lewat database, nggak bisa dari admin panel.
+        </p>
+      </TaskCard>
+
+      <TaskCard title="Ubah atau tambah orang di halaman BATON Legacy">
+        <p>
+          Bagian atas halaman <code>/legacy</code> (tim awal BATON) itu statis —
+          daftar nama dan fotonya ada di kode dan di Drive, bukan di database.
+          Buat ganti foto atau nambah orang, hubungi Zenka. Bagian bawah
+          (BATON Sacrifices, placard per Ketua) terisi otomatis tiap ada
+          Handover yang kelar, dan nggak bisa diedit dari admin panel.
         </p>
       </TaskCard>
 

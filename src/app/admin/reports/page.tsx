@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { resolveActorName } from "@/lib/format";
 import { exportInventorySnapshot } from "./actions";
 import { AnnualReportPanel } from "./AnnualReportPanel";
 import { buttonVariants } from "@/components/ui/button";
@@ -65,7 +66,7 @@ export default async function ReportsPage() {
                       className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
                     >
                       <span className="text-foreground-2">
-                        {s.label} — by {s.creator.name} —{" "}
+                        {s.label} — by {resolveActorName(s.creator, s.creatorName)} —{" "}
                         {s.createdAt.toLocaleDateString("en-GB")}
                       </span>
                       <a

@@ -30,7 +30,7 @@ export function OnboardingSection() {
           ketika masa jabatannya habis. Gw sendiri tetep pegang{" "}
           <strong>Overlord</strong> — akses penuh ke konfigurasi & data
           historis, tapi bukan yang jalanin operasionalnya sehari-hari. Di atas
-          semuanya ada <strong>Pengurus Inti</strong> OSUI yang bisa
+          semuanya ada akun <strong>Pengurus</strong> permanen OSUI yang bisa
           ngawasin, termasuk aktif/nonaktifin Ketua dan Staff.
         </p>
         <p>
@@ -56,16 +56,16 @@ export function OnboardingSection() {
           (Settings juga), tambah Staff baru, dan aktif/nonaktifin Staff.
         </p>
         <p>
-          <strong>Pengurus Inti</strong> — pengurus inti OSUI. Akses
-          operasionalnya sama kayak Staff (Settings cuma bisa dilihat), tapi
-          bisa tambah Staff atau Ketua baru dan aktif/nonaktifin Ketua dan
-          Staff.
+          <strong>Pengurus</strong> — akun permanen OSUI, cuma dua: PI OSUI dan
+          Logistik OSUI. Akses operasionalnya sama kayak Staff (Settings cuma
+          bisa dilihat), tapi bisa tambah Staff atau Ketua baru dan
+          aktif/nonaktifin Ketua dan Staff.
         </p>
         <p>
-          <strong>Overlord</strong> — gw, developer BATON. Semua yang Ketua
-          bisa + aktif/nonaktifin Pengurus Inti. Kalau ada yang kerasa
-          &quot;kok gw nggak bisa X&quot;, kemungkinan itu emang fitur khusus
-          role di atas lu.
+          <strong>Overlord</strong> — gw, developer BATON. Semua yang Ketua bisa
+          + aktif/nonaktifin Pengurus. Kalau ada yang kerasa &quot;kok gw
+          nggak bisa X&quot;, kemungkinan itu emang fitur khusus role di atas
+          lu.
         </p>
       </TaskCard>
 
@@ -104,8 +104,8 @@ export function OnboardingSection() {
 
       <TaskCard title="Ini semua file peminjam ada di Drive Logistik?">
         <p>
-          Yoi, semua file BATON (kontrak, addendum, foto items dll,) itu ada di Drive
-          Logistik di folder BATON (warna ungu) dan{" "}
+          Yoi, semua file BATON (kontrak, addendum, foto items dll,) itu ada di
+          Drive Logistik di folder BATON (warna ungu) dan{" "}
           <strong>JANGAN PERNAH DIHAPUS</strong>!
         </p>
         <p>Isinya udah organized, cek aja sendiri.</p>
@@ -136,6 +136,14 @@ export function OnboardingSection() {
           baru diomongin dulu karena gw as of now adalah (semi) functional
           WORKING ADULT jadi gw ada kesibukan dan mesti sempetin waktu untuk
           implementasi fitur besar.
+        </p>
+      </TaskCard>
+
+      <TaskCard title="Serah terima jabatan Ketua (Handover)">
+        <p>
+          Pas masa jabatan Ketua habis, dia klik tombol{" "}
+          <strong>Handover</strong> di baris namanya sendiri di Settings, bagian
+          Admin Management. Lalu akan mengikuti tahapan-tahapannya.
         </p>
       </TaskCard>
 

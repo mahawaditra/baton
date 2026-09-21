@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import { previewAnnualReport, saveAnnualReport } from "./actions";
+import { resolveActorName } from "@/lib/format";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +37,8 @@ type RecentReport = {
   periodEnd: Date;
   summary: unknown;
   createdAt: Date;
-  creator: { name: string };
+  creator: { name: string } | null;
+  creatorName: string | null;
 };
 
 function SummaryTable({ rows }: { rows: SummaryRow[] }) {
@@ -176,7 +178,7 @@ export function AnnualReportPanel({
                       <span>
                         Report {r.year} (through{" "}
                         {new Date(r.periodEnd).toLocaleDateString("en-GB")}) —
-                        by {r.creator.name} —{" "}
+                        by {resolveActorName(r.creator, r.creatorName)} —{" "}
                         {r.createdAt.toLocaleDateString("en-GB")}
                       </span>
                     </button>

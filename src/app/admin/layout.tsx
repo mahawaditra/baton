@@ -2,6 +2,7 @@ import { AdminNav } from "./AdminNav";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminLayout({
@@ -14,6 +15,8 @@ export default async function AdminLayout({
   if (!session || !session.user.isActive) {
     return <>{children}</>;
   }
+
+  if (session.user.handoverAt) redirect("/limbo");
 
   const pendingCount = await prisma.borrowingRequest.count({
     where: {

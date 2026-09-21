@@ -13,8 +13,20 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3000"),
   title: "BATON",
   description: "Base for Assets, Tools, and Orchestral Needs.",
+  openGraph: {
+    title: "BATON",
+    description:
+      "Platform peminjaman instrumen dan barang inventaris OSUI Mahawaditra.",
+    siteName: "BATON",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

@@ -15,4 +15,5 @@ Leftovers you can delete by hand in the BATON folder:
   DO NOT delete
     Assets/Fonts/                 contract PDF fonts, generation breaks without them
     Assets/Signature_*.png        the signature image, loan settings still points to it
+    Assets/Legacy/                photos on the Legacy wall, tombstones point to them and reset never touches them
 `);

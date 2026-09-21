@@ -48,7 +48,7 @@ I'm an alumnus of OSUI Mahawaditra year 2020. I happened to be the Deputy Head (
 - Contracts were filled in by hand — typos and inconsistent file & document conventions were common
 - Deadline reminders and deposit status were both tracked manually, that is, not tracked at all until the admin team realized an instrument was still witheld by someone (now who's at fault for that really?)
 
-BATON is built halfly as a handoff tool and a personal project that I'll keep maintaining for... As long as I can remember, or needed, really. Whoever holds the head-of-logistics position each year becomes **Ketua** — day-to-day access to requests, inventory, and document review, plus full control over configuration (Loan Settings, deposit amounts, the signatory data printed on every contract) and their own team's accounts, so they can onboard incoming staff and deactivate outgoing ones themselves. Their team gets plain **Staff** access — same day-to-day work, minus configuration and admin management. Above them sit **Pengurus Inti** (OSUI's core board), who share the day-to-day access but can add and deactivate any Ketua or Staff, and me as **Overlord**, permanently — the only role that can deactivate a Pengurus Inti. Pengurus Inti and Overlord are direct database changes, not something the UI exposes.
+BATON is built halfly as a handoff tool and a personal project that I'll keep maintaining for... As long as I can remember, or needed, really. Whoever holds the head-of-logistics position each year becomes **Ketua** — day-to-day access to requests, inventory, and document review, plus full control over configuration (Loan Settings, deposit amounts, the signatory data printed on every contract) and their own team's accounts, so they can onboard incoming staff and deactivate outgoing ones themselves. Their team gets plain **Staff** access — same day-to-day work, minus configuration and admin management. Above them sit the two permanent **Pengurus** accounts (PI OSUI and Logistik OSUI), who share the day-to-day access but can add and deactivate any Ketua or Staff, and me as **Overlord**, permanently — the only role that can deactivate a Pengurus. Pengurus and Overlord are direct database changes, not something the UI exposes.
 
 It's also deliberately still hybrid with the existing Google ecosystem, not a full replacement of it: files still live in the shared logistics division's Drive folder, admins still log in with their Google account, and the physical, stamped contract is still the document that's actually legally binding. BATON's job is to make the process **_around_** that. Tracking, reminders, status, history — structured and hard to get wrong (I hope), not to throw away what already worked.
 
@@ -85,7 +85,8 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Extension and return handling
 - Per-instrument history page
 - Annual settings (due dates, bank details, deposit amount, signatory data) — Ketua and Overlord only, visible but locked for everyone else
-- Admin management — Ketua (staff only), Pengurus Inti and Overlord (staff and Ketua), each limited to deactivating roles below their own
+- Admin management — Ketua (staff only), Pengurus and Overlord (staff and Ketua), each limited to deactivating roles below their own
+- Ketua handover — the outgoing Ketua deletes all staff and seats the next Ketua in one step, then leaves BATON from a locked-down page by attaching a photo. Their name, section, term year and the staff they led stay behind as a placard on the public **BATON Legacy** page (`/legacy`); activity history keeps their names even though the accounts are gone
 
 ### Borrowing Flow
 
@@ -240,7 +241,7 @@ npx prisma db seed
 
 The seed reads the real inventory from `prisma/seed-data/instruments.xlsx` and `prisma/seed-data/goods.xlsx`. Those two files are gitignored — they're the org's actual inventory — so a fresh clone needs its own copies, with the same column headers `prisma/seed.ts` reads.
 
-To wipe a database back to a clean slate and re-seed it (after a round of testing, say), run `npm run db:reset`. It validates both spreadsheets before touching anything, lists exactly what it is about to delete, keeps Overlord and Pengurus Inti accounts and Loan Settings (and refuses to run without at least one Overlord), and only continues if you type `RESET` in an interactive terminal. Afterwards it prints which Drive folders are safe to clear by hand, since a database reset doesn't touch Drive.
+To wipe a database back to a clean slate and re-seed it (after a round of testing, say), run `npm run db:reset`. It validates both spreadsheets before touching anything, lists exactly what it is about to delete, keeps Overlord and Pengurus accounts and Loan Settings (and refuses to run without at least one Overlord), and only continues if you type `RESET` in an interactive terminal. Afterwards it prints which Drive folders are safe to clear by hand, since a database reset doesn't touch Drive.
 
 Run the dev server:
 
@@ -261,17 +262,22 @@ src/
     api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive),
                  /api/status/[ticket_id]/contract (contract PDF download, gated by a
                  60-second signed token)
+    legacy/      Public BATON Legacy wall (/legacy) and the routes that serve its photos
+    limbo/       Where a Ketua ends up after starting a handover: no exits, one photo to attach
     request/     Public borrowing request form
     status/      Public per-ticket status page (access-code gated)
   components/    Shared UI components
   lib/           Business logic and integrations — Prisma client, Google Drive, email,
                  PDF generation, rate limiting, pure rule functions (loan-rules.ts),
+                 role hierarchy (roles.ts), the Ketua handover transaction (handover.ts),
                  and the enum → label maps the UI reads (labels.ts)
+scripts/         One-off maintenance scripts, e.g. upload-legacy-crew.ts (puts the founding
+                 crew's photos on Drive) and cleanup-legacy-test.ts (removes test tombstones)
 prisma/
-  schema.prisma  Database schema (15 models)
+  schema.prisma  Database schema (16 models)
   migrations/    Migration history
   seed.ts        Seeds instruments and goods from prisma/seed-data/*.xlsx (gitignored)
-  reset.ts       Guarded wipe behind `npm run db:reset` — keeps Overlord, Pengurus Inti and Loan Settings
+  reset.ts       Guarded wipe behind `npm run db:reset` — keeps Overlord, Pengurus and Loan Settings
 ```
 
 ## Testing
@@ -283,6 +289,7 @@ npm run test:watch # watch mode
 
 Coverage is aimed at the business-logic layer that would cause real problems if it silently broke, rather than at a coverage percentage:
 
+- `roles.ts` / `handover.ts` — who may manage whom (the full role-versus-role matrix), and the two-step Ketua handover run against a fake transaction: staff are removed before the new Ketua is created, every refusal happens before anything is written, and a second tab cannot complete a handover twice
 - `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, and name/nickname display resolution
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
 - `format.ts` / `mail.ts` — date/timezone handling, activity-log and annual-report wording, email content generation

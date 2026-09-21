@@ -240,7 +240,7 @@ model Addendum {
 
 enum AdminRole {
   staff
-  pengurus_inti
+  pengurus
   ketua
   overlord
 }
@@ -252,6 +252,7 @@ model Admin {
   role          AdminRole @default(staff)
   emailVerified Boolean   @default(false) @map("email_verified")
   isActive      Boolean   @default(true) @map("is_active")
+  handoverAt    DateTime? @map("handover_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
 
@@ -336,6 +337,8 @@ enum ActivityAction {
   reactivate_admin
   transfer_to_ongoing
   revert_from_ongoing
+  handover_ketua
+  complete_handover
 }
 
 enum EntityType {
@@ -350,9 +353,10 @@ enum EntityType {
 }
 
 model ActivityLog {
-  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  adminId String @map("admin_id") @db.Uuid
-  admin   Admin  @relation(fields: [adminId], references: [id])
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId   String? @map("admin_id") @db.Uuid
+  admin     Admin?  @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  adminName String? @map("admin_name")
 
   action     ActivityAction
   entityType EntityType     @map("entity_type")
@@ -367,21 +371,37 @@ model InventorySnapshot {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   label       String
   driveFileId String   @map("drive_file_id")
-  createdBy   String   @map("created_by") @db.Uuid
-  creator     Admin    @relation(fields: [createdBy], references: [id])
+  createdBy   String?  @map("created_by") @db.Uuid
+  creator     Admin?   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  creatorName String?  @map("creator_name")
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("inventory_snapshots")
 }
 
 model AnnualReport {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  year      Int
-  periodEnd DateTime @map("period_end") @db.Date
-  summary   Json
-  createdBy String   @map("created_by") @db.Uuid
-  creator   Admin    @relation(fields: [createdBy], references: [id])
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  year        Int
+  periodEnd   DateTime @map("period_end") @db.Date
+  summary     Json
+  createdBy   String?  @map("created_by") @db.Uuid
+  creator     Admin?   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  creatorName String?  @map("creator_name")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("annual_reports")
+}
+
+model Tombstone {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  termYear         Int      @map("term_year")
+  ketuaName        String   @map("ketua_name")
+  ketuaSection     String   @map("ketua_section")
+  ketuaAngkatan    String   @map("ketua_angkatan")
+  staffNames       String[] @default([]) @map("staff_names")
+  photoDriveFileId String?  @map("photo_drive_file_id")
+  ketuaAdminId     String?  @map("ketua_admin_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("tombstones")
 }

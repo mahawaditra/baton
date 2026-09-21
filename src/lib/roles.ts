@@ -3,7 +3,7 @@ import type { AdminRole } from "@/generated/prisma/client";
 const ROLE_RANK: Record<AdminRole, number> = {
   staff: 1,
   ketua: 2,
-  pengurus_inti: 3,
+  pengurus: 3,
   overlord: 4,
 };
 

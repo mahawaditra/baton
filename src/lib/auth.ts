@@ -10,11 +10,16 @@ export const auth = betterAuth({
     modelName: "admin",
     additionalFields: {
       role: {
-        type: ["staff", "pengurus_inti", "ketua", "overlord"],
+        type: ["staff", "pengurus", "ketua", "overlord"],
         input: false,
       },
       isActive: {
         type: "boolean",
+        input: false,
+      },
+      handoverAt: {
+        type: "date",
+        required: false,
         input: false,
       },
     },
