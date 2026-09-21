@@ -127,15 +127,6 @@ export function TroubleshootingSection() {
         </p>
       </TaskCard>
 
-      <TaskCard title="Ubah atau tambah orang di halaman BATON Legacy">
-        <p>
-          Halaman <code>/legacy</code> itu tribute kecil buat temen-temen yang
-          bantuin Zenka pas jadi pengurus Logistik. Daftar nama dan fotonya
-          statis — ada di kode dan di Drive, bukan di database. Buat ganti foto
-          atau nambah orang, hubungi Zenka.
-        </p>
-      </TaskCard>
-
       <TaskCard title="Link LINE di landing page nggak berfungsi (Sep 2026)">
         <p>
           Link &quot;Add Friend&quot; LINE itu BUKAN dirakit dari LINE ID biasa
