@@ -116,8 +116,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (overdueFlipped > 0) {
-    revalidatePath("/admin/dashboard");
-    revalidatePath("/admin/requests");
+    revalidatePath("/dashboard");
+    revalidatePath("/requests");
   }
 
   return Response.json({

@@ -68,17 +68,24 @@ export function CrewPhoto({
   hasPhoto,
   featured,
   className,
+  eager,
+  unoptimized,
 }: {
   slug: string;
   name: string;
   hasPhoto: boolean;
   featured?: boolean;
   className?: string;
+  eager?: boolean;
+  unoptimized?: boolean;
 }) {
   const src = `/legacy/photo/crew/${slug}`;
   const innerRadius = featured
     ? "rounded-[calc(1.5rem-1.5px)]"
     : "rounded-[calc(1rem-1.5px)]";
+  const sizes = featured
+    ? "(min-width: 1536px) 240px, (min-width: 640px) 192px, 176px"
+    : "(min-width: 1536px) 112px, 96px";
 
   return (
     <div
@@ -103,7 +110,14 @@ export function CrewPhoto({
                 innerRadius,
               )}
             >
-              <ChromaticImage src={src} alt={name} className="h-full w-full" />
+              <ChromaticImage
+                src={src}
+                alt={name}
+                className="h-full w-full"
+                eager={eager}
+                unoptimized={unoptimized}
+                sizes={sizes}
+              />
             </DialogPrimitive.Trigger>
             <CrewPhotoModal src={src} name={name} />
           </DialogPrimitive.Root>

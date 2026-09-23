@@ -47,7 +47,7 @@ export function AdminGoogleLogin() {
       await authClient.signIn.social(
         {
           provider: "google",
-          callbackURL: "/admin/dashboard",
+          callbackURL: "/",
         },
         { onError: (ctx) => fail(ctx.error) },
       );

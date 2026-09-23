@@ -7,22 +7,22 @@ export function revalidateRequestViews(
     archive?: boolean;
   } = {},
 ) {
-  revalidatePath(`/admin/requests/${requestId}`);
-  revalidatePath("/admin/requests");
-  revalidatePath("/admin/dashboard");
-  revalidatePath("/admin/activity");
+  revalidatePath(`/requests/${requestId}`);
+  revalidatePath("/requests");
+  revalidatePath("/dashboard");
+  revalidatePath("/activity");
 
   const instrumentIds = (options.instrumentIds ?? []).filter(
     (id): id is string => Boolean(id),
   );
   for (const id of instrumentIds) {
-    revalidatePath(`/admin/instruments/${id}`);
+    revalidatePath(`/instruments/${id}`);
   }
   if (instrumentIds.length > 0) {
-    revalidatePath("/admin/instruments");
+    revalidatePath("/instruments");
   }
 
   if (options.archive) {
-    revalidatePath("/admin/archive");
+    revalidatePath("/archive");
   }
 }

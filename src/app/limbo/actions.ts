@@ -79,7 +79,7 @@ export async function completeHandover(
   }
 
   revalidatePath("/legacy");
-  revalidatePath("/admin/settings");
-  revalidatePath("/admin/activity");
-  redirect("/legacy", RedirectType.replace);
+  revalidatePath("/settings");
+  revalidatePath("/activity");
+  redirect(`${process.env.BETTER_AUTH_URL}/legacy`, RedirectType.replace);
 }

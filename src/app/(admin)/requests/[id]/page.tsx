@@ -1,0 +1,535 @@
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { AssignSection } from "./AssignSection";
+import { NotifyAndRejectPanel } from "./NotifyAndRejectPanel";
+import { CancelRequestPanel } from "./CancelRequestPanel";
+import { DocumentReviewSection } from "./DocumentReviewSection";
+import {
+  confirmExtension,
+  confirmHandover,
+  confirmReturn,
+  revertFromOngoing,
+} from "./actions";
+import {
+  ACTIVE_INSTRUMENT_HOLD_STATUSES,
+  canAssignInstrument,
+  canCancelRequest,
+  canNotifyBorrower,
+  confirmedExtensionCount,
+  formatNameWithNickname,
+  formatSharedLocation,
+  getRequestStep,
+  hasAvailableSlot,
+  LOAN_STEP_LABELS,
+  resolveMaxConcurrentLoans,
+} from "@/lib/loan/loan-rules";
+import { RequestStatusBadge } from "@/components/RequestStatusBadge";
+import { getAddendumTimingLabel } from "@/lib/labels";
+import { formatJakartaDate } from "@/lib/format";
+import {
+  CONDITION_OPTIONS,
+  STATUS_OPTIONS,
+  getStatusLabel,
+} from "@/components/StatusBadge";
+import { ExtensionBadge } from "@/components/ExtensionBadge";
+import { LoanStepper } from "@/components/LoanStepper";
+import { SubmitButton } from "@/components/SubmitButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AlertTriangle, Ban } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { PhotoViewerModal } from "@/components/PhotoViewerModal";
+
+export default async function RequestDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const request = await prisma.borrowingRequest.findUniqueOrThrow({
+    where: { id },
+    include: {
+      instrument: true,
+    },
+  });
+
+  const instrumentCandidates = await prisma.instrument.findMany({
+    where: {
+      status: { notIn: ["placed", "unavailable"] },
+      condition: { in: ["ok", "need_repair"] },
+      isLoanable: true,
+      type: { contains: request.instrumentTypeRequested, mode: "insensitive" },
+    },
+    include: {
+      borrowingRequests: {
+        where: { status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] } },
+        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
+      },
+    },
+  });
+
+  const typeSlots = await prisma.instrumentTypeSlot.findMany();
+
+  const candidates = instrumentCandidates
+    .filter((inst) =>
+      hasAvailableSlot(
+        inst.borrowingRequests.length,
+        resolveMaxConcurrentLoans(inst.type, typeSlots),
+      ),
+    )
+    .map((inst) => ({
+      ...inst,
+      activeHolders: inst.borrowingRequests.length,
+      maxConcurrentLoans: resolveMaxConcurrentLoans(inst.type, typeSlots),
+      displayLocation: formatSharedLocation(
+        inst.borrowingRequests,
+        inst.location,
+      ),
+    }));
+
+  const currentInstrumentHolders = request.instrumentId
+    ? await prisma.borrowingRequest.findMany({
+        where: {
+          instrumentId: request.instrumentId,
+          status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+        },
+        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
+      })
+    : [];
+
+  const currentInstrumentWithSlot = request.instrument
+    ? {
+        ...request.instrument,
+        activeHolders: currentInstrumentHolders.length,
+        maxConcurrentLoans: resolveMaxConcurrentLoans(
+          request.instrument.type,
+          typeSlots,
+        ),
+        displayLocation: formatSharedLocation(
+          currentInstrumentHolders,
+          request.instrument.location,
+        ),
+      }
+    : null;
+
+  const latestPeriod = await prisma.loanPeriod.findFirst({
+    where: { requestId: request.id },
+    orderBy: { sequence: "desc" },
+  });
+
+  const documents = latestPeriod
+    ? await prisma.document.findMany({
+        where: { periodId: latestPeriod.id },
+        distinct: ["type"],
+        orderBy: { uploadedAt: "desc" },
+      })
+    : [];
+
+  const addendums = latestPeriod
+    ? await prisma.addendum.findMany({
+        where: { periodId: latestPeriod.id },
+        orderBy: { submittedAt: "asc" },
+      })
+    : [];
+
+  const canAssign = canAssignInstrument(
+    request.status,
+    request.instrumentConfirmed,
+  );
+  const canNotify = canNotifyBorrower(
+    request.status,
+    request.instrumentConfirmed,
+  );
+
+  const canCancel = canCancelRequest(request.status);
+
+  const remainingActiveHolders = request.instrumentId
+    ? await prisma.borrowingRequest.count({
+        where: {
+          instrumentId: request.instrumentId,
+          id: { not: request.id },
+          status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+        },
+      })
+    : 0;
+  const isLastHolder = remainingActiveHolders === 0;
+
+  const isExtension = latestPeriod?.periodType === "extension";
+
+  const step = getRequestStep(request.status, request.instrumentConfirmed);
+  const stepLabels = LOAN_STEP_LABELS.map((label, index) =>
+    index === 3 && request.status === "returned" ? "Returned" : label,
+  );
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <div className="mb-2 flex flex-wrap items-center gap-3">
+          <RequestStatusBadge status={request.status} variant="pill" />
+          <ExtensionBadge count={confirmedExtensionCount(latestPeriod)} />
+          <span className="tabular text-xs text-muted-foreground">
+            Submitted {formatJakartaDate(request.createdAt)}
+          </span>
+        </div>
+        <h1 className="text-h1">
+          {formatNameWithNickname(request.borrowerName, request.borrowerNickname)}{" "}
+          <span className="tabular text-muted-foreground">
+            — {request.ticketId}
+          </span>
+        </h1>
+        <p className="mt-1 text-sm text-foreground-2">
+          {request.instrumentTypeRequested}
+          {request.status === "reviewing" &&
+            request.instrumentConfirmed &&
+            " · Instrument confirmed — waiting for borrower to complete Stage 2"}
+        </p>
+      </div>
+
+      {step === "exception" ? (
+        <div
+          className={cn(
+            "flex items-start gap-3 rounded-md border p-4 text-sm",
+            request.status === "cancelled"
+              ? "border-border bg-muted/40"
+              : "border-destructive/40 bg-destructive-soft/40",
+          )}
+        >
+          {request.status === "cancelled" ? (
+            <Ban
+              className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          ) : (
+            <AlertTriangle
+              className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+              strokeWidth={1.75}
+            />
+          )}
+          <div>
+            <div
+              className={cn(
+                "font-semibold",
+                request.status === "cancelled"
+                  ? "text-foreground"
+                  : "text-destructive",
+              )}
+            >
+              {request.status === "rejected"
+                ? "Request Rejected"
+                : request.status === "cancelled"
+                  ? "Request Cancelled"
+                  : "Overdue"}
+            </div>
+            {request.status === "rejected" && request.rejectionReason && (
+              <div className="mt-0.5 text-foreground-2">
+                {request.rejectionReason}
+              </div>
+            )}
+            {request.status === "cancelled" && request.cancellationReason && (
+              <div className="mt-0.5 text-foreground-2">
+                {request.cancellationReason}
+              </div>
+            )}
+            {request.status === "overdue" && (
+              <div className="mt-0.5 text-foreground-2">
+                The borrower has not returned the instrument by the due date.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <Card>
+          <CardContent>
+            <LoanStepper steps={stepLabels} current={step} />
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Borrower</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted-foreground">Year</dt>
+                  <dd className="mt-0.5 font-medium">{request.borrowerYear}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Email</dt>
+                  <dd className="mt-0.5 font-medium">
+                    {request.borrowerEmail}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Phone</dt>
+                  <dd className="tabular mt-0.5 font-medium">
+                    {request.borrowerPhone}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">LINE</dt>
+                  <dd className="mt-0.5 font-medium">
+                    {request.borrowerLineId}
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          {canAssign && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Assign Instrument</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AssignSection
+                  requestId={id}
+                  currentInstrument={currentInstrumentWithSlot}
+                  candidates={candidates}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {canAssign ? (
+            <NotifyAndRejectPanel requestId={id} canNotify={canNotify} />
+          ) : (
+            request.instrument && (
+              <Card>
+                <CardContent>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="font-heading text-h3">Instrument</span>
+                    <Link
+                      href={`/instruments/${request.instrument.id}`}
+                      className="text-sm font-medium text-navy underline-offset-4 hover:underline"
+                    >
+                      {request.instrument.type}
+                      {request.instrument.brand &&
+                        ` — ${request.instrument.brand}`}
+                      {request.instrument.serialNumber &&
+                        ` (S/N: ${request.instrument.serialNumber})`}
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          )}
+          {canCancel && <CancelRequestPanel requestId={id} />}
+
+          {request.carriedOverAt &&
+            (request.status === "active" || request.status === "overdue") && (
+              <Card>
+                <CardContent>
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <div>
+                      <span className="font-heading text-h3">
+                        Ongoing Loans
+                      </span>{" "}
+                      <span className="text-sm text-muted-foreground">
+                        — since{" "}
+                        {formatJakartaDate(request.carriedOverAt)}.
+                      </span>
+                    </div>
+                    <form action={revertFromOngoing.bind(null, id)}>
+                      <SubmitButton
+                        pendingText="Moving..."
+                        variant="outline"
+                        size="sm"
+                      >
+                        Move back to active roster
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+        </div>
+      </div>
+
+      {(request.status === "documents_uploaded" ||
+        (isExtension && documents.length > 0)) && (
+        <DocumentReviewSection
+          requestId={id}
+          documents={documents}
+          isExtension={isExtension}
+        />
+      )}
+
+      {addendums.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Condition Addendum</CardTitle>
+          </CardHeader>
+          <CardContent className="gap-4">
+            {addendums.map((a) => (
+              <div key={a.id} className="rounded-md border border-border p-4">
+                <div className="text-sm font-semibold">
+                  {getAddendumTimingLabel(a.timing)}
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-2">
+                  <div className="flex flex-col gap-2.5">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">
+                        Completeness
+                      </dt>
+                      <dd className="mt-0.5">{a.completeness}</dd>
+                    </div>
+                    {a.accessoriesCondition && (
+                      <div>
+                        <dt className="text-xs text-muted-foreground">
+                          Accessories Condition
+                        </dt>
+                        <dd className="mt-0.5">{a.accessoriesCondition}</dd>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">
+                        Body Condition
+                      </dt>
+                      <dd className="mt-0.5">{a.bodyCondition}</dd>
+                    </div>
+                    {a.notes && (
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Notes</dt>
+                        <dd className="mt-0.5">{a.notes}</dd>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {a.driveFileIds.length > 0 && (
+                  <div className="mt-3">
+                    <PhotoViewerModal
+                      fileIds={a.driveFileIds}
+                      title={`${a.timing === "initial" ? "Initial" : "Final"} condition photos`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {request.status === "ready_to_pickup" && (
+              <form action={confirmHandover.bind(null, id)}>
+                <SubmitButton pendingText="Confirming..." className="w-full">
+                  Confirm Handover
+                </SubmitButton>
+              </form>
+            )}
+
+            {isExtension && !latestPeriod?.startDate && (
+              <form action={confirmExtension.bind(null, id)}>
+                <SubmitButton pendingText="Confirming..." className="w-full">
+                  Confirm Extension
+                </SubmitButton>
+              </form>
+            )}
+
+            {(request.status === "active" || request.status === "overdue") &&
+              addendums.some((a) => a.timing === "final") && (
+                <form
+                  action={confirmReturn.bind(null, id)}
+                  className="flex flex-col gap-3 rounded-md border border-border p-4"
+                >
+                  <div className="text-sm font-semibold">Confirm Return</div>
+                  {isLastHolder ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="condition">Condition</Label>
+                          <Select
+                            name="condition"
+                            items={CONDITION_OPTIONS}
+                            defaultValue="ok"
+                          >
+                            <SelectTrigger id="condition" className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CONDITION_OPTIONS.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="status">Status</Label>
+                          <Select
+                            name="status"
+                            items={STATUS_OPTIONS}
+                            defaultValue="available"
+                          >
+                            <SelectTrigger id="status" className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="available">
+                                {getStatusLabel("available")}
+                              </SelectItem>
+                              <SelectItem value="unavailable">
+                                {getStatusLabel("unavailable")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-foreground-2">
+                            Ignored if Condition is &quot;Pensiun&quot; or
+                            &quot;Hilang&quot; — forced to &quot;Nonaktif&quot;.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="location">Location</Label>
+                        <Input
+                          id="location"
+                          name="location"
+                          defaultValue="Sekre"
+                          required
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-foreground-2">
+                      Instrumen ini masih dipegang {remainingActiveHolders}{" "}
+                      peminjam lain — kondisi/status/lokasi instrumen gak
+                      diminta di sini, cuma nutup pengembalian{" "}
+                      {formatNameWithNickname(request.borrowerName, request.borrowerNickname)}.
+                    </p>
+                  )}
+                  <SubmitButton
+                    pendingText="Confirming..."
+                    className="self-start"
+                  >
+                    Confirm Return
+                  </SubmitButton>
+                </form>
+              )}
+          </CardContent>
+        </Card>
+      )}
+
+      {isExtension && addendums.length === 0 && (
+        <p className="text-sm text-foreground-2">
+          Waiting for borrower to submit the addendum for this extension period.
+        </p>
+      )}
+    </div>
+  );
+}

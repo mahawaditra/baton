@@ -36,7 +36,11 @@ export function AuroraBackground({
     >
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 overflow-hidden"
+        className="pointer-events-none absolute inset-0 overflow-hidden bg-[url(/images/aurora-static-mobile.webp)] bg-cover bg-top sm:hidden"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block"
         style={AURORA_VARIABLES}
       >
         <div

@@ -14,6 +14,9 @@ export type ChromaticImageProps = {
   displacement?: number;
   chromaticShift?: number;
   tilt?: number;
+  eager?: boolean;
+  unoptimized?: boolean;
+  sizes?: string;
 };
 
 const VERTEX_SHADER = `
@@ -124,6 +127,9 @@ export function ChromaticImage({
   displacement = 0.05,
   chromaticShift = 0.01,
   tilt = 0.3,
+  eager = false,
+  unoptimized = true,
+  sizes,
 }: ChromaticImageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -386,7 +392,10 @@ export function ChromaticImage({
         src={src}
         alt={alt}
         fill
-        unoptimized
+        unoptimized={unoptimized}
+        loading={eager ? "eager" : "lazy"}
+        fetchPriority={eager ? "high" : "auto"}
+        sizes={sizes}
         className="object-cover"
       />
       {active && (

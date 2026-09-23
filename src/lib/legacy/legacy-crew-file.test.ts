@@ -16,11 +16,13 @@ describe("patchLegacyCrewSource", () => {
       slug: "kenichi",
       fileId: "abc123",
       mimeType: "image/jpeg",
+      animated: false,
     });
 
     const kenichi = entryOf(patched, "kenichi");
     expect(kenichi).toContain('photoDriveFileId: "abc123",');
     expect(kenichi).toContain('mimeType: "image/jpeg",');
+    expect(kenichi).toContain("animated: false,");
 
     for (const member of LEGACY_CREW) {
       if (member.slug === "kenichi") continue;
@@ -33,10 +35,12 @@ describe("patchLegacyCrewSource", () => {
       slug: "haseulbintaro",
       fileId: "fid",
       mimeType: "image/gif",
+      animated: true,
     });
     const entry = entryOf(patched, "haseulbintaro");
     expect(entry).toContain("featured: true,");
     expect(entry).toContain('photoDriveFileId: "fid",');
+    expect(entry).toContain("animated: true,");
   });
 
   it("can be patched for every member, one after another", () => {
@@ -46,6 +50,7 @@ describe("patchLegacyCrewSource", () => {
         slug: member.slug,
         fileId: `id-${member.slug}`,
         mimeType: "image/png",
+        animated: false,
       });
     }
     for (const member of LEGACY_CREW) {
@@ -60,11 +65,13 @@ describe("patchLegacyCrewSource", () => {
       slug: "adit",
       fileId: "first",
       mimeType: "image/gif",
+      animated: false,
     });
     const twice = patchLegacyCrewSource(once, {
       slug: "adit",
       fileId: "second",
       mimeType: "image/gif",
+      animated: false,
     });
     const adit = entryOf(twice, "adit");
     expect(adit).toContain('photoDriveFileId: "second",');
@@ -76,6 +83,7 @@ describe("patchLegacyCrewSource", () => {
       slug: "bamjo",
       fileId: "x",
       mimeType: "image/gif",
+      animated: false,
     });
     const before = entryOf(source, "bamjo");
     const after = entryOf(patched, "bamjo");
@@ -89,6 +97,7 @@ describe("patchLegacyCrewSource", () => {
         slug: "nobody",
         fileId: "x",
         mimeType: "image/gif",
+        animated: false,
       }),
     ).toThrow(/nobody/);
   });

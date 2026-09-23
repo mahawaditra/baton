@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
-import { AdminGoogleLogin } from "@/components/AdminGoogleLogin";
 
 const FAQ_ITEMS = [
   {
@@ -45,16 +44,6 @@ const FAQ_ITEMS = [
   },
 ];
 
-const ADMIN_ITEM = {
-  q: "Bagaimana kalau aku admin?",
-  a: (
-    <>
-      Sini masuk.
-      <AdminGoogleLogin />
-    </>
-  ),
-};
-
 const LEFT_COLUMN = FAQ_ITEMS.slice(0, 5);
 const RIGHT_COLUMN = FAQ_ITEMS.slice(5);
 
@@ -90,9 +79,6 @@ export function LandingFaq() {
               <FaqItem key={item.q} item={item} />
             ))}
           </div>
-        </div>
-        <div className="mt-3 lg:mx-auto lg:w-[460px]">
-          <FaqItem item={ADMIN_ITEM} />
         </div>
       </div>
     </section>

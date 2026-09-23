@@ -1,6 +1,6 @@
 export function patchLegacyCrewSource(
   source: string,
-  update: { slug: string; fileId: string; mimeType: string },
+  update: { slug: string; fileId: string; mimeType: string; animated: boolean },
 ): string {
   const start = source.indexOf(`slug: "${update.slug}"`);
   if (start === -1) {
@@ -15,15 +15,21 @@ export function patchLegacyCrewSource(
   const block = source.slice(start, end);
   const idPattern = /photoDriveFileId: (?:null|"[^"]*"),/;
   const mimePattern = /mimeType: "[^"]*",/;
-  if (!idPattern.test(block) || !mimePattern.test(block)) {
+  const animatedPattern = /animated: (?:true|false),/;
+  if (
+    !idPattern.test(block) ||
+    !mimePattern.test(block) ||
+    !animatedPattern.test(block)
+  ) {
     throw new Error(
-      `The "${update.slug}" entry is missing photoDriveFileId or mimeType`,
+      `The "${update.slug}" entry is missing photoDriveFileId, mimeType, or animated`,
     );
   }
 
   const patched = block
     .replace(idPattern, `photoDriveFileId: "${update.fileId}",`)
-    .replace(mimePattern, `mimeType: "${update.mimeType}",`);
+    .replace(mimePattern, `mimeType: "${update.mimeType}",`)
+    .replace(animatedPattern, `animated: ${update.animated},`);
 
   return source.slice(0, start) + patched + source.slice(end);
 }

@@ -20,7 +20,7 @@ export default async function LimboPage() {
 
   if (!session || !session.user.isActive) redirect("/");
   if (session.user.role !== "ketua" || !session.user.handoverAt) {
-    redirect("/admin/dashboard");
+    redirect("/");
   }
 
   return (

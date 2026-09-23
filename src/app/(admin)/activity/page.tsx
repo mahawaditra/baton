@@ -1,0 +1,179 @@
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { toJakartaCalendarDate, todayInJakarta } from "@/lib/format";
+import { EmptyState } from "@/components/EmptyState";
+import {
+  ActivityTimeline,
+  type ActivityLogWithAdmin,
+} from "@/components/ActivityTimeline";
+import { buttonVariants } from "@/components/ui/button";
+import { Activity, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { ActivityLog } from "@/generated/prisma/client";
+
+const PAGE_SIZE = 30;
+
+const ENTITY_TYPE_LABEL: Record<string, string> = {
+  goods: "Goods",
+  loan_settings: "Loan Settings",
+  admin: "Admin",
+  inventory_snapshot: "Snapshot",
+  loan_period: "Loan Period",
+  instrument_type_slot: "Instrument Slot",
+};
+
+function groupLogsByDay(logs: ActivityLogWithAdmin[]) {
+  const today = todayInJakarta();
+  const yesterday = new Date(today);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+
+  const groups = new Map<
+    string,
+    { label: string; logs: ActivityLogWithAdmin[] }
+  >();
+
+  for (const log of logs) {
+    const day = toJakartaCalendarDate(log.createdAt);
+    const key = day.toISOString();
+
+    let label: string;
+    if (day.getTime() === today.getTime()) {
+      label = "Today";
+    } else if (day.getTime() === yesterday.getTime()) {
+      label = "Yesterday";
+    } else {
+      label = day.toLocaleDateString("en-GB", {
+        timeZone: "UTC",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
+
+    if (!groups.has(key)) {
+      groups.set(key, { label, logs: [] });
+    }
+    groups.get(key)!.logs.push(log);
+  }
+
+  return [...groups.values()];
+}
+
+export default async function ActivityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const parsedPage = Number.parseInt(pageParam ?? "", 10);
+  const page =
+    Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+  const [logs, total] = await Promise.all([
+    prisma.activityLog.findMany({
+      include: { admin: true },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.activityLog.count(),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const requestIds = [
+    ...new Set(
+      logs
+        .filter((l) => l.entityType === "borrowing_request")
+        .map((l) => l.entityId),
+    ),
+  ];
+  const instrumentIds = [
+    ...new Set(
+      logs.filter((l) => l.entityType === "instrument").map((l) => l.entityId),
+    ),
+  ];
+
+  const [requests, instruments] = await Promise.all([
+    requestIds.length > 0
+      ? prisma.borrowingRequest.findMany({
+          where: { id: { in: requestIds } },
+          select: { id: true, ticketId: true },
+        })
+      : [],
+    instrumentIds.length > 0
+      ? prisma.instrument.findMany({
+          where: { id: { in: instrumentIds } },
+          select: { id: true, type: true },
+        })
+      : [],
+  ]);
+
+  const requestMap = new Map(requests.map((r) => [r.id, r.ticketId]));
+  const instrumentMap = new Map(instruments.map((i) => [i.id, i.type]));
+
+  function entityTag(log: ActivityLog): string {
+    if (log.entityType === "borrowing_request") {
+      return requestMap.get(log.entityId) ?? "Request";
+    }
+    if (log.entityType === "instrument") {
+      return instrumentMap.get(log.entityId) ?? "Instrument";
+    }
+    return ENTITY_TYPE_LABEL[log.entityType] ?? log.entityType;
+  }
+
+  const tags = new Map(logs.map((log) => [log.entityId, entityTag(log)]));
+
+  const groupedLogs = groupLogsByDay(logs);
+
+  return (
+    <div className="flex flex-col gap-6 pb-20">
+      <h1 className="hidden text-h1 lg:block">Activity Log</h1>
+
+      {logs.length === 0 ? (
+        <EmptyState icon={Activity} title="No activity recorded yet" />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {groupedLogs.map((group) => (
+            <div key={group.label} className="flex flex-col gap-3">
+              <div className="text-sm font-semibold text-foreground-2">
+                {group.label}
+              </div>
+              <ActivityTimeline logs={group.logs} tags={tags} showDate={false} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="fixed right-0 bottom-0 left-0 z-10 flex items-center justify-between border-t border-border bg-surface px-6 py-4 lg:left-60">
+        <Link
+          href={`/activity?page=${page - 1}`}
+          aria-disabled={page <= 1}
+          tabIndex={page <= 1 ? -1 : undefined}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            page <= 1 && "pointer-events-none opacity-50",
+          )}
+        >
+          <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
+          Prev
+        </Link>
+        <span className="tabular text-sm text-muted-foreground">
+          Page {page} of {totalPages}
+        </span>
+        <Link
+          href={`/activity?page=${page + 1}`}
+          aria-disabled={page >= totalPages}
+          tabIndex={page >= totalPages ? -1 : undefined}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            page >= totalPages && "pointer-events-none opacity-50",
+          )}
+        >
+          Next
+          <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+        </Link>
+      </div>
+    </div>
+  );
+}

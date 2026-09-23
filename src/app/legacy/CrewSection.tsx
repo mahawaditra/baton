@@ -17,6 +17,8 @@ export function CrewSection() {
             name={featured.name}
             hasPhoto={Boolean(featured.photoDriveFileId)}
             featured
+            eager
+            unoptimized={featured.animated}
             className="h-44 w-44 sm:h-48 sm:w-48 2xl:h-60 2xl:w-60"
           />
           <div className={cn("flex flex-col gap-1", halo)}>
@@ -42,6 +44,7 @@ export function CrewSection() {
               slug={member.slug}
               name={member.name}
               hasPhoto={Boolean(member.photoDriveFileId)}
+              unoptimized={member.animated}
               className="h-24 w-24 2xl:h-28 2xl:w-28"
             />
             <div className={cn("flex min-w-0 max-w-36 flex-col gap-0.5", halo)}>

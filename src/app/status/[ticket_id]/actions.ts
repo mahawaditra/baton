@@ -24,6 +24,7 @@ import {
 } from "@/lib/loan/loan-rules";
 import { RequestData } from "./types";
 import { sendEmail } from "@/lib/mail";
+import { ADMIN_URL } from "@/lib/admin/admin-host";
 import { accessCodeLimiter, limitOrAllow } from "@/lib/rate-limit";
 import { z } from "zod";
 import {
@@ -766,7 +767,7 @@ export async function submitDocument(
           : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
         html: `
         <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
-        <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
+        <p><a href="${ADMIN_URL}/requests/${request.id}">Buka detail request</a></p>
       `,
       });
     } catch (error) {
@@ -988,7 +989,7 @@ export async function submitAddendum(
         subject: `Pengembalian menunggu konfirmasi — tiket ${request.ticketId}`,
         html: `
         <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah mengisi addendum kondisi akhir dan siap dikonfirmasi pengembaliannya.</p>
-        <p><a href="${process.env.BETTER_AUTH_URL}/admin/requests/${request.id}">Buka detail request</a></p>
+        <p><a href="${ADMIN_URL}/requests/${request.id}">Buka detail request</a></p>
       `,
       });
     } catch (error) {

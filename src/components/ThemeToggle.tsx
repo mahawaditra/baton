@@ -6,6 +6,7 @@ import { Moon, Sun } from "lucide-react";
 import { useMounted } from "@/lib/use-mounted";
 import { FixedPortal } from "@/components/FixedPortal";
 import { cn } from "@/lib/utils";
+import { isAdminHost } from "@/lib/admin/admin-host";
 
 export function ThemeToggle() {
   const mounted = useMounted();
@@ -21,7 +22,7 @@ export function ThemeToggle() {
   }
 
   const isDark = resolvedTheme === "dark";
-  const isAdminShell = pathname.startsWith("/admin");
+  const isAdminShell = isAdminHost(window.location.hostname);
 
   return (
     <FixedPortal>

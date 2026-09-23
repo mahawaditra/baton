@@ -20,7 +20,7 @@ export function ItemPhoto({
     >
       {fileId ? (
         <Image
-          src={`/admin/drive-files/${fileId}`}
+          src={`/drive-files/${fileId}`}
           alt={alt}
           fill
           unoptimized

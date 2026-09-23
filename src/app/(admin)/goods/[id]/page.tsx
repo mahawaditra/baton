@@ -1,0 +1,104 @@
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { EditGoodForm } from "./EditGoodForm";
+import { uploadGoodPhoto } from "./actions";
+import { getConditionLabel } from "@/components/StatusBadge";
+import { ItemPhotoField } from "@/components/ItemPhotoField";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+export default async function GoodDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ edit?: string }>;
+}) {
+  const { id } = await params;
+  const { edit } = await searchParams;
+  const isEditing = edit === "true";
+
+  const good = await prisma.good.findUniqueOrThrow({
+    where: { id },
+  });
+
+  const goods = await prisma.good.findMany({
+    select: { location: true },
+  });
+  const locations = [...new Set(goods.map((g) => g.location))].sort();
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-h1">{good.name}</h1>
+        {good.brand && (
+          <p className="mt-1 text-sm text-foreground-2">{good.brand}</p>
+        )}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Detail</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!isEditing ? (
+            <div className="flex flex-col gap-5 sm:flex-row sm:gap-6">
+              <ItemPhotoField
+                fileId={good.photoDriveFileId}
+                alt={good.name}
+                action={uploadGoodPhoto.bind(null, id)}
+                className="mx-auto w-44 shrink-0 sm:mx-0"
+              />
+              <div className="flex flex-1 flex-col gap-4">
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Brand</dt>
+                    <dd className="mt-0.5 font-medium">{good.brand || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Reg. No.</dt>
+                    <dd className="tabular mt-0.5 font-medium">
+                      {good.registrationNo || "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Name</dt>
+                    <dd className="mt-0.5 font-medium">{good.name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Condition</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {getConditionLabel(good.condition)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Location</dt>
+                    <dd className="mt-0.5 font-medium">{good.location}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Quantity</dt>
+                    <dd className="mt-0.5 font-medium">{good.quantity}</dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-muted-foreground">Notes</dt>
+                    <dd className="mt-0.5 font-medium">{good.notes || "—"}</dd>
+                  </div>
+                </dl>
+
+                <Link
+                  href={`/goods/${id}?edit=true`}
+                  className={cn(buttonVariants({ size: "sm" }), "self-start")}
+                >
+                  Edit Good
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <EditGoodForm good={good} locations={locations} />
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

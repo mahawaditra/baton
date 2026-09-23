@@ -53,7 +53,7 @@ function PhotoFrame({ fileId, alt }: { fileId: string; alt: string }) {
         </div>
       ) : (
         <Image
-          src={`/admin/drive-files/${fileId}`}
+          src={`/drive-files/${fileId}`}
           alt={alt}
           fill
           unoptimized
@@ -157,7 +157,7 @@ export function PhotoViewerModal({
           }}
           action={uploadAction}
           initialImageSrc={
-            cropFileId ? `/admin/drive-files/${cropFileId}` : undefined
+            cropFileId ? `/drive-files/${cropFileId}` : undefined
           }
         />
       )}

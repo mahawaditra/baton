@@ -259,7 +259,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 src/
   app/
-    admin/       Admin panel — dashboard, inventory, requests, settings.
+    (admin)/     Admin panel — dashboard, inventory, requests, settings.
                  Access-gated by proxy.ts (Next.js 16's replacement for middleware.ts);
                  the layout and every Server Action check the session again on their own.
     api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive),

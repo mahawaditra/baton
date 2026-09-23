@@ -335,9 +335,9 @@ export function getEntityUrl(
 ): string | null {
   switch (entityType) {
     case "instrument":
-      return `/admin/instruments/${entityId}`;
+      return `/instruments/${entityId}`;
     case "borrowing_request":
-      return `/admin/requests/${entityId}`;
+      return `/requests/${entityId}`;
     default:
       return null;
   }
