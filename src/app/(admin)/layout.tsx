@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { AdminNav } from "./AdminNav";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { getSession } from "@/lib/admin/require-admin";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Admin BATON",
+};
 
 export default async function AdminLayout({
   children,
