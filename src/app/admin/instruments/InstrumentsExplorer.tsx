@@ -221,49 +221,50 @@ export function InstrumentsExplorer({
           {mobileFiltered.length} dari {instruments.length} instrumen
         </div>
 
-        <div className="-mx-2 overflow-x-auto px-2">
-          <div className="flex items-center gap-2">
-            <div className="inline-flex shrink-0 gap-0.5 rounded-lg border border-border bg-surface-2 p-[3px]">
-              {MOBILE_SORT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setMobileSort(opt.id)}
-                  className={cn(
-                    "whitespace-nowrap rounded px-3 py-1.5 text-sm font-medium text-muted-foreground",
-                    mobileSort === opt.id &&
-                      "bg-surface font-semibold text-foreground shadow-sm",
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            <div className="h-5 w-px shrink-0 bg-border" />
-            <div className="flex shrink-0 gap-2">
-              <FacetFilter
-                label="Section"
-                options={sections}
-                selected={sectionFilter}
-                onToggle={handleSectionToggle}
-              />
-              <FacetFilter
-                label="Type"
-                options={types}
-                selected={typeFilter}
-                onToggle={(value) =>
-                  setTypeFilter((prev) => toggleSetValue(prev, value))
-                }
-              />
-              <FacetFilter
-                label="Status"
-                options={statusOptions}
-                selected={statusFilter}
-                onToggle={(value) =>
-                  setStatusFilter((prev) => toggleSetValue(prev, value))
-                }
-              />
-            </div>
+        <div className="flex flex-col gap-2 sm:-mx-2 sm:flex-row sm:items-center sm:overflow-x-auto sm:px-2">
+          <div className="flex w-full gap-0.5 rounded-lg border border-border bg-surface-2 p-[3px] sm:w-fit sm:shrink-0">
+            {MOBILE_SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setMobileSort(opt.id)}
+                className={cn(
+                  "flex-1 whitespace-nowrap rounded px-3 py-1.5 text-center text-sm font-medium text-muted-foreground sm:flex-none",
+                  mobileSort === opt.id &&
+                    "bg-surface font-semibold text-foreground shadow-sm",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="hidden shrink-0 bg-border sm:block sm:h-5 sm:w-px" />
+          <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-fit sm:shrink-0">
+            <FacetFilter
+              label="Section"
+              options={sections}
+              selected={sectionFilter}
+              onToggle={handleSectionToggle}
+              className="w-full sm:w-fit"
+            />
+            <FacetFilter
+              label="Type"
+              options={types}
+              selected={typeFilter}
+              onToggle={(value) =>
+                setTypeFilter((prev) => toggleSetValue(prev, value))
+              }
+              className="w-full sm:w-fit"
+            />
+            <FacetFilter
+              label="Status"
+              options={statusOptions}
+              selected={statusFilter}
+              onToggle={(value) =>
+                setStatusFilter((prev) => toggleSetValue(prev, value))
+              }
+              className="w-full sm:w-fit"
+            />
           </div>
         </div>
 

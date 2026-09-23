@@ -14,11 +14,13 @@ export function FacetFilter({
   options,
   selected,
   onToggle,
+  className,
 }: {
   label: string;
   options: string[];
   selected: Set<string>;
   onToggle: (value: string) => void;
+  className?: string;
 }) {
   return (
     <Popover>
@@ -26,6 +28,7 @@ export function FacetFilter({
         className={cn(
           buttonVariants({ variant: "outline", size: "sm" }),
           "gap-1.5",
+          className,
         )}
       >
         {label}
