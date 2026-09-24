@@ -8,7 +8,7 @@ export function LimboShell({ children }: { children: React.ReactNode }) {
           <div className="legacy-plaque relative flex flex-col items-center gap-6 rounded-[calc(1.5rem-1.5px)] px-6 py-10 text-center sm:px-10">
             <div
               aria-hidden
-              className="legacy-emblem aspect-[229/287] h-16"
+              className="legacy-emblem aspect-[1146/1820] h-16"
             />
             <h1 className="font-heading text-h1 text-foreground">
               The sacrifice is made.

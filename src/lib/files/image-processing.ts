@@ -46,9 +46,5 @@ export async function prepareImageFile(file: File): Promise<File> {
   }
 
   if (!working.type.startsWith("image/")) return working;
-  try {
-    return await compressImage(working);
-  } catch {
-    return working;
-  }
+  return compressImage(working);
 }

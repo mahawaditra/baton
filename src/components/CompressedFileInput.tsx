@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { prepareImageFile } from "@/lib/files/image-processing";
+import { toastError } from "@/lib/toast";
 
 export function CompressedFileInput({
   id,
@@ -11,6 +12,7 @@ export function CompressedFileInput({
   multiple = false,
   required = false,
   onCompressingChange,
+  onCompressingProgress,
 }: {
   id?: string;
   name: string;
@@ -18,9 +20,13 @@ export function CompressedFileInput({
   multiple?: boolean;
   required?: boolean;
   onCompressingChange?: (isCompressing: boolean) => void;
+  onCompressingProgress?: (current: number, total: number) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(
+    null,
+  );
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -29,7 +35,22 @@ export function CompressedFileInput({
     setIsCompressing(true);
     onCompressingChange?.(true);
 
-    const processed = await Promise.all(Array.from(files).map(prepareImageFile));
+    const fileList = Array.from(files);
+    const processed: File[] = [];
+    for (const [index, file] of fileList.entries()) {
+      setProgress({ current: index + 1, total: fileList.length });
+      onCompressingProgress?.(index + 1, fileList.length);
+      try {
+        processed.push(await prepareImageFile(file));
+      } catch {
+        toastError(`Gagal memproses foto "${file.name}". Coba pilih ulang foto ini.`);
+        if (inputRef.current) inputRef.current.value = "";
+        setIsCompressing(false);
+        onCompressingChange?.(false);
+        setProgress(null);
+        return;
+      }
+    }
 
     const dataTransfer = new DataTransfer();
     for (const file of processed) {
@@ -41,6 +62,7 @@ export function CompressedFileInput({
 
     setIsCompressing(false);
     onCompressingChange?.(false);
+    setProgress(null);
   }
 
   return (
@@ -60,7 +82,11 @@ export function CompressedFileInput({
         )}
       />
       {isCompressing && (
-        <p className="text-xs text-muted-foreground">Memproses foto...</p>
+        <p className="text-xs text-muted-foreground">
+          {progress && progress.total > 1
+            ? `Memproses foto ${progress.current} dari ${progress.total}...`
+            : "Memproses foto..."}
+        </p>
       )}
     </div>
   );

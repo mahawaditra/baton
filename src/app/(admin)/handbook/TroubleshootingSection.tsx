@@ -146,6 +146,35 @@ export function TroubleshootingSection() {
         </p>
       </TaskCard>
 
+      <TaskCard title="Foto hasil addendum corrupt/kepotong/rusak (Sep 2026)">
+        <p>
+          Kejadian 24/09/2026 yaitu foto yang di-upload peminjam untuk
+          Addendum Awal ada 5 foto dan yang berhasil hanya 1, sedangkan 4
+          sisanya corrupt (gambarnya kepotong).
+        </p>
+        <p>
+          Secara internal, 1 foto yang selamat itu masih bagus dan worth
+          using as addendum and instrument photo. Tapi dari sisi peminjam,
+          itu adalah bukti legal barang yang mereka pinjam dan berguna as
+          their defense kalo kenapa-napa.
+        </p>
+        <p>
+          Jadi ada baiknya minta fotonya aja lagi dari mereka secara
+          informal (lewat LINE), nanti kirim aja ke gw untuk replace
+          fotonya di Drive, gw ada script untuk replace fotonya supaya
+          seamless untuk kalian dan juga peminjam. And of course, jangan
+          lupa minta maaf dulu yes ke mereka (dan gw juga minta maap).
+        </p>
+        <p>
+          <strong>
+            DO NOT ATTEMPT TO DELETE/REPLACE THE PHOTO IN THE DRIVE FOLDER
+            YOURSELF
+          </strong>
+          . Itu bakal merusak peminjamannya di sistem. Butuh script khusus
+          untuk replace isi suatu file di drive.
+        </p>
+      </TaskCard>
+
       <TaskCard title="Glosarium">
         <ul className="list-disc pl-5">
           <li>

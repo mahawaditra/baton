@@ -40,6 +40,10 @@ export function AddendumForm({
   const [clientError, setClientError] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [compressProgress, setCompressProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
 
   useEffect(() => {
     if (state.success) onSuccess();
@@ -178,6 +182,9 @@ export function AddendumForm({
               multiple
               required
               onCompressingChange={setIsCompressing}
+              onCompressingProgress={(current, total) =>
+                setCompressProgress({ current, total })
+              }
             />
           </div>
           <div className="flex items-start gap-2.5">
@@ -202,7 +209,9 @@ export function AddendumForm({
             className="self-start"
           >
             {isCompressing
-              ? "Memproses..."
+              ? compressProgress && compressProgress.total > 1
+                ? `Memproses foto ${compressProgress.current} dari ${compressProgress.total}...`
+                : "Memproses..."
               : isValidating
                 ? "Memeriksa foto..."
                 : isPending

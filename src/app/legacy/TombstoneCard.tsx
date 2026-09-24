@@ -14,7 +14,7 @@ export function TombstoneCard({ tombstone }: { tombstone: Tombstone }) {
           className="pointer-events-none absolute inset-2.5 rounded-t-[9.25rem] rounded-b-xl border border-gold/30"
         />
 
-        <div aria-hidden className="legacy-emblem aspect-[229/287] h-[4.75rem]" />
+        <div aria-hidden className="legacy-emblem aspect-[1146/1820] h-[4.75rem]" />
 
         <div className="font-heading text-h2 tabular text-gold-soft-foreground">
           {tombstone.termYear}

@@ -83,7 +83,7 @@ export default async function LegacyPage() {
               <div className="flex flex-col items-center gap-4 py-4 text-center">
                 <div
                   aria-hidden
-                  className="legacy-emblem aspect-[229/287] h-24 opacity-80"
+                  className="legacy-emblem aspect-[1146/1820] h-24 opacity-80"
                 />
                 <p className="text-body-lg text-foreground-2">
                   No sacrifices have been made yet.
