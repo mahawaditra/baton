@@ -269,7 +269,10 @@ export function AdminNav({
         {userFooter}
       </aside>
 
-      <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex items-center gap-3 border-b border-border bg-surface px-4 py-3 lg:hidden">
+      <header
+        data-admin-shell
+        className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex items-center gap-3 border-b border-border bg-surface px-4 py-3 lg:hidden"
+      >
         <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
           <Dialog.Trigger
             aria-label="Open menu"

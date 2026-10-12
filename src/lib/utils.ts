@@ -1,5 +1,26 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
+
+export const CUSTOM_FONT_SIZES = [
+  "display",
+  "h1",
+  "h2",
+  "h3",
+  "title",
+  "body-lg",
+  "body",
+  "label",
+  "caption",
+  "micro",
+]
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [{ text: CUSTOM_FONT_SIZES }],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

@@ -12,6 +12,7 @@ import {
   requiredDocumentTypesForPeriod,
   getRequestActionLabel,
   getRequestStep,
+  waitingOnBorrowerLabel,
   getDocumentTypeLabel,
   hasAvailableSlot,
   formatSharedLocation,
@@ -100,6 +101,18 @@ describe("documentTypesNeedingUpload", () => {
     expect(documentTypesNeedingUpload(required, existing)).toEqual([
       "ktp_scan",
     ]);
+  });
+});
+
+describe("waitingOnBorrowerLabel", () => {
+  it("uses plain wording instead of the internal Stage 2 term", () => {
+    expect(waitingOnBorrowerLabel("reviewing")).toBe(
+      "Waiting for borrower to fill in contract details",
+    );
+    expect(waitingOnBorrowerLabel("contract_generated")).toBe(
+      "Waiting for borrower to upload documents",
+    );
+    expect(waitingOnBorrowerLabel("ready_to_pickup")).toBe("Waiting for pickup");
   });
 });
 

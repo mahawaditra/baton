@@ -1,11 +1,10 @@
 import Link from "next/link";
+import { formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
 import {
   formatActivityLog,
-  formatJakartaDateTime,
-  formatJakartaTime,
   getEntityUrl,
   resolveActorName,
-} from "@/lib/format";
+} from "@/lib/activity-log";
 import type { ActivityLog, Admin } from "@/generated/prisma/client";
 
 export type ActivityLogWithAdmin = ActivityLog & { admin: Admin | null };

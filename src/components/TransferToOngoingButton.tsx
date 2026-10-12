@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ArrowRightLeft } from "lucide-react";
-import { transferToOngoing } from "./actions";
+import { transferToOngoing } from "@/app/(admin)/dashboard/actions";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -19,8 +19,10 @@ import { toastError } from "@/lib/toast";
 
 export function TransferToOngoingButton({
   transferableCount,
+  label = "Transfer",
 }: {
   transferableCount: number;
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -44,7 +46,7 @@ export function TransferToOngoingButton({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger render={<Button variant="outline" size="sm" />}>
         <ArrowRightLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-        Transfer
+        {label}
       </AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-[480px]">
         <AlertDialogHeader>

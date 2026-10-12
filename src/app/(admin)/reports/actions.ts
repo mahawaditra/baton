@@ -9,8 +9,8 @@ import {
   uploadFile,
 } from "@/lib/files/drive";
 import { buildXlsxBuffer } from "@/lib/files/xlsx";
+import { buildAnnualSummaryRows } from "@/lib/activity-log";
 import {
-  buildAnnualSummaryRows,
   currentYearInJakarta,
   formatJakartaDate,
   toJakartaCalendarDate,

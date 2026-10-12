@@ -8,7 +8,7 @@ import { getLegacyFolder, trashFile, uploadFile } from "@/lib/files/drive";
 import { validateImageUpload } from "@/lib/files/file-validation";
 import { runCompleteHandover } from "@/lib/admin/handover";
 
-export type CompleteHandoverState = { error: string | null };
+type CompleteHandoverState = { error: string | null };
 
 async function trashQuietly(fileId: string) {
   try {

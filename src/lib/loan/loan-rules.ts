@@ -195,6 +195,35 @@ export function requestNeedsAction(req: {
   return false;
 }
 
+export function isReturnPending(req: {
+  status: string;
+  loanPeriods: {
+    actualReturnDate: Date | null;
+    addendums: { timing: string }[];
+  }[];
+}): boolean {
+  const latestPeriod = req.loanPeriods[0];
+  if (!latestPeriod) return false;
+  return (
+    (req.status === "active" || req.status === "overdue") &&
+    !latestPeriod.actualReturnDate &&
+    latestPeriod.addendums.some((a) => a.timing === "final")
+  );
+}
+
+export function isExtensionPending(req: {
+  status: string;
+  loanPeriods: { periodType: string; startDate: Date | null }[];
+}): boolean {
+  const latestPeriod = req.loanPeriods[0];
+  if (!latestPeriod) return false;
+  return (
+    req.status === "active" &&
+    latestPeriod.periodType === "extension" &&
+    !latestPeriod.startDate
+  );
+}
+
 export function getRequestActionLabel(req: {
   status: string;
   instrumentConfirmed: boolean;
@@ -214,26 +243,25 @@ export function getRequestActionLabel(req: {
   if (req.status === "documents_uploaded") {
     return "Needs document review";
   }
-
-  const latestPeriod = req.loanPeriods[0];
-
-  if (
-    latestPeriod &&
-    (req.status === "active" || req.status === "overdue") &&
-    !latestPeriod.actualReturnDate &&
-    latestPeriod.addendums.some((a) => a.timing === "final")
-  ) {
+  if (isReturnPending(req)) {
     return "Needs return confirmation";
   }
-
-  if (
-    latestPeriod &&
-    req.status === "active" &&
-    latestPeriod.periodType === "extension" &&
-    !latestPeriod.startDate
-  ) {
+  if (isExtensionPending(req)) {
     return "Needs extension confirmation";
   }
 
   return "Needs handover confirmation";
+}
+
+export function waitingOnBorrowerLabel(status: string): string {
+  switch (status) {
+    case "contract_generated":
+      return "Waiting for borrower to upload documents";
+    case "reviewing":
+      return "Waiting for borrower to fill in contract details";
+    case "ready_to_pickup":
+      return "Waiting for pickup";
+    default:
+      return "Waiting on borrower";
+  }
 }

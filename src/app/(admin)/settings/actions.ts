@@ -188,7 +188,7 @@ export async function addAdmin(
   return { success: true, error: null, generalError: null };
 }
 
-export type HandoverState = { error: string | null };
+type HandoverState = { error: string | null };
 
 export async function handoverKetua(
   formData: FormData,
@@ -417,7 +417,7 @@ export async function setSignatoryLineAddFriendPublic(value: boolean) {
   revalidatePath("/activity");
 }
 
-export type SetSignatoryLineAddFriendUrlResult =
+type SetSignatoryLineAddFriendUrlResult =
   | { success: true }
   | { success: false; error: string };
 
@@ -504,7 +504,7 @@ export async function setAdminActive(adminId: string, isActive: boolean) {
   revalidatePath("/activity");
 }
 
-export type AdjustInstrumentTypeSlotResult =
+type AdjustInstrumentTypeSlotResult =
   | { success: true; value: number }
   | { success: false; error: string };
 

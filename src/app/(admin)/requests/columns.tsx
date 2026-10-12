@@ -3,17 +3,13 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { Prisma } from "@/generated/prisma/client";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
 import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatJakartaDate } from "@/lib/format";
-
-export type RequestRow = Prisma.BorrowingRequestGetPayload<{
-  include: { loanPeriods: { select: { sequence: true; startDate: true } } };
-}>;
+import type { RequestRow } from "./request-row";
 
 export const columns: ColumnDef<RequestRow>[] = [
   {

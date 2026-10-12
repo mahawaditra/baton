@@ -1,21 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { ADMIN_HOST, isAdminHost } from "@/lib/admin/admin-host";
-
-const ADMIN_PATH_SEGMENTS = new Set([
-  "dashboard",
-  "requests",
-  "instruments",
-  "goods",
-  "archive",
-  "activity",
-  "reports",
-  "settings",
-  "handbook",
-  "login",
-  "documents",
-  "drive-files",
-]);
+import {
+  ADMIN_HOST,
+  ADMIN_PATH_SEGMENTS,
+  isAdminHost,
+} from "@/lib/admin/admin-host";
 
 function bounceToAdminHost(req: NextRequest): NextResponse | undefined {
   if (!ADMIN_HOST) return undefined;

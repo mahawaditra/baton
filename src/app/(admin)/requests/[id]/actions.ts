@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
-import { sendEmail } from "@/lib/mail";
+import { sendEmailSafely } from "@/lib/send-email-safely";
 import { daysBetween, escapeHtml, toJakartaCalendarDate } from "@/lib/format";
 import {
   calculateDepositRefund,
@@ -174,20 +174,16 @@ export async function confirmAvailable(requestId: string) {
     where: { id: requestId },
     data: { instrumentConfirmed: true },
   });
-  try {
-    await sendEmail({
-      to: request.borrowerEmail,
-      subject: "Instrumen tersedia — lengkapi data kontrak",
-      html: `
-      <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
-      <p>Instrumen yang kamu ajukan sekarang tersedia.</p>
-      <p>Silakan lengkapi data kontrak di link berikut:</p>
-      <p><a href="${process.env.BETTER_AUTH_URL}/status/${request.ticketId}">Lanjut ke Tahap 2</a></p>
-    `,
-    });
-  } catch (error) {
-    Sentry.captureException(error);
-  }
+  await sendEmailSafely({
+    to: request.borrowerEmail,
+    subject: "Instrumen tersedia — lengkapi data kontrak",
+    html: `
+    <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
+    <p>Instrumen yang kamu ajukan sekarang tersedia.</p>
+    <p>Silakan lengkapi data kontrak di link berikut:</p>
+    <p><a href="${process.env.BETTER_AUTH_URL}/status/${request.ticketId}">Lanjut ke Tahap 2</a></p>
+  `,
+  });
   await prisma.activityLog.create({
     data: {
       adminId: session.user.id,
@@ -287,20 +283,16 @@ export async function rejectRequest(
     };
   }
 
-  try {
-    await sendEmail({
-      to: request.borrowerEmail,
-      subject: "Pengajuan peminjaman tidak dapat diproses.",
-      html: `
-      <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
-      <p>Mohon maaf, pengajuan peminjaman instrumen kamu (tiket ${request.ticketId}) tidak dapat kami proses.</p>
-      <p>Alasan: ${escapeHtml(reason)}</p>
-      <p>Silakan hubungi staf Logistik OSUI untuk solusi lebih lanjut.</p>
-    `,
-    });
-  } catch (error) {
-    Sentry.captureException(error);
-  }
+  await sendEmailSafely({
+    to: request.borrowerEmail,
+    subject: "Pengajuan peminjaman tidak dapat diproses.",
+    html: `
+    <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
+    <p>Mohon maaf, pengajuan peminjaman instrumen kamu (tiket ${request.ticketId}) tidak dapat kami proses.</p>
+    <p>Alasan: ${escapeHtml(reason)}</p>
+    <p>Silakan hubungi staf Logistik OSUI untuk solusi lebih lanjut.</p>
+  `,
+  });
 
   await prisma.activityLog.create({
     data: {
@@ -312,7 +304,10 @@ export async function rejectRequest(
     },
   });
 
-  revalidateRequestViews(requestId, { instrumentIds: [request.instrumentId] });
+  revalidateRequestViews(requestId, {
+    instrumentIds: [request.instrumentId],
+    archive: true,
+  });
 
   return { success: true, error: null, generalError: null };
 }
@@ -412,7 +407,10 @@ export async function cancelRequest(
     },
   });
 
-  revalidateRequestViews(requestId, { instrumentIds: [request.instrumentId] });
+  revalidateRequestViews(requestId, {
+    instrumentIds: [request.instrumentId],
+    archive: true,
+  });
 
   return { success: true, error: null, generalError: null };
 }
@@ -494,27 +492,23 @@ export async function submitDocumentReview(
         ? "Dokumen berikut yang kamu upload perlu direvisi:"
         : "Beberapa dokumen berikut yang kamu upload perlu direvisi:";
 
-    try {
-      await sendEmail({
-        to: requestForEmail.borrowerEmail,
-        subject: "Dokumen ditolak — perlu direvisi",
-        html: `
-        <p>Halo ${escapeHtml(resolveNickname(requestForEmail.borrowerName, requestForEmail.borrowerNickname))},</p>
-        <p>${introText}</p>
-        <ul>
-          ${rejected
-            .map(
-              (d) =>
-                `<li><strong>${escapeHtml(getDocumentTypeLabel(d.type))}</strong>: ${escapeHtml(d.notes!)}</li>`,
-            )
-            .join("")}
-        </ul>
-        <p>Silakan upload ulang dokumen di <a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">halaman status kamu</a>.</p>
-        `,
-      });
-    } catch (error) {
-      Sentry.captureException(error);
-    }
+    await sendEmailSafely({
+      to: requestForEmail.borrowerEmail,
+      subject: "Dokumen ditolak — perlu direvisi",
+      html: `
+      <p>Halo ${escapeHtml(resolveNickname(requestForEmail.borrowerName, requestForEmail.borrowerNickname))},</p>
+      <p>${introText}</p>
+      <ul>
+        ${rejected
+          .map(
+            (d) =>
+              `<li><strong>${escapeHtml(getDocumentTypeLabel(d.type))}</strong>: ${escapeHtml(d.notes!)}</li>`,
+          )
+          .join("")}
+      </ul>
+      <p>Silakan upload ulang dokumen di <a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">halaman status kamu</a>.</p>
+      `,
+    });
   } else if (!isExtension) {
     const allDocuments = await prisma.document.findMany({
       where: { periodId: latestPeriod.id },
@@ -536,20 +530,16 @@ export async function submitDocumentReview(
         where: { id: requestId },
       });
 
-      try {
-        await sendEmail({
-          to: requestForEmail.borrowerEmail,
-          subject: "Dokumen disetujui — siap diambil",
-          html: `
-          <p>Halo ${escapeHtml(resolveNickname(requestForEmail.borrowerName, requestForEmail.borrowerNickname))},</p>
-          <p>Dokumen kamu sudah disetujui dan instrumen sudah siap diambil di Sekre atau Pusgiwa UI!</p>
-          <p>Staf Logistik OSUI akan menghubungi kamu untuk koordinasi waktu pengambilan. Jika dalam waktu dekat belum ada kabar, kamu bisa menghubungi staf Logistik OSUI langsung melalui LINE.</p>
-          <p><a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">Lihat halaman status</a> untuk mengisi addendum setelah menerima instrumen.</p>
-          `,
-        });
-      } catch (error) {
-        Sentry.captureException(error);
-      }
+      await sendEmailSafely({
+        to: requestForEmail.borrowerEmail,
+        subject: "Dokumen disetujui — siap diambil",
+        html: `
+        <p>Halo ${escapeHtml(resolveNickname(requestForEmail.borrowerName, requestForEmail.borrowerNickname))},</p>
+        <p>Dokumen kamu sudah disetujui dan instrumen sudah siap diambil di Sekre atau Pusgiwa UI!</p>
+        <p>Staf Logistik OSUI akan menghubungi kamu untuk koordinasi waktu pengambilan. Jika dalam waktu dekat belum ada kabar, kamu bisa menghubungi staf Logistik OSUI langsung melalui LINE.</p>
+        <p><a href="${process.env.BETTER_AUTH_URL}/status/${requestForEmail.ticketId}">Lihat halaman status</a> untuk mengisi addendum setelah menerima instrumen.</p>
+        `,
+      });
 
       await prisma.activityLog.create({
         data: {
@@ -846,19 +836,15 @@ export async function confirmReturn(requestId: string, formData: FormData) {
       ? `<p>Deposit yang akan dikembalikan: <strong>Rp${depositRefundAmount.toLocaleString("id-ID")}</strong>. Staf Logistik OSUI akan menghubungi kamu untuk proses transfer balik.</p>`
       : `<p>Berdasarkan tanggal pengembalian, deposit yang kamu setorkan tidak dapat dikembalikan sesuai ketentuan peminjaman.</p>`;
 
-  try {
-    await sendEmail({
-      to: request.borrowerEmail,
-      subject: "Pengembalian dikonfirmasi — terima kasih!",
-      html: `
-      <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
-      <p>Pengembalian instrumen kamu sudah dikonfirmasi. Terima kasih sudah mengembalikan instrumennya!</p>
-      ${depositMessage}
-      `,
-    });
-  } catch (error) {
-    Sentry.captureException(error);
-  }
+  await sendEmailSafely({
+    to: request.borrowerEmail,
+    subject: "Pengembalian dikonfirmasi — terima kasih!",
+    html: `
+    <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
+    <p>Pengembalian instrumen kamu sudah dikonfirmasi. Terima kasih sudah mengembalikan instrumennya!</p>
+    ${depositMessage}
+    `,
+  });
 
   revalidateRequestViews(requestId, {
     instrumentIds: [request.instrumentId],

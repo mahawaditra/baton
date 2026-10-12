@@ -320,6 +320,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+@media (width < 64rem) {
+  body:has([data-admin-shell]) [data-theme-toggle] {
+    display: none;
+  }
+}
+
+.scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.scrollbar-subtle:hover {
+  scrollbar-color: var(--muted-foreground) transparent;
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,

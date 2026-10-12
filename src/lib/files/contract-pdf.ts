@@ -10,7 +10,7 @@ let cachedContractFonts: {
   italic: string;
 } | null = null;
 
-export async function getContractFonts() {
+async function getContractFonts() {
   if (cachedContractFonts) return cachedContractFonts;
 
   const [regular, bold, italic] = await Promise.all([
@@ -38,7 +38,7 @@ function imageToBase64(filename: string): string {
 const headerImage = imageToBase64("header.png");
 const footerImage = imageToBase64("footer.png");
 
-export const headerTemplate = `<div style="width: 100%; margin: 0 24px;">
+const headerTemplate = `<div style="width: 100%; margin: 0 24px;">
     <img src="${headerImage}" style="width: 100%; display: block;" />
   </div>
 `;
@@ -105,7 +105,7 @@ type ContractData = {
   dueDate: Date;
 };
 
-export async function buildContractHTML(data: ContractData): Promise<string> {
+async function buildContractHTML(data: ContractData): Promise<string> {
   const fonts = await getContractFonts();
   const dueDateStr = formatTanggalIndo(data.dueDate);
   const todayStr = formatTanggalIndo(todayInJakarta());
@@ -300,7 +300,7 @@ export async function buildContractHTML(data: ContractData): Promise<string> {
 </html>
 `;
 }
-export const footerTemplate = `
+const footerTemplate = `
   <div style="width: 100%; margin: 0 24px;">
     <img src="${footerImage}" style="width: 100%; display: block;" />
   </div>
@@ -309,7 +309,7 @@ export const footerTemplate = `
 const REMOTE_CHROMIUM_URL =
   "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
 
-export async function getBrowser() {
+async function getBrowser() {
   if (process.env.NODE_ENV === "production") {
     const chromium = (await import("@sparticuz/chromium-min")).default;
     const puppeteer = (await import("puppeteer-core")).default;

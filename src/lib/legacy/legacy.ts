@@ -25,7 +25,7 @@ export function formatKetuaLine(params: {
   return `${left} | ${right}`;
 }
 
-export const LEGACY_STAFF_TWO_COLUMN_FROM = 5;
+const LEGACY_STAFF_TWO_COLUMN_FROM = 5;
 
 export function usesTwoStaffColumns(staffCount: number): boolean {
   return staffCount >= LEGACY_STAFF_TWO_COLUMN_FROM;

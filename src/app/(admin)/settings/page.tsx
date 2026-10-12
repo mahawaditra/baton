@@ -29,14 +29,15 @@ export default async function SettingsPage() {
   const canEdit = canEditSettings(role);
   const showAdminManagement = canViewAdminManagement(role);
 
-  const admins = showAdminManagement
-    ? await prisma.admin.findMany({ orderBy: { createdAt: "asc" } })
-    : [];
-
-  const loanSettings = await prisma.loanSetting.findFirst();
+  const [admins, loanSettings, instrumentTypeSlots] = await Promise.all([
+    showAdminManagement
+      ? prisma.admin.findMany({ orderBy: { createdAt: "asc" } })
+      : [],
+    prisma.loanSetting.findFirst(),
+    prisma.instrumentTypeSlot.findMany(),
+  ]);
   const staffCount = admins.filter((a) => a.role === "staff").length;
 
-  const instrumentTypeSlots = await prisma.instrumentTypeSlot.findMany();
   const slotByType = new Map(
     instrumentTypeSlots.map((s) => [s.instrumentType, s.maxConcurrentLoans]),
   );

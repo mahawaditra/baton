@@ -1,13 +1,8 @@
-import { cn } from "@/lib/utils";
+import { StatusPill, type StatusPillTone } from "@/components/StatusPill";
 import { REQUEST_STATUS_LABELS } from "@/lib/labels";
 import type { BorrowingRequestStatus } from "@/generated/prisma/client";
 
-export { getRequestStatusLabel } from "@/lib/labels";
-
-const REQUEST_STATUS_CONFIG: Record<
-  BorrowingRequestStatus,
-  { bg: string; fg: string; dot: string }
-> = {
+const REQUEST_STATUS_CONFIG: Record<BorrowingRequestStatus, StatusPillTone> = {
   submitted: {
     bg: "bg-gold-soft",
     fg: "text-gold-soft-foreground",
@@ -67,18 +62,9 @@ export function RequestStatusBadge({
   status: BorrowingRequestStatus;
   variant?: "chip" | "pill";
 }) {
-  const config = REQUEST_STATUS_CONFIG[status];
   return (
-    <span
-      className={cn(
-        "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap px-2 text-micro uppercase",
-        variant === "pill" ? "rounded-full" : "rounded-sm",
-        config.bg,
-        config.fg,
-      )}
-    >
-      <span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />
+    <StatusPill tone={REQUEST_STATUS_CONFIG[status]} variant={variant}>
       {REQUEST_STATUS_LABELS[status]}
-    </span>
+    </StatusPill>
   );
 }

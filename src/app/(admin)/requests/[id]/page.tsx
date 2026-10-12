@@ -61,22 +61,88 @@ export default async function RequestDetailPage({
     },
   });
 
-  const instrumentCandidates = await prisma.instrument.findMany({
-    where: {
-      status: { notIn: ["placed", "unavailable"] },
-      condition: { in: ["ok", "need_repair"] },
-      isLoanable: true,
-      type: { contains: request.instrumentTypeRequested, mode: "insensitive" },
-    },
-    include: {
-      borrowingRequests: {
-        where: { status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] } },
-        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
-      },
-    },
-  });
+  const canAssign = canAssignInstrument(
+    request.status,
+    request.instrumentConfirmed,
+  );
+  const canNotify = canNotifyBorrower(
+    request.status,
+    request.instrumentConfirmed,
+  );
+  const canCancel = canCancelRequest(request.status);
 
-  const typeSlots = await prisma.instrumentTypeSlot.findMany();
+  const [
+    instrumentCandidates,
+    typeSlots,
+    currentInstrumentHolders,
+    latestPeriod,
+    remainingActiveHolders,
+  ] = await Promise.all([
+    canAssign
+      ? prisma.instrument.findMany({
+          where: {
+            status: { notIn: ["placed", "unavailable"] },
+            condition: { in: ["ok", "need_repair"] },
+            isLoanable: true,
+            type: {
+              contains: request.instrumentTypeRequested,
+              mode: "insensitive",
+            },
+          },
+          include: {
+            borrowingRequests: {
+              where: { status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] } },
+              select: {
+                borrowerName: true,
+                borrowerNickname: true,
+                borrowerYear: true,
+              },
+            },
+          },
+        })
+      : [],
+    canAssign ? prisma.instrumentTypeSlot.findMany() : [],
+    canAssign && request.instrumentId
+      ? prisma.borrowingRequest.findMany({
+          where: {
+            instrumentId: request.instrumentId,
+            status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+          },
+          select: {
+            borrowerName: true,
+            borrowerNickname: true,
+            borrowerYear: true,
+          },
+        })
+      : [],
+    prisma.loanPeriod.findFirst({
+      where: { requestId: request.id },
+      orderBy: { sequence: "desc" },
+    }),
+    request.instrumentId
+      ? prisma.borrowingRequest.count({
+          where: {
+            instrumentId: request.instrumentId,
+            id: { not: request.id },
+            status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+          },
+        })
+      : 0,
+  ]);
+
+  const [documents, addendums] = latestPeriod
+    ? await Promise.all([
+        prisma.document.findMany({
+          where: { periodId: latestPeriod.id },
+          distinct: ["type"],
+          orderBy: { uploadedAt: "desc" },
+        }),
+        prisma.addendum.findMany({
+          where: { periodId: latestPeriod.id },
+          orderBy: { submittedAt: "asc" },
+        }),
+      ])
+    : [[], []];
 
   const candidates = instrumentCandidates
     .filter((inst) =>
@@ -95,16 +161,6 @@ export default async function RequestDetailPage({
       ),
     }));
 
-  const currentInstrumentHolders = request.instrumentId
-    ? await prisma.borrowingRequest.findMany({
-        where: {
-          instrumentId: request.instrumentId,
-          status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
-        },
-        select: { borrowerName: true, borrowerNickname: true, borrowerYear: true },
-      })
-    : [];
-
   const currentInstrumentWithSlot = request.instrument
     ? {
         ...request.instrument,
@@ -120,46 +176,6 @@ export default async function RequestDetailPage({
       }
     : null;
 
-  const latestPeriod = await prisma.loanPeriod.findFirst({
-    where: { requestId: request.id },
-    orderBy: { sequence: "desc" },
-  });
-
-  const documents = latestPeriod
-    ? await prisma.document.findMany({
-        where: { periodId: latestPeriod.id },
-        distinct: ["type"],
-        orderBy: { uploadedAt: "desc" },
-      })
-    : [];
-
-  const addendums = latestPeriod
-    ? await prisma.addendum.findMany({
-        where: { periodId: latestPeriod.id },
-        orderBy: { submittedAt: "asc" },
-      })
-    : [];
-
-  const canAssign = canAssignInstrument(
-    request.status,
-    request.instrumentConfirmed,
-  );
-  const canNotify = canNotifyBorrower(
-    request.status,
-    request.instrumentConfirmed,
-  );
-
-  const canCancel = canCancelRequest(request.status);
-
-  const remainingActiveHolders = request.instrumentId
-    ? await prisma.borrowingRequest.count({
-        where: {
-          instrumentId: request.instrumentId,
-          id: { not: request.id },
-          status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
-        },
-      })
-    : 0;
   const isLastHolder = remainingActiveHolders === 0;
 
   const isExtension = latestPeriod?.periodType === "extension";
@@ -189,7 +205,7 @@ export default async function RequestDetailPage({
           {request.instrumentTypeRequested}
           {request.status === "reviewing" &&
             request.instrumentConfirmed &&
-            " · Instrument confirmed — waiting for borrower to complete Stage 2"}
+            " · Instrument confirmed — waiting for borrower to fill in contract details"}
         </p>
       </div>
 

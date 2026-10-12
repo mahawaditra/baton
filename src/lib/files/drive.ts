@@ -123,7 +123,7 @@ export async function getBorrowerArchiveFolder(
   return getOrCreateFolder(`${ticketId}_${borrowerName}`, archiveRoot);
 }
 
-export async function getItemPhotosFolder(): Promise<string> {
+async function getItemPhotosFolder(): Promise<string> {
   const assetsFolder = await getOrCreateFolder(
     "Assets",
     process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,

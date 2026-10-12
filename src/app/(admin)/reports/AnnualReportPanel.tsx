@@ -3,11 +3,8 @@
 import { useState } from "react";
 import { z } from "zod";
 import { previewAnnualReport, saveAnnualReport } from "./actions";
-import {
-  formatCalendarDate,
-  formatJakartaDate,
-  resolveActorName,
-} from "@/lib/format";
+import { formatCalendarDate, formatJakartaDate } from "@/lib/format";
+import { resolveActorName } from "@/lib/activity-log";
 import {
   AlertDialog,
   AlertDialogAction,

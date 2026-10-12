@@ -6,18 +6,9 @@ import {
   canManage,
   canSetActive,
   canViewAdminManagement,
-  roleRank,
 } from "./roles";
 
 const ALL_ROLES: AdminRole[] = ["staff", "ketua", "pengurus", "overlord"];
-
-describe("roleRank", () => {
-  it("orders staff < ketua < pengurus < overlord", () => {
-    expect(roleRank("staff")).toBeLessThan(roleRank("ketua"));
-    expect(roleRank("ketua")).toBeLessThan(roleRank("pengurus"));
-    expect(roleRank("pengurus")).toBeLessThan(roleRank("overlord"));
-  });
-});
 
 describe("canManage", () => {
   const expected: Record<AdminRole, AdminRole[]> = {

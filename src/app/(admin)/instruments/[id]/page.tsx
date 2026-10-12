@@ -39,29 +39,30 @@ export default async function InstrumentDetailPage({
   const { edit, tab = "peminjam" } = await searchParams;
   const isEditing = edit === "true";
 
-  const instrument = await prisma.instrument.findUniqueOrThrow({
-    where: { id },
-  });
-
-  const activeHolders = await prisma.borrowingRequest.findMany({
-    where: {
-      instrumentId: id,
-      status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
-    },
-    select: {
-      id: true,
-      borrowerName: true,
-      borrowerNickname: true,
-      borrowerYear: true,
-    },
-  });
+  const [instrument, activeHolders, typeSlots] = await Promise.all([
+    prisma.instrument.findUniqueOrThrow({
+      where: { id },
+    }),
+    prisma.borrowingRequest.findMany({
+      where: {
+        instrumentId: id,
+        status: { in: [...ACTIVE_INSTRUMENT_HOLD_STATUSES] },
+      },
+      select: {
+        id: true,
+        borrowerName: true,
+        borrowerNickname: true,
+        borrowerYear: true,
+      },
+    }),
+    prisma.instrumentTypeSlot.findMany(),
+  ]);
   const statusLocked = activeHolders.length > 0;
   const displayLocation = formatSharedLocation(
     activeHolders,
     instrument.location,
   );
 
-  const typeSlots = await prisma.instrumentTypeSlot.findMany();
   const maxConcurrentLoans = resolveMaxConcurrentLoans(
     instrument.type,
     typeSlots,

@@ -24,7 +24,7 @@ export function NotifyAndRejectPanel({
         <CardContent>
           <p className="text-sm text-foreground-2">
             {canNotify
-              ? "The borrower gets an email to complete Stage 2 — contract details and document upload — before the instrument can be handed over."
+              ? "The borrower gets an email to fill in contract details and upload documents before the instrument can be handed over."
               : "Assign an instrument above before notifying the borrower."}
           </p>
           <form action={confirmAvailable.bind(null, requestId)}>

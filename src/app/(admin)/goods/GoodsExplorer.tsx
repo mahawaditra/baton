@@ -123,6 +123,27 @@ export function GoodsExplorer({
     return [...mobileFiltered].sort((a, b) => a.name.localeCompare(b.name));
   }, [mobileFiltered, mobileSort]);
 
+  const emptyState =
+    goods.length === 0 ? (
+      <EmptyState
+        icon={Package}
+        title="No goods yet"
+        description="Goods added by admin will appear here."
+      />
+    ) : (
+      <EmptyState
+        icon={SearchX}
+        tone="search"
+        title="No matching goods"
+        description="Try a different search term, or reset the filters below."
+        action={
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            Reset filters
+          </Button>
+        }
+      />
+    );
+
   return (
     <div className="flex flex-col gap-4">
       <div className="hidden flex-col gap-4 lg:flex">
@@ -149,25 +170,7 @@ export function GoodsExplorer({
         </div>
 
         {filtered.length === 0 ? (
-          goods.length === 0 ? (
-            <EmptyState
-              icon={Package}
-              title="No goods yet"
-              description="Goods added by admin will appear here."
-            />
-          ) : (
-            <EmptyState
-              icon={SearchX}
-              tone="search"
-              title="No matching goods"
-              description="Try a different search term, or reset the filters below."
-              action={
-                <Button variant="outline" size="sm" onClick={handleReset}>
-                  Reset filters
-                </Button>
-              }
-            />
-          )
+          emptyState
         ) : (
           <DataTable data={filtered} columns={columns} />
         )}
@@ -225,25 +228,7 @@ export function GoodsExplorer({
         </div>
 
         {mobileFiltered.length === 0 ? (
-          goods.length === 0 ? (
-            <EmptyState
-              icon={Package}
-              title="No goods yet"
-              description="Goods added by admin will appear here."
-            />
-          ) : (
-            <EmptyState
-              icon={SearchX}
-              tone="search"
-              title="No matching goods"
-              description="Try a different search term, or reset the filters below."
-              action={
-                <Button variant="outline" size="sm" onClick={handleReset}>
-                  Reset filters
-                </Button>
-              }
-            />
-          )
+          emptyState
         ) : mobileGroups ? (
           <div className="flex flex-col">
             {mobileGroups.map(([locationLabel, items]) => (

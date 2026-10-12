@@ -2,7 +2,7 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
-export type AppSession = NonNullable<
+type AppSession = NonNullable<
   Awaited<ReturnType<typeof auth.api.getSession>>
 >;
 

@@ -3,19 +3,11 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type {
-  BorrowingRequest,
-  Instrument,
-  LoanPeriod,
-} from "@/generated/prisma/client";
+import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { buttonVariants } from "@/components/ui/button";
 import { formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { cn } from "@/lib/utils";
-
-export type ArchivedRequest = BorrowingRequest & {
-  instrument: Instrument | null;
-  loanPeriods: LoanPeriod[];
-};
+import type { ArchivedRequest } from "./archive-row";
 
 export const columns: ColumnDef<ArchivedRequest>[] = [
   {
@@ -28,22 +20,32 @@ export const columns: ColumnDef<ArchivedRequest>[] = [
   {
     id: "instrument",
     header: "Instrument",
-    accessorFn: (row) => row.instrument?.type ?? "",
+    accessorFn: (row) => row.instrument?.type ?? row.instrumentTypeRequested,
     cell: ({ row }) => (
       <span>
-        {row.original.instrument?.type}{" "}
-        <span className="tabular text-muted-foreground">
-          ({row.original.instrument?.serialNumber})
-        </span>
+        {row.original.instrument?.type ?? row.original.instrumentTypeRequested}
+        {row.original.instrument?.serialNumber && (
+          <span className="tabular text-muted-foreground">
+            {" "}
+            ({row.original.instrument.serialNumber})
+          </span>
+        )}
       </span>
     ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => <RequestStatusBadge status={row.original.status} />,
   },
   {
     id: "periode",
     header: "Period",
     accessorFn: (row) => row.loanPeriods.length,
     cell: ({ row }) =>
-      `${row.original.loanPeriods.length} period${row.original.loanPeriods.length !== 1 ? "s" : ""}`,
+      row.original.loanPeriods.length === 0
+        ? "—"
+        : `${row.original.loanPeriods.length} period${row.original.loanPeriods.length !== 1 ? "s" : ""}`,
   },
   {
     accessorKey: "depositRefundAmount",

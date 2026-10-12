@@ -6,7 +6,7 @@ export default function ArchiveLoading() {
     <div className="flex flex-col gap-6">
       <h1 className="hidden text-h1 lg:block">Archive</h1>
       <LoadingMarquee />
-      <TableRowsSkeleton columns={6} rows={7} />
+      <TableRowsSkeleton columns={7} rows={7} />
     </div>
   );
 }

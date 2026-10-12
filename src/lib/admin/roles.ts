@@ -7,10 +7,6 @@ const ROLE_RANK: Record<AdminRole, number> = {
   overlord: 4,
 };
 
-export function roleRank(role: AdminRole): number {
-  return ROLE_RANK[role];
-}
-
 export function canManage(actor: AdminRole, target: AdminRole): boolean {
   return ROLE_RANK[actor] > ROLE_RANK[target];
 }

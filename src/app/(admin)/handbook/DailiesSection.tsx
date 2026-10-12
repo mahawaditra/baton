@@ -19,6 +19,11 @@ export function DailiesSection() {
           assign dari detail request-nya.
         </p>
         <p>
+          Lebih enak lihat per tahap? Pindah ke tampilan <strong>Board</strong>{" "}
+          (tombol di samping kolom search). Kartu berlabel kuning artinya
+          nunggu kalian, yang abu-abu nunggu peminjam.
+        </p>
+        <p>
           Nggak ada yang cocok? Reject aja, kasih alasan singkat — nanti
           otomatis ke-email ke peminjam.
         </p>

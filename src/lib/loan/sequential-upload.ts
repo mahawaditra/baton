@@ -4,9 +4,9 @@ export type UploadOutcome = {
   generalError: string | null;
 };
 
-export type UploadItem<K extends string> = { key: K; file: File };
+type UploadItem<K extends string> = { key: K; file: File };
 
-export type UploadBatchResult<K extends string> = {
+type UploadBatchResult<K extends string> = {
   succeeded: K[];
   errors: Partial<Record<K, string>>;
   generalError: string | null;

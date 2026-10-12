@@ -3,7 +3,7 @@ import { AdminNav } from "./AdminNav";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { getSession } from "@/lib/admin/require-admin";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPendingRequestCount } from "@/lib/admin/queries";
 
 export const metadata: Metadata = {
   title: "Admin BATON",
@@ -22,19 +22,7 @@ export default async function AdminLayout({
 
   if (session.user.handoverAt) redirect("/limbo");
 
-  const pendingCount = await prisma.borrowingRequest.count({
-    where: {
-      status: {
-        in: [
-          "submitted",
-          "reviewing",
-          "contract_generated",
-          "documents_uploaded",
-          "ready_to_pickup",
-        ],
-      },
-    },
-  });
+  const pendingCount = await getPendingRequestCount();
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminNav

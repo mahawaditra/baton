@@ -1,4 +1,4 @@
-export type LegacyCrewMember = {
+type LegacyCrewMember = {
   slug: string;
   name: string;
   lines: string[];

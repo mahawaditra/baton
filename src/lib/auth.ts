@@ -5,6 +5,7 @@ import { ADMIN_URL } from "@/lib/admin/admin-host";
 
 export const auth = betterAuth({
   baseURL: ADMIN_URL,
+  advanced: { database: { validateSchema: false } },
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

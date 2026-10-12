@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { formatJakartaDate, resolveActorName } from "@/lib/format";
+import { formatJakartaDate } from "@/lib/format";
+import { resolveActorName } from "@/lib/activity-log";
 import { exportInventorySnapshot } from "./actions";
 import { AnnualReportPanel } from "./AnnualReportPanel";
 import { buttonVariants } from "@/components/ui/button";

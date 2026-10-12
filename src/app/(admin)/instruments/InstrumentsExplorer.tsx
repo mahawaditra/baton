@@ -154,6 +154,27 @@ export function InstrumentsExplorer({
     );
   }, [mobileFiltered, mobileSort]);
 
+  const emptyState =
+    instruments.length === 0 ? (
+      <EmptyState
+        icon={Boxes}
+        title="No instruments yet"
+        description="Instruments added by admin will appear here."
+      />
+    ) : (
+      <EmptyState
+        icon={SearchX}
+        tone="search"
+        title="No matching instruments"
+        description="Try a different search term, or reset the filters below."
+        action={
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            Reset filters
+          </Button>
+        }
+      />
+    );
+
   return (
     <div className="flex flex-col gap-4">
       <div className="hidden flex-col gap-4 lg:flex">
@@ -186,25 +207,7 @@ export function InstrumentsExplorer({
         </div>
 
         {filtered.length === 0 ? (
-          instruments.length === 0 ? (
-            <EmptyState
-              icon={Boxes}
-              title="No instruments yet"
-              description="Instruments added by admin will appear here."
-            />
-          ) : (
-            <EmptyState
-              icon={SearchX}
-              tone="search"
-              title="No matching instruments"
-              description="Try a different search term, or reset the filters below."
-              action={
-                <Button variant="outline" size="sm" onClick={handleReset}>
-                  Reset filters
-                </Button>
-              }
-            />
-          )
+          emptyState
         ) : (
           <DataTable data={filtered} columns={columns} />
         )}
@@ -269,25 +272,7 @@ export function InstrumentsExplorer({
         </div>
 
         {mobileFiltered.length === 0 ? (
-          instruments.length === 0 ? (
-            <EmptyState
-              icon={Boxes}
-              title="No instruments yet"
-              description="Instruments added by admin will appear here."
-            />
-          ) : (
-            <EmptyState
-              icon={SearchX}
-              tone="search"
-              title="No matching instruments"
-              description="Try a different search term, or reset the filters below."
-              action={
-                <Button variant="outline" size="sm" onClick={handleReset}>
-                  Reset filters
-                </Button>
-              }
-            />
-          )
+          emptyState
         ) : mobileGroups ? (
           <div className="flex flex-col">
             {mobileGroups.map(([sectionLabel, items]) => (

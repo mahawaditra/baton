@@ -1,4 +1,4 @@
-export const LEGACY_PHOTO_CACHE_CONTROL =
+const LEGACY_PHOTO_CACHE_CONTROL =
   "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400";
 
 export function legacyPhotoResponse(buffer: Buffer, contentType: string) {

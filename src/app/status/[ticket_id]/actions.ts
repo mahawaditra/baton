@@ -23,7 +23,7 @@ import {
   requiredDocumentTypesForPeriod,
 } from "@/lib/loan/loan-rules";
 import { RequestData } from "./types";
-import { sendEmail } from "@/lib/mail";
+import { sendEmailSafely } from "@/lib/send-email-safely";
 import { ADMIN_URL } from "@/lib/admin/admin-host";
 import { accessCodeLimiter, limitOrAllow } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -759,20 +759,16 @@ export async function submitDocument(
   }
 
   if (nowComplete) {
-    try {
-      await sendEmail({
-        to: process.env.GMAIL_USER!,
-        subject: isExtension
-          ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
-          : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
-        html: `
-        <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
-        <p><a href="${ADMIN_URL}/requests/${request.id}">Buka detail request</a></p>
-      `,
-      });
-    } catch (error) {
-      Sentry.captureException(error);
-    }
+    await sendEmailSafely({
+      to: process.env.GMAIL_USER!,
+      subject: isExtension
+        ? `Dokumen perpanjangan menunggu review — tiket ${request.ticketId}`
+        : `Dokumen baru menunggu review — tiket ${request.ticketId}`,
+      html: `
+      <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah meng-upload ${isExtension ? "kontrak perpanjangan yang sudah ditandatangani" : "dokumen kontrak"}.</p>
+      <p><a href="${ADMIN_URL}/requests/${request.id}">Buka detail request</a></p>
+    `,
+    });
   }
 
   return { success: true, error: null, generalError: null };
@@ -983,18 +979,14 @@ export async function submitAddendum(
   }
 
   if (timing === "final") {
-    try {
-      await sendEmail({
-        to: process.env.GMAIL_USER!,
-        subject: `Pengembalian menunggu konfirmasi — tiket ${request.ticketId}`,
-        html: `
-        <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah mengisi addendum kondisi akhir dan siap dikonfirmasi pengembaliannya.</p>
-        <p><a href="${ADMIN_URL}/requests/${request.id}">Buka detail request</a></p>
-      `,
-      });
-    } catch (error) {
-      Sentry.captureException(error);
-    }
+    await sendEmailSafely({
+      to: process.env.GMAIL_USER!,
+      subject: `Pengembalian menunggu konfirmasi — tiket ${request.ticketId}`,
+      html: `
+      <p>Peminjam ${escapeHtml(formatNameWithNickname(request.borrowerName, request.borrowerNickname))} (tiket ${request.ticketId}) sudah mengisi addendum kondisi akhir dan siap dikonfirmasi pengembaliannya.</p>
+      <p><a href="${ADMIN_URL}/requests/${request.id}">Buka detail request</a></p>
+    `,
+    });
   }
 
   return { success: true, error: null, generalError: null, fields: {} };

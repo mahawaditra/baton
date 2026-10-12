@@ -7,6 +7,7 @@ import {
   getRequestActionLabel,
   requestNeedsAction,
   resolveNickname,
+  waitingOnBorrowerLabel,
 } from "@/lib/loan/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import {
@@ -32,21 +33,47 @@ import {
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
-import { TransferToOngoingButton } from "./TransferToOngoingButton";
+import { TransferToOngoingButton } from "@/components/TransferToOngoingButton";
+import {
+  PENDING_REQUEST_STATUSES,
+  countTransferableLoans,
+  getPendingRequestCount,
+} from "@/lib/admin/queries";
 import type { Prisma } from "@/generated/prisma/client";
 
-function waitingOnBorrowerLabel(status: string): string {
-  switch (status) {
-    case "contract_generated":
-      return "Waiting for borrower to upload documents";
-    case "reviewing":
-      return "Waiting for borrower to complete Stage 2";
-    case "ready_to_pickup":
-      return "Waiting for pickup";
-    default:
-      return "Waiting on borrower";
-  }
-}
+const rosterSelect = {
+  id: true,
+  status: true,
+  carriedOverAt: true,
+  borrowerName: true,
+  borrowerNickname: true,
+  borrowerYear: true,
+  borrowerLineId: true,
+  instrument: { select: { type: true, serialNumber: true } },
+  loanPeriods: {
+    select: { sequence: true, startDate: true, dueDate: true },
+    orderBy: { sequence: "desc" },
+    take: 1,
+  },
+} satisfies Prisma.BorrowingRequestSelect;
+
+const pendingSelect = {
+  id: true,
+  ticketId: true,
+  status: true,
+  instrumentConfirmed: true,
+  borrowerName: true,
+  loanPeriods: {
+    select: {
+      periodType: true,
+      startDate: true,
+      actualReturnDate: true,
+      addendums: { select: { timing: true } },
+    },
+    orderBy: { sequence: "desc" },
+    take: 1,
+  },
+} satisfies Prisma.BorrowingRequestSelect;
 
 function StatCard({
   label,
@@ -91,10 +118,7 @@ function StatCard({
 }
 
 type RosterRow = Prisma.BorrowingRequestGetPayload<{
-  include: {
-    instrument: true;
-    loanPeriods: { orderBy: { sequence: "desc" }; take: 1 };
-  };
+  select: typeof rosterSelect;
 }> & { dueDate: Date | null };
 
 function LoanRosterTable({ rows }: { rows: RosterRow[] }) {
@@ -160,29 +184,20 @@ function LoanRosterTable({ rows }: { rows: RosterRow[] }) {
 }
 
 export default async function DashboardPage() {
-  const session = await getSession();
-
   const [
+    session,
     pendingCount,
     activeCount,
     overdueCount,
     needRepairCount,
     activeOngoingCount,
     transferableCount,
+    pendingRequests,
+    recentActivity,
+    activeRequests,
   ] = await Promise.all([
-    prisma.borrowingRequest.count({
-      where: {
-        status: {
-          in: [
-            "submitted",
-            "reviewing",
-            "contract_generated",
-            "documents_uploaded",
-            "ready_to_pickup",
-          ],
-        },
-      },
-    }),
+    getSession(),
+    getPendingRequestCount(),
     prisma.borrowingRequest.count({
       where: { status: "active" },
     }),
@@ -195,39 +210,11 @@ export default async function DashboardPage() {
     prisma.borrowingRequest.count({
       where: { status: "active", carriedOverAt: { not: null } },
     }),
-    prisma.borrowingRequest.count({
-      where: {
-        status: { in: ["active", "overdue"] },
-        carriedOverAt: null,
-      },
-    }),
-  ]);
-
-  const activeNewCount = activeCount - activeOngoingCount;
-
-  const [pendingRequests, recentActivity, activeRequests] = await Promise.all([
+    countTransferableLoans(),
     prisma.borrowingRequest.findMany({
-      where: {
-        status: {
-          in: [
-            "submitted",
-            "reviewing",
-            "contract_generated",
-            "documents_uploaded",
-            "ready_to_pickup",
-          ],
-        },
-      },
-      include: {
-        loanPeriods: {
-          orderBy: { sequence: "desc" },
-          take: 1,
-          include: { addendums: true },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      where: { status: { in: [...PENDING_REQUEST_STATUSES] } },
+      select: pendingSelect,
+      orderBy: { createdAt: "desc" },
       take: 5,
     }),
     prisma.activityLog.findMany({
@@ -235,20 +222,13 @@ export default async function DashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
-
     prisma.borrowingRequest.findMany({
       where: { status: { in: ["active", "overdue"] } },
-      include: {
-        instrument: true,
-        loanPeriods: {
-          orderBy: {
-            sequence: "desc",
-          },
-          take: 1,
-        },
-      },
+      select: rosterSelect,
     }),
   ]);
+
+  const activeNewCount = activeCount - activeOngoingCount;
 
   const rosterWithDueDate: RosterRow[] = activeRequests
     .map((req) => ({

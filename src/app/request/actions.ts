@@ -1,14 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/mail";
+import { sendEmailSafely } from "@/lib/send-email-safely";
 import { getClientIp, limitOrAllow, submitRequestLimiter } from "@/lib/rate-limit";
 import { generateTicketId, generateAccessCode } from "@/lib/loan/id-generators";
 import { z } from "zod";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { escapeHtml } from "@/lib/format";
 import { formatNameWithNickname, resolveNickname } from "@/lib/loan/loan-rules";
-import * as Sentry from "@sentry/nextjs";
 import { Prisma } from "@/generated/prisma/client";
 
 type State = {
@@ -116,38 +115,30 @@ export async function submitRequest(
     }
   }
 
-  try {
-    await sendEmail({
-      to: email,
-      subject: `Pengajuan peminjaman diterima — tiket ${ticketId}`,
-      html: `
-        <p>Halo ${safeNickname}!</p>
-        <p>Pengajuan peminjaman instrumen kamu sudah kami terima dan akan direview oleh staf Logistik OSUI.</p>
-        <p>Simpan informasi berikut untuk cek status pengajuan kamu kapan saja:</p>
-        <p>
-          Nomor tiket: <strong>${ticketId}</strong><br/>
-          Kode akses: <strong>${accessCode}</strong>
-        </p>
-        <p><a href="${process.env.BETTER_AUTH_URL}/status/${ticketId}">Cek status pengajuan</a></p>
-      `,
-    });
-  } catch (error) {
-    Sentry.captureException(error);
-  }
+  await sendEmailSafely({
+    to: email,
+    subject: `Pengajuan peminjaman diterima — tiket ${ticketId}`,
+    html: `
+      <p>Halo ${safeNickname}!</p>
+      <p>Pengajuan peminjaman instrumen kamu sudah kami terima dan akan direview oleh staf Logistik OSUI.</p>
+      <p>Simpan informasi berikut untuk cek status pengajuan kamu kapan saja:</p>
+      <p>
+        Nomor tiket: <strong>${ticketId}</strong><br/>
+        Kode akses: <strong>${accessCode}</strong>
+      </p>
+      <p><a href="${process.env.BETTER_AUTH_URL}/status/${ticketId}">Cek status pengajuan</a></p>
+    `,
+  });
 
-  try {
-    await sendEmail({
-      to: process.env.GMAIL_USER!,
-      subject: `Pengajuan baru masuk — tiket ${ticketId}`,
-      html: `
-        <p>Ada pengajuan peminjaman baru dari ${safeNameWithNickname}.</p>
-        <p>Instrumen diminati: ${instrumentType}</p>
-        <p>Mohon di-review di laman requests web.</p>
-      `,
-    });
-  } catch (error) {
-    Sentry.captureException(error);
-  }
+  await sendEmailSafely({
+    to: process.env.GMAIL_USER!,
+    subject: `Pengajuan baru masuk — tiket ${ticketId}`,
+    html: `
+      <p>Ada pengajuan peminjaman baru dari ${safeNameWithNickname}.</p>
+      <p>Instrumen diminati: ${instrumentType}</p>
+      <p>Mohon di-review di laman requests web.</p>
+    `,
+  });
 
   return {
     ticketId,

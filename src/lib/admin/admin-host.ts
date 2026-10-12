@@ -1,5 +1,20 @@
 export const ADMIN_HOST = process.env.NEXT_PUBLIC_ADMIN_HOST ?? "";
 
+export const ADMIN_PATH_SEGMENTS = new Set([
+  "dashboard",
+  "requests",
+  "instruments",
+  "goods",
+  "archive",
+  "activity",
+  "reports",
+  "settings",
+  "handbook",
+  "login",
+  "documents",
+  "drive-files",
+]);
+
 export function isAdminHost(rawHost: string | null | undefined): boolean {
   if (!ADMIN_HOST || !rawHost) return false;
   return rawHost.split(":")[0] === ADMIN_HOST;

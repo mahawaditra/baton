@@ -76,6 +76,8 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 ### For admins
 
 - Dashboard: requests needing action, recent activity, and the active loan roster — with a one-click carry-over that moves long-running loans into a separate _ongoing_ roster before each intake season
+- Requests as a table or a Kanban-style board that follows the loan workflow (read-only, one card per request, flagged by what is waiting on whom); the chosen view is remembered
+- Archive of returned, rejected, and cancelled requests, filterable by year and status
 - Real-time instrument inventory, sortable/filterable, edited from a per-instrument detail page, each with a catalog photo (crop and rotate on upload)
 - Configurable instrument sharing: how many borrowers a given instrument type can have on loan at once — Ketua and Overlord only, visible but locked for everyone else
 - A separate goods inventory (manual CRUD), catalog photos and all
