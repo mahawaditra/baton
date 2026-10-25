@@ -9,6 +9,7 @@ import {
   validateImageUpload,
 } from "@/lib/files/file-validation";
 import { toastError } from "@/lib/toast";
+import { withNetworkFallback } from "@/lib/network-fallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,7 +36,9 @@ export function AddendumForm({
   timing?: "initial" | "final";
   onSuccess: () => void;
 }) {
-  const action = submitAddendum.bind(null, ticketId, accessCode, timing);
+  const action = withNetworkFallback(
+    submitAddendum.bind(null, ticketId, accessCode, timing),
+  );
   const [state, formAction, isPending] = useActionState(action, initialState);
   const [clientError, setClientError] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);

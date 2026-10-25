@@ -81,29 +81,35 @@ export async function verifyAccessCode(
   ticketId: string,
   code: string,
 ): Promise<VerifyResult> {
-  const request = await prisma.borrowingRequest.findUnique({
-    where: { ticketId },
-    select: {
-      id: true,
-      ticketId: true,
-      accessCode: true,
-      borrowerName: true,
-      borrowerNickname: true,
-      status: true,
-      createdAt: true,
-      rejectionReason: true,
-      cancellationReason: true,
-      instrumentTypeRequested: true,
-      instrumentConfirmed: true,
-      borrowerKtpNumber: true,
-      borrowerAddressKtp: true,
-      borrowerAddressDomicile: true,
-      borrowerFaculty: true,
-      guardianName: true,
-      guardianPhone: true,
-      guardianAddressKtp: true,
-    },
-  });
+  const [request, latestPeriod] = await Promise.all([
+    prisma.borrowingRequest.findUnique({
+      where: { ticketId },
+      select: {
+        id: true,
+        ticketId: true,
+        accessCode: true,
+        borrowerName: true,
+        borrowerNickname: true,
+        status: true,
+        createdAt: true,
+        rejectionReason: true,
+        cancellationReason: true,
+        instrumentTypeRequested: true,
+        instrumentConfirmed: true,
+        borrowerKtpNumber: true,
+        borrowerAddressKtp: true,
+        borrowerAddressDomicile: true,
+        borrowerFaculty: true,
+        guardianName: true,
+        guardianPhone: true,
+        guardianAddressKtp: true,
+      },
+    }),
+    prisma.loanPeriod.findFirst({
+      where: { request: { ticketId } },
+      orderBy: { sequence: "desc" },
+    }),
+  ]);
 
   if (!request || request.accessCode !== code) {
     const { success } = await limitOrAllow(
@@ -118,10 +124,6 @@ export async function verifyAccessCode(
     };
   }
 
-  const latestPeriod = await prisma.loanPeriod.findFirst({
-    where: { requestId: request.id },
-    orderBy: { sequence: "desc" },
-  });
   const isExtensionPeriod = latestPeriod?.periodType === "extension";
 
   const [

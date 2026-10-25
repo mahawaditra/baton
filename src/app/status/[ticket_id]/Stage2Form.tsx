@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { submitStage2 } from "./actions";
 import { toastError } from "@/lib/toast";
+import { withNetworkFallback } from "@/lib/network-fallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,9 @@ export function Stage2Form({
   accessCode: string;
   onSuccess: () => void;
 }) {
-  const action = submitStage2.bind(null, ticketId, accessCode);
+  const action = withNetworkFallback(
+    submitStage2.bind(null, ticketId, accessCode),
+  );
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   useEffect(() => {

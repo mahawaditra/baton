@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { submitExtension } from "./actions";
 import { RequestData } from "./types";
 import { toastError } from "@/lib/toast";
+import { withNetworkFallback } from "@/lib/network-fallback";
 import { splitFacultyMajor } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,9 @@ export function ExtendForm({
   accessCode: string;
   onSuccess: () => void;
 }) {
-  const action = submitExtension.bind(null, data.ticketId, accessCode);
+  const action = withNetworkFallback(
+    submitExtension.bind(null, data.ticketId, accessCode),
+  );
   const [state, formAction, isPending] = useActionState(action, initialState);
   const prefillFaculty = splitFacultyMajor(data.borrowerFaculty);
 

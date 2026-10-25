@@ -10,6 +10,7 @@ import { AddendumForm } from "./AddendumForm";
 import { ExtendForm } from "./ExtendForm";
 import { getRequestStep, LOAN_STEP_LABELS, resolveNickname } from "@/lib/loan/loan-rules";
 import { toastError } from "@/lib/toast";
+import { NETWORK_ERROR_MESSAGE } from "@/lib/network-fallback";
 import { formatCalendarDate, formatJakartaDate } from "@/lib/format";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { LoanStepper } from "@/components/LoanStepper";
@@ -59,11 +60,23 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
     }
   }, [ticketId]);
 
+  const refetchAfterSave = useCallback(async () => {
+    try {
+      await refetch();
+    } catch {
+      toastError(
+        "Data berhasil tersimpan, tapi tampilan belum diperbarui. Muat ulang halaman ini.",
+      );
+    }
+  }, [refetch]);
+
   useEffect(() => {
     let active = true;
     async function loadInitial() {
       try {
         await refetch();
+      } catch {
+        toastError(NETWORK_ERROR_MESSAGE);
       } finally {
         if (active) setChecking(false);
       }
@@ -76,7 +89,13 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
 
   async function handleSubmit(formData: FormData) {
     const code = formData.get("code") as string;
-    const result = await verifyAccessCode(ticketId, code);
+    let result: Awaited<ReturnType<typeof verifyAccessCode>>;
+    try {
+      result = await verifyAccessCode(ticketId, code);
+    } catch {
+      toastError(NETWORK_ERROR_MESSAGE);
+      return;
+    }
 
     if (result.success) {
       localStorage.setItem(`access_code_${ticketId}`, code);
@@ -218,7 +237,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
               <Stage2Form
                 ticketId={data.ticketId}
                 accessCode={accessCode}
-                onSuccess={refetch}
+                onSuccess={refetchAfterSave}
               />
             </>
           )}
@@ -367,7 +386,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
             <AddendumForm
               ticketId={data.ticketId}
               accessCode={accessCode}
-              onSuccess={refetch}
+              onSuccess={refetchAfterSave}
             />
           )}
 
@@ -378,7 +397,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
               timing="final"
               onSuccess={() => {
                 setShowReturnForm(false);
-                refetch();
+                refetchAfterSave();
               }}
             />
           )}
@@ -389,7 +408,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
               accessCode={accessCode}
               onSuccess={() => {
                 setShowExtendForm(false);
-                refetch();
+                refetchAfterSave();
               }}
             />
           )}
