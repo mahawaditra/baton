@@ -2,7 +2,6 @@ export const NETWORK_ERROR_MESSAGE =
   "Gagal terhubung ke server. Cek koneksi kamu lalu coba lagi.";
 
 type FieldsActionState = {
-  success: boolean;
   error: string | null;
   generalError: string | null;
   fields: Record<string, string>;
@@ -25,7 +24,6 @@ export function withNetworkFallback<S extends FieldsActionState>(
     } catch {
       return {
         ...prevState,
-        success: false,
         error: null,
         generalError: NETWORK_ERROR_MESSAGE,
         fields: textFieldsOf(formData),

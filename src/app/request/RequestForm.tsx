@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toastError } from "@/lib/toast";
+import { withNetworkFallback } from "@/lib/network-fallback";
 import { EmptyState } from "@/components/EmptyState";
 
 const initialState = {
@@ -67,7 +68,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 
 export function RequestForm() {
   const [state, formAction, isPending] = useActionState(
-    submitRequest,
+    withNetworkFallback(submitRequest),
     initialState,
   );
 

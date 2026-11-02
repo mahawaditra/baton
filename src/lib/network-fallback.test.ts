@@ -33,7 +33,10 @@ describe("withNetworkFallback", () => {
       throw new TypeError("Failed to fetch");
     });
 
-    const result = await action(initialState, new FormData());
+    const result = await action(
+      { ...initialState, error: "Nomor KTP harus 16 digit" },
+      new FormData(),
+    );
 
     expect(result.success).toBe(false);
     expect(result.error).toBeNull();
