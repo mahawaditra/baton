@@ -18,3 +18,7 @@ export const generateAccessCode = customAlphabet(
   "23456789ABCDEFGHJKMNPQRSTUVWXYZ",
   6,
 );
+
+export function normalizeAccessCode(code: string): string {
+  return code.trim().toUpperCase();
+}

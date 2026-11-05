@@ -8,21 +8,39 @@ import { UploadDocumentsForm } from "./UploadDocumentsForm";
 import { RequestData } from "./types";
 import { AddendumForm } from "./AddendumForm";
 import { ExtendForm } from "./ExtendForm";
-import { getRequestStep, LOAN_STEP_LABELS, resolveNickname } from "@/lib/loan/loan-rules";
+import {
+  getRequestStep,
+  getStatusTurn,
+  LOAN_STEP_LABELS,
+  resolveNickname,
+  type StatusTurn,
+} from "@/lib/loan/loan-rules";
 import { toastError } from "@/lib/toast";
+import { normalizeAccessCode } from "@/lib/loan/id-generators";
+import {
+  clearTicketSaved,
+  markTicketSaved,
+} from "@/lib/loan/saved-ticket-cookie";
 import { NETWORK_ERROR_MESSAGE } from "@/lib/network-fallback";
 import { formatCalendarDate, formatJakartaDate } from "@/lib/format";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { LoanStepper } from "@/components/LoanStepper";
 import { LoadingMarquee } from "@/components/LoadingMarquee";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ContactLink, LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 import { Card, CardContent } from "@/components/ui/card";
+import { TicketCard, TicketLabel } from "@/components/TicketCard";
+import { StatusLookupShell } from "../StatusLookupShell";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, Download, Info } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  Hourglass,
+  Info,
+  PenLine,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function StatusNote({ children }: { children: React.ReactNode }) {
@@ -37,24 +55,126 @@ function StatusNote({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StatusGate({ ticketId }: { ticketId: string }) {
+const GATE_DESCRIPTION =
+  "Masukkan kode akses yang dikirim ke email kamu untuk buka status peminjaman ini.";
+const GATE_FOOTNOTE =
+  "Lupa kode aksesnya? Cek email konfirmasi yang kamu terima pas kirim pengajuan.";
+
+function TicketIdHeader({ ticketId }: { ticketId: string }) {
+  return (
+    <div className="px-6 pt-5 pb-6">
+      <TicketLabel>Ticket ID</TicketLabel>
+      <div className="mt-1 flex items-baseline justify-between gap-3">
+        <span className="tabular font-heading text-display tracking-[0.02em]">
+          {ticketId}
+        </span>
+        <Link
+          href="/status"
+          className="text-caption font-medium text-hero-fg/70 underline-offset-4 transition-colors hover:text-hero-fg hover:underline"
+        >
+          Ganti
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+const TICKET_MAIN_CLASS =
+  "mx-auto -mt-10 flex w-full max-w-[51rem] flex-col gap-6 px-6 pb-12 md:pb-16";
+
+function TicketHero({
+  ticketId,
+  children,
+}: {
+  ticketId: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-hero-bg px-6 pt-2 pb-16 text-hero-fg">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="text-micro uppercase text-gold">Tiket peminjaman</div>
+        <h1 className="tabular mt-1 font-heading text-display tracking-[0.02em] text-hero-fg">
+          {ticketId}
+        </h1>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const TURN_TONE = {
+  borrower: {
+    label: "Giliran kamu",
+    icon: PenLine,
+    chip: "bg-gold text-hero-bg",
+    bottomTone: "gold",
+    callout: "border-gold/40 bg-gold-soft",
+  },
+  staff: {
+    label: "Giliran staf",
+    icon: Hourglass,
+    chip: "bg-plum text-plum-soft",
+    bottomTone: "plum",
+    callout: "border-plum/25 bg-plum-soft",
+  },
+} as const;
+
+function TurnRow({
+  turn,
+  className,
+}: {
+  turn: StatusTurn;
+  className?: string;
+}) {
+  const tone = TURN_TONE[turn.actor];
+  const Icon = tone.icon;
+  return (
+    <div className={cn("flex items-start gap-3", className)}>
+      <span
+        className={cn(
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+          tone.chip,
+        )}
+      >
+        <Icon className="h-4 w-4" strokeWidth={1.75} />
+      </span>
+      <div>
+        <div className="text-label text-foreground">{tone.label}</div>
+        <p className="mt-0.5 text-body text-foreground-2">{turn.message}</p>
+      </div>
+    </div>
+  );
+}
+
+export function StatusGate({
+  ticketId,
+  hasSavedCode,
+}: {
+  ticketId: string;
+  hasSavedCode: boolean;
+}) {
   const [data, setData] = useState<RequestData | null>(null);
   const [accessCode, setAccessCode] = useState<string | null>(null);
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(hasSavedCode);
   const [showExtendForm, setShowExtendForm] = useState(false);
   const [showReturnForm, setShowReturnForm] = useState(false);
   const [downloadPending, startDownloadTransition] = useTransition();
 
   const refetch = useCallback(async () => {
     const savedCode = localStorage.getItem(`access_code_${ticketId}`);
-    if (!savedCode) return;
+    if (!savedCode) {
+      clearTicketSaved(ticketId);
+      return;
+    }
 
     const result = await verifyAccessCode(ticketId, savedCode);
     if (result.success) {
+      markTicketSaved(ticketId);
       setData(result.request);
       setAccessCode(savedCode);
     } else {
       localStorage.removeItem(`access_code_${ticketId}`);
+      clearTicketSaved(ticketId);
       setData(null);
       setAccessCode(null);
     }
@@ -88,7 +208,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   }, [refetch]);
 
   async function handleSubmit(formData: FormData) {
-    const code = formData.get("code") as string;
+    const code = normalizeAccessCode(String(formData.get("code") ?? ""));
     let result: Awaited<ReturnType<typeof verifyAccessCode>>;
     try {
       result = await verifyAccessCode(ticketId, code);
@@ -99,6 +219,7 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
 
     if (result.success) {
       localStorage.setItem(`access_code_${ticketId}`, code);
+      markTicketSaved(ticketId);
       setData(result.request);
       setAccessCode(code);
     } else {
@@ -108,33 +229,28 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background p-6">
-        <div className="flex flex-col items-center gap-2">
-          <span className="h-2.5 w-10 rounded-full bg-gold" />
-          <div className="font-heading text-h1 text-navy">BATON</div>
-          <div className="tabular text-micro uppercase text-muted-foreground">
-            Tiket {ticketId}
+      <div className="flex-1">
+        <TicketHero ticketId={ticketId}>
+          <Skeleton className="mt-2 h-5 w-40 bg-hero-fg/15" />
+          <div className="mt-4 flex items-center gap-3">
+            <Skeleton className="h-[22px] w-24 rounded-full bg-hero-fg/15" />
+            <Skeleton className="h-3 w-32 bg-hero-fg/15" />
           </div>
-        </div>
+        </TicketHero>
 
-        <div className="w-full max-w-sm">
+        <main className={TICKET_MAIN_CLASS}>
+          <Card className="gap-0 py-0">
+            <CardContent className="flex flex-col gap-5 py-6">
+              {LOAN_STEP_LABELS.map((label) => (
+                <div key={label} className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
           <LoadingMarquee />
-        </div>
-
-        <Card className="w-full max-w-sm">
-          <CardContent className="gap-4">
-            <div>
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="mt-2.5 h-3 w-full" />
-              <Skeleton className="mt-1.5 h-3 w-3/4" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
+        </main>
       </div>
     );
   }
@@ -145,34 +261,31 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
       index === 3 && data.status === "returned" ? "Selesai" : label,
     );
 
-    return (
-      <div className="min-h-screen bg-background">
-        <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12 md:py-16">
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <RequestStatusBadge status={data.status} variant="pill" />
-              <span className="tabular text-xs text-muted-foreground">
-                Diajukan {formatJakartaDate(data.createdAt)}
-              </span>
-            </div>
-            <h1 className="font-heading text-h1 text-foreground">
-              {resolveNickname(data.borrowerName, data.borrowerNickname)}{" "}
-              <span className="tabular text-muted-foreground">
-                — {data.ticketId}
-              </span>
-            </h1>
-            <p className="mt-1 text-body text-foreground-2">
-              {data.instrumentTypeRequested}
-            </p>
-          </div>
+    const turn = getStatusTurn(data);
 
+    return (
+      <div className="flex-1">
+        <TicketHero ticketId={data.ticketId}>
+          <p className="mt-1 text-body-lg text-hero-fg/75">
+            {resolveNickname(data.borrowerName, data.borrowerNickname)} ·{" "}
+            {data.instrumentTypeRequested}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <RequestStatusBadge status={data.status} variant="pill" />
+            <span className="tabular text-caption text-hero-fg/60">
+              Diajukan {formatJakartaDate(data.createdAt)}
+            </span>
+          </div>
+        </TicketHero>
+
+        <main className={TICKET_MAIN_CLASS}>
           {step === "exception" ? (
             <div
               className={cn(
                 "flex items-start gap-3 rounded-md border p-4 text-sm",
                 data.status === "cancelled"
-                  ? "border-border bg-muted/40"
-                  : "border-destructive/40 bg-destructive-soft/40",
+                  ? "border-border bg-muted"
+                  : "border-destructive/40 bg-destructive-soft",
               )}
             >
               {data.status === "cancelled" ? (
@@ -220,38 +333,50 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
                 )}
               </div>
             </div>
+          ) : turn ? (
+            <TicketCard
+              bottomTone={TURN_TONE[turn.actor].bottomTone}
+              top={
+                <div className="px-6 py-6">
+                  <LoanStepper steps={stepLabels} current={step} />
+                </div>
+              }
+              bottom={<TurnRow turn={turn} className="px-6 pt-4 pb-5" />}
+            />
           ) : (
-            <Card>
-              <CardContent>
+            <Card className="gap-0 py-0">
+              <CardContent className="py-6">
                 <LoanStepper steps={stepLabels} current={step} />
               </CardContent>
             </Card>
           )}
 
+          {step === "exception" && turn && (
+            <TurnRow
+              turn={turn}
+              className={cn(
+                "rounded-md border px-6 py-5",
+                TURN_TONE[turn.actor].callout,
+              )}
+            />
+          )}
+
           {data.status === "reviewing" && data.instrumentConfirmed && (
-            <>
-              <StatusNote>
-                Instrumen kamu udah dikonfirmasi tersedia! Isi data di bawah ini
-                untuk lanjut proses kontrak peminjaman.
-              </StatusNote>
-              <Stage2Form
-                ticketId={data.ticketId}
-                accessCode={accessCode}
-                onSuccess={refetchAfterSave}
-              />
-            </>
+            <Stage2Form
+              ticketId={data.ticketId}
+              accessCode={accessCode}
+              onSuccess={refetchAfterSave}
+            />
           )}
 
           {data.status === "returned" && (
-            <StatusNote>
-              Terima kasih sudah mengembalikan instrumennya!
-            </StatusNote>
+            <StatusNote>Makasih udah balikin instrumennya!</StatusNote>
           )}
 
           {data.status === "active" && (
             <StatusNote>
-              Instrumen kamu sedang dipinjam. Dijaga dan jangan lupa
-              dikembalikan sebelum tanggal jatuh tempo ya!
+              Kamu lagi pinjam instrumennya. Dijaga baik-baik, dan jangan lupa
+              balikin sebelum jatuh tempo ya!
             </StatusNote>
           )}
 
@@ -262,49 +387,6 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
                 {formatCalendarDate(data.dueDate, "id-ID")}
               </span>
             </p>
-          )}
-
-          {(data.status === "submitted" || data.status === "reviewing") &&
-            !data.instrumentConfirmed && (
-              <StatusNote>
-                Staf sedang mereview pengajuan dan mengecek ketersediaan
-                instrumen kamu.
-              </StatusNote>
-            )}
-
-          {data.status === "documents_uploaded" && (
-            <StatusNote>Dokumen kamu sedang direview staf.</StatusNote>
-          )}
-
-          {data.status === "ready_to_pickup" && data.hasInitialAddendum && (
-            <StatusNote>
-              Addendum sudah dikirim. Menunggu konfirmasi staf.
-            </StatusNote>
-          )}
-
-          {data.isExtensionPeriod &&
-            !data.needsExtensionDocuments &&
-            !data.canFillExtensionAddendum &&
-            !data.hasInitialAddendum && (
-              <StatusNote>
-                Dokumen perpanjangan sedang direview staf.
-              </StatusNote>
-            )}
-
-          {(data.status === "active" || data.status === "overdue") &&
-            data.hasFinalAddendum && (
-              <StatusNote>
-                Addendum pengembalian sudah dikirim. Menunggu staf konfirmasi
-                pengembalian di Sekre.
-              </StatusNote>
-            )}
-
-          {(data.status === "contract_generated" ||
-            data.needsExtensionDocuments) && (
-            <StatusNote>
-              Kontrak kamu udah siap! Download, pahami kontraknya, tanda tangan,
-              lalu upload lagi bareng dokumen pendukung lainnya.
-            </StatusNote>
           )}
 
           {(data.status === "contract_generated" ||
@@ -348,14 +430,6 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
               uploadedDocumentTypes={data.uploadedDocumentTypes}
               onSuccess={refetch}
             />
-          )}
-
-          {data.status === "ready_to_pickup" && !data.hasInitialAddendum && (
-            <StatusNote>
-              Instrumen kamu siap diambil! Hubungi staf Logistik OSUI dan
-              koordinasi jadwal pengambilan dengan kontaknya di bawah ini (atau
-              bisa dicek lewat email), lalu isi kondisi awal di bawah ini.
-            </StatusNote>
           )}
 
           {data.status === "ready_to_pickup" &&
@@ -446,56 +520,38 @@ export function StatusGate({ ticketId }: { ticketId: string }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background p-6">
-      <div className="flex flex-col items-center gap-2">
-        <span className="h-2.5 w-10 rounded-full bg-gold" />
-        <div className="font-heading text-h1 text-navy">BATON</div>
-        <div className="tabular text-micro uppercase text-muted-foreground">
-          Tiket {ticketId}
-        </div>
-      </div>
-
-      <Card className="w-full max-w-sm">
-        <CardContent>
-          <form action={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <h2 className="font-heading text-h3 text-foreground">
-                Masukkan Kode Akses
-              </h2>
-              <p className="mt-1 text-caption text-foreground-2">
-                Masukkan kode akses yang dikirim ke email kamu untuk buka status
-                peminjaman ini.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="code">Kode Akses</Label>
-              <Input
-                id="code"
-                name="code"
-                type="text"
-                placeholder="Kode Akses"
-                required
-              />
-            </div>
-
-            <SubmitButton pendingText="Memeriksa..." className="w-full">
-              Buka
+    <StatusLookupShell description={GATE_DESCRIPTION} footnote={GATE_FOOTNOTE}>
+      <TicketCard
+        topTone="hero"
+        bottomClassName="ticket-unfold"
+        top={<TicketIdHeader ticketId={ticketId} />}
+        bottom={
+          <form
+            action={handleSubmit}
+            className="flex flex-col gap-3 px-6 pt-4 pb-6"
+          >
+            <label
+              htmlFor="code"
+              className="text-micro uppercase text-muted-foreground"
+            >
+              Kode Akses
+            </label>
+            <Input
+              id="code"
+              name="code"
+              type="text"
+              autoCapitalize="characters"
+              autoComplete="off"
+              placeholder="6 karakter dari email"
+              className="tabular tracking-[0.12em] placeholder:tracking-normal"
+              required
+            />
+            <SubmitButton pendingText="Memeriksa..." className="mt-1 w-full">
+              Buka status
             </SubmitButton>
           </form>
-        </CardContent>
-      </Card>
-
-      <p className="max-w-sm text-center text-caption text-foreground-2">
-        Lupa kode aksesnya? Cek email konfirmasi yang kamu terima pas kirim
-        pengajuan.
-      </p>
-      <Link
-        href="/status"
-        className={cn(buttonVariants({ variant: "link", size: "sm" }))}
-      >
-        Cek tiket lain
-      </Link>
-    </div>
+        }
+      />
+    </StatusLookupShell>
   );
 }

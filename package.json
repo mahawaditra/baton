@@ -30,9 +30,9 @@
     "heic-to": "^1.5.2",
     "lucide-react": "^1.31.0",
     "nanoid": "^6.0.0",
-    "next": "^16.3.5",
+    "next": "^16.4.5",
     "next-themes": "^0.4.6",
-    "nodemailer": "^10.1.0",
+    "nodemailer": "^10.3.1",
     "pg": "^8.22.0",
     "puppeteer": "^25.5.0",
     "puppeteer-core": "^25.5.0",
@@ -54,7 +54,7 @@
     "@types/react-dom": "^19",
     "esbuild": "^0.28.2",
     "eslint": "^9",
-    "eslint-config-next": "^16.4.0",
+    "eslint-config-next": "^16.4.5",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.1",
@@ -63,11 +63,11 @@
     "vitest": "^4.1.10"
   },
   "allowScripts": {
-    "@prisma/engines@7.9.1": true,
+    "@prisma/engines@7.10.0": true,
     "@sentry/cli@2.58.6": true,
     "@swc/core@1.15.46": true,
     "esbuild@0.28.2": true,
-    "prisma@7.9.1": true,
+    "prisma@7.10.0": true,
     "unrs-resolver@1.12.2": true,
     "puppeteer@25.5.0": false
   }

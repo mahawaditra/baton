@@ -139,15 +139,20 @@
 }
 
 :root {
+  --day-gold: oklch(0.735 0.108 82);
+  --day-gold-hover: oklch(0.7 0.115 82);
+  --day-gold-soft-foreground: oklch(0.42 0.09 82);
+  --night-hero-bg: oklch(0.195 0.032 285);
+  --night-hero-fg: oklch(0.945 0.01 85);
   --navy: oklch(0.278 0.052 264);
   --navy-hover: oklch(0.325 0.058 264);
   --navy-active: oklch(0.238 0.048 264);
   --plum: oklch(0.358 0.062 292);
   --plum-soft: oklch(0.912 0.02 292);
-  --gold: oklch(0.735 0.108 82);
-  --gold-hover: oklch(0.7 0.115 82);
+  --gold: var(--day-gold);
+  --gold-hover: var(--day-gold-hover);
   --gold-soft: oklch(0.93 0.045 82);
-  --gold-soft-foreground: oklch(0.42 0.09 82);
+  --gold-soft-foreground: var(--day-gold-soft-foreground);
   --hero-bg: oklch(0.278 0.052 264);
   --hero-fg: oklch(0.97 0.01 85);
 
@@ -247,8 +252,8 @@
   --gold-hover: oklch(0.82 0.12 82);
   --gold-soft: oklch(0.34 0.075 82);
   --gold-soft-foreground: oklch(0.78 0.115 82);
-  --hero-bg: oklch(0.195 0.032 285);
-  --hero-fg: oklch(0.945 0.01 85);
+  --hero-bg: var(--night-hero-bg);
+  --hero-fg: var(--night-hero-fg);
   --shadow-hero-btn: 0 8px 24px oklch(0.1 0.02 285 / 0.55);
 
   --success: oklch(0.72 0.1 148);
@@ -318,6 +323,84 @@
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .faq-item::details-content {
+    opacity: 0;
+    transition:
+      opacity 250ms ease,
+      content-visibility 250ms allow-discrete;
+  }
+
+  .faq-item[open]::details-content {
+    opacity: 1;
+  }
+
+  @supports (interpolate-size: allow-keywords) {
+    .faq-item {
+      interpolate-size: allow-keywords;
+    }
+
+    .faq-item::details-content {
+      block-size: 0;
+      overflow-y: clip;
+      transition:
+        block-size 250ms ease,
+        opacity 250ms ease,
+        content-visibility 250ms allow-discrete;
+    }
+
+    .faq-item[open]::details-content {
+      block-size: auto;
+    }
+  }
+
+  [data-reveal] {
+    transition:
+      opacity 600ms ease,
+      translate 600ms ease;
+  }
+
+  [data-reveal="waiting"] {
+    opacity: 0;
+    translate: 0 24px;
+  }
+
+  .ticket-unfold {
+    animation: ticket-unfold 450ms ease-out both;
+  }
+}
+
+@keyframes ticket-unfold {
+  from {
+    opacity: 0;
+    translate: 0 -16px;
+  }
+}
+
+.dark .ticket-hero {
+  --hero-bg: var(--night-hero-fg);
+  --hero-fg: var(--night-hero-bg);
+  --gold: var(--day-gold);
+  --gold-hover: var(--day-gold-hover);
+  --gold-soft-foreground: var(--day-gold-soft-foreground);
+}
+
+.ticket-notch-bottom {
+  mask:
+    radial-gradient(circle at 0 100%, #0000 10px, #000 10.5px) left / 51% 100%
+      no-repeat,
+    radial-gradient(circle at 100% 100%, #0000 10px, #000 10.5px) right / 51%
+      100% no-repeat;
+}
+
+.ticket-notch-top {
+  mask:
+    radial-gradient(circle at 0 0, #0000 10px, #000 10.5px) left / 51% 100%
+      no-repeat,
+    radial-gradient(circle at 100% 0, #0000 10px, #000 10.5px) right / 51% 100%
+      no-repeat;
 }
 
 @media (width < 64rem) {

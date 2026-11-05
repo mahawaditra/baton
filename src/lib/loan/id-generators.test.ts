@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { generateTicketId, generateAccessCode } from "./id-generators";
+import {
+  generateTicketId,
+  generateAccessCode,
+  normalizeAccessCode,
+} from "./id-generators";
 import { INSTRUMENT_TYPE_CODES } from "@/lib/constants";
 import { currentYearInJakarta } from "@/lib/format";
 
@@ -44,5 +48,16 @@ describe("generateAccessCode", () => {
     expect(code).toHaveLength(6);
     expect(code).toMatch(/^[A-Z0-9]+$/);
     expect(code).not.toMatch(/[0O1Il]/);
+  });
+});
+
+describe("normalizeAccessCode", () => {
+  it("uppercases and trims what the borrower typed", () => {
+    expect(normalizeAccessCode("  58pgx4 ")).toBe("58PGX4");
+  });
+
+  it("leaves a generated code unchanged", () => {
+    const code = generateAccessCode();
+    expect(normalizeAccessCode(code)).toBe(code);
   });
 });

@@ -15,6 +15,7 @@ export type RequestData = {
   dueDate: Date | null;
   canExtend: boolean;
   isExtensionPeriod: boolean;
+  hasPendingExtension: boolean;
   needsExtensionDocuments: boolean;
   canFillExtensionAddendum: boolean;
   hasFinalAddendum: boolean;

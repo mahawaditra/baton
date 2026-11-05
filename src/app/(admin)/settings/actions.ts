@@ -352,6 +352,7 @@ export async function updateLoanSettings(
   invalidateFooterCache();
 
   revalidatePath("/");
+  revalidatePath("/request");
   revalidatePath("/settings");
   revalidatePath("/activity");
 
@@ -384,6 +385,7 @@ export async function setSignatoryPhonePublic(value: boolean) {
 
   invalidateFooterCache();
   revalidatePath("/");
+  revalidatePath("/request");
   revalidatePath("/settings");
   revalidatePath("/activity");
 }
@@ -413,6 +415,7 @@ export async function setSignatoryLineAddFriendPublic(value: boolean) {
   });
 
   revalidatePath("/");
+  revalidatePath("/request");
   revalidatePath("/settings");
   revalidatePath("/activity");
 }
@@ -457,6 +460,7 @@ export async function setSignatoryLineAddFriendUrl(
   });
 
   revalidatePath("/");
+  revalidatePath("/request");
   revalidatePath("/settings");
   revalidatePath("/activity");
 

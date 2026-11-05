@@ -16,9 +16,7 @@ export default async function AdminLayout({
 }) {
   const session = await getSession();
 
-  if (!session || !session.user.isActive) {
-    return <>{children}</>;
-  }
+  if (!session || !session.user.isActive) redirect("/login");
 
   if (session.user.handoverAt) redirect("/limbo");
 

@@ -28,7 +28,12 @@ export async function GET(
   });
   if (!doc) return new Response("Not found", { status: 404 });
 
-  const buffer = await fetchFileBytes(doc.driveFileId);
+  let buffer: Buffer;
+  try {
+    buffer = await fetchFileBytes(doc.driveFileId);
+  } catch {
+    return new Response("Not found", { status: 404 });
+  }
 
   const contentType = (ALLOWED_UPLOAD_MIME_TYPES as readonly string[]).includes(
     doc.mimeType,

@@ -1,4 +1,5 @@
 import { daysBetween, todayInJakarta } from "@/lib/format";
+import type { BorrowingRequestStatus } from "@/generated/prisma/enums";
 
 export function calculateDepositRefund(params: {
   daysLate: number;
@@ -264,4 +265,108 @@ export function waitingOnBorrowerLabel(status: string): string {
     default:
       return "Waiting on borrower";
   }
+}
+
+export type StatusTurn = {
+  actor: "borrower" | "staff";
+  message: string;
+};
+
+export function getStatusTurn(data: {
+  status: BorrowingRequestStatus;
+  instrumentConfirmed: boolean;
+  hasInitialAddendum: boolean;
+  hasFinalAddendum: boolean;
+  isExtensionPeriod: boolean;
+  needsExtensionDocuments: boolean;
+  canFillExtensionAddendum: boolean;
+  hasPendingExtension: boolean;
+}): StatusTurn | null {
+  if (data.status === "reviewing" && data.instrumentConfirmed) {
+    return {
+      actor: "borrower",
+      message:
+        "Instrumen kamu udah dikonfirmasi tersedia! Isi data di bawah ini untuk lanjut proses kontrak peminjaman.",
+    };
+  }
+  if (data.status === "contract_generated" || data.needsExtensionDocuments) {
+    return {
+      actor: "borrower",
+      message:
+        "Kontrak kamu udah siap! Download, pahami kontraknya, tanda tangan, lalu upload lagi bareng dokumen pendukung lainnya.",
+    };
+  }
+  if (data.status === "ready_to_pickup" && !data.hasInitialAddendum) {
+    return {
+      actor: "borrower",
+      message:
+        "Instrumen kamu udah siap diambil! Atur jadwal pengambilan dengan staf Logistik OSUI lewat kontak di bawah (atau cek email), terus isi kondisi awalnya di form bawah.",
+    };
+  }
+  if (data.canFillExtensionAddendum) {
+    return {
+      actor: "borrower",
+      message:
+        "Dokumen perpanjangan kamu udah disetujui! Isi addendum kondisi di bawah ya.",
+    };
+  }
+  if (data.hasPendingExtension && data.hasInitialAddendum) {
+    return {
+      actor: "staff",
+      message:
+        "Addendum perpanjangan kamu udah terkirim. Tinggal nunggu konfirmasi staf.",
+    };
+  }
+  if (
+    (data.status === "active" || data.status === "overdue") &&
+    data.hasFinalAddendum
+  ) {
+    return {
+      actor: "staff",
+      message:
+        "Addendum pengembalian udah terkirim. Tinggal nunggu staf konfirmasi pengembalian di Sekre.",
+    };
+  }
+  if (data.status === "ready_to_pickup" && data.hasInitialAddendum) {
+    return {
+      actor: "staff",
+      message: "Addendum kamu udah terkirim. Tinggal nunggu konfirmasi staf.",
+    };
+  }
+  if (data.status === "documents_uploaded") {
+    return { actor: "staff", message: "Dokumen kamu lagi dicek staf." };
+  }
+  if (data.isExtensionPeriod && !data.hasInitialAddendum) {
+    return {
+      actor: "staff",
+      message: "Dokumen perpanjangan kamu lagi dicek staf.",
+    };
+  }
+  if (
+    (data.status === "submitted" || data.status === "reviewing") &&
+    !data.instrumentConfirmed
+  ) {
+    return {
+      actor: "staff",
+      message:
+        "Staf sedang mereview pengajuan dan mengecek ketersediaan instrumen kamu.",
+    };
+  }
+  return null;
+}
+
+export function displayedDueDate(
+  latestPeriod: {
+    dueDate: Date;
+    startDate: Date | null;
+    periodType: string;
+  } | null,
+  previousPeriod: { dueDate: Date } | null,
+): Date | null {
+  if (!latestPeriod) return null;
+  const extensionPending =
+    latestPeriod.periodType === "extension" && !latestPeriod.startDate;
+  return extensionPending
+    ? (previousPeriod?.dueDate ?? null)
+    : latestPeriod.dueDate;
 }

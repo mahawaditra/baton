@@ -1,11 +1,16 @@
 import { MARQUEE_TEXT } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 const COPIES_PER_ROW = 2;
 const DESKTOP_ROWS = 10;
 const MOBILE_ROWS = 14;
 const MARQUEE_DURATION_SECONDS = 40;
 
-export function HeroMarquee() {
+export function HeroMarquee({
+  textClassName = "text-hero-fg/25 dark:text-gold/28",
+}: {
+  textClassName?: string;
+}) {
   return (
     <div aria-hidden className="fixed inset-0 -z-10">
       <div className="flex h-full flex-col justify-between py-6">
@@ -18,7 +23,11 @@ export function HeroMarquee() {
               className={`overflow-hidden ${rowIndex >= DESKTOP_ROWS ? "lg:hidden" : ""}`}
             >
               <div
-                className={`marquee-track ${rowIndex % 2 === 0 ? "marquee-l" : "marquee-r"} font-heading text-[clamp(2.5rem,6vw,4.5rem)] leading-none font-bold text-hero-fg/25 dark:text-gold/28`}
+                className={cn(
+                  "marquee-track font-heading text-[clamp(2.5rem,6vw,4.5rem)] leading-none font-bold",
+                  rowIndex % 2 === 0 ? "marquee-l" : "marquee-r",
+                  textClassName,
+                )}
                 style={{ animationDelay: `${delaySeconds}s` }}
               >
                 {Array.from({ length: COPIES_PER_ROW }).map((_, copyIndex) => (

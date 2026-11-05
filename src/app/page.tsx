@@ -1,37 +1,16 @@
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
-import { ClipboardList, Clock } from "lucide-react";
+import { Check } from "lucide-react";
 import { HeroMarquee } from "@/components/HeroMarquee";
 import { LandingHero } from "@/components/LandingHero";
 import { LandingFaq } from "@/components/LandingFaq";
 import { LandingLegacy } from "@/components/LandingLegacy";
-import { prisma } from "@/lib/prisma";
-import { toWhatsAppNumber } from "@/lib/format";
+import { Reveal } from "@/components/Reveal";
+import { cn } from "@/lib/utils";
+import { getPublicContacts } from "@/lib/public-contacts";
+import { PublicFooter } from "@/components/PublicFooter";
 import { ContactLink, LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 
-type StepIconProps = { className?: string; strokeWidth?: number };
-
-function SignatureIcon({ className, strokeWidth = 1.75 }: StepIconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M20 19.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9.5" />
-      <path d="M9 4v18" />
-      <path d="M14 22 4 12" />
-      <path d="m22 22-5-5" />
-      <path d="M17 22v-4h4" />
-    </svg>
-  );
-}
-
-function GithubIcon({ className }: StepIconProps) {
+function GithubIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor">
       <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2C6 20.94 5.34 19 5.34 19c-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.85 1.24 1.85 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.31-.54-1.53.11-3.19 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.19.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.28 0 .32.21.69.8.57 4.57-1.52 7.85-5.83 7.85-10.91C23.5 5.65 18.35.5 12 .5z" />
@@ -39,77 +18,43 @@ function GithubIcon({ className }: StepIconProps) {
   );
 }
 
-function PickupIcon({ className, strokeWidth = 1.75 }: StepIconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M16 16 8 8" />
-      <path d="m16 8-8 8" />
-      <path d="M21 10V6a2 2 0 0 0-2-2h-4" />
-      <path d="M3 10V6a2 2 0 0 1 2-2h4" />
-      <path d="M21 14v4a2 2 0 0 1-2 2h-4" />
-      <path d="M3 14v4a2 2 0 0 0 2 2h4" />
-    </svg>
-  );
-}
-
 const STEPS = [
   {
-    icon: ClipboardList,
     title: "Ajukan Permintaan",
     description:
       "Isi data singkat: nama, kontak, dan instrumen yang kamu butuhkan.",
   },
   {
-    icon: Clock,
     title: "Tunggu Konfirmasi",
     description:
       "Staf Logistik cek ketersediaan dan siapkan instrumen untuk kamu.",
   },
   {
-    icon: SignatureIcon,
     title: "Lengkapi & Tanda Tangan",
     description:
       "Isi data kontrak, unduh, tanda tangan, lalu upload dokumennya.",
   },
   {
-    icon: PickupIcon,
     title: "Ambil di Sekre",
     description:
       "Catat kondisi awal, instrumen resmi jadi tanggung jawabmu.",
   },
 ] as const;
 
+function stepMarkerClass(index: number) {
+  if (index === 0) return "bg-navy text-background";
+  if (index === STEPS.length - 1) return "bg-gold text-hero-bg";
+  return "border-2 border-navy bg-background text-navy";
+}
+
 export default async function Home() {
-  const settings = await prisma.loanSetting.findFirst({
-    select: {
-      signatoryPhone: true,
-      signatoryPhonePublic: true,
-      signatoryLineAddFriendUrl: true,
-      signatoryLineAddFriendPublic: true,
-    },
-  });
-  const whatsappNumber =
-    settings?.signatoryPhonePublic && settings.signatoryPhone
-      ? toWhatsAppNumber(settings.signatoryPhone)
-      : undefined;
-  const lineAddFriendUrl =
-    settings?.signatoryLineAddFriendPublic && settings.signatoryLineAddFriendUrl
-      ? settings.signatoryLineAddFriendUrl
-      : undefined;
+  const { whatsappNumber, lineAddFriendUrl } = await getPublicContacts();
 
   return (
     <div className="min-h-screen bg-background">
       <section
         data-landing-hero
-        className="relative isolate -mt-[env(safe-area-inset-top,0px)] flex min-h-[100vh] items-end justify-center overflow-hidden bg-hero-bg pt-[env(safe-area-inset-top,0px)] select-none">
+        className="relative isolate -mt-[env(safe-area-inset-top,0px)] flex min-h-[100vh] items-end justify-center overflow-hidden bg-hero-bg [clip-path:inset(0)] pt-[env(safe-area-inset-top,0px)] select-none">
         <HeroMarquee />
         <div
           aria-hidden
@@ -119,39 +64,52 @@ export default async function Home() {
       </section>
 
       <div className="relative isolate">
-        <section className="border-t border-border bg-surface px-6 py-12">
-          <div className="mx-auto max-w-7xl">
+        <section className="bg-background px-6 py-12">
+          <Reveal className="mx-auto max-w-7xl">
             <h2 className="text-center font-heading text-h2 text-foreground">
               Cara Pinjam
             </h2>
-            <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <ol className="mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-4 lg:gap-6">
               {STEPS.map((step, index) => {
-                const Icon = step.icon;
+                const isLast = index === STEPS.length - 1;
                 return (
-                  <div key={step.title} className="relative">
-                    <span className="absolute -top-2.5 -left-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-background shadow-sm">
-                      {index + 1}
+                  <li
+                    key={step.title}
+                    className="relative flex gap-4 lg:flex-col lg:items-center lg:gap-4 lg:text-center"
+                  >
+                    {!isLast && (
+                      <span
+                        aria-hidden
+                        className="absolute top-11 -bottom-8 left-[21px] w-0.5 bg-gold lg:top-[21px] lg:bottom-auto lg:left-1/2 lg:h-0.5 lg:w-[calc(100%+1.5rem)]"
+                      />
+                    )}
+                    <span
+                      className={cn(
+                        "relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-heading text-title font-semibold ring-4 ring-background",
+                        stepMarkerClass(index),
+                      )}
+                    >
+                      {isLast ? (
+                        <>
+                          <Check className="h-5 w-5" strokeWidth={2.25} />
+                          <span className="sr-only">{index + 1}</span>
+                        </>
+                      ) : (
+                        index + 1
+                      )}
                     </span>
-                    <Card size="sm">
-                      <CardContent>
-                        <div className="flex items-center gap-2.5">
-                          <Icon
-                            className="h-5 w-5 text-navy"
-                            strokeWidth={1.75}
-                          />
-                          <h3 className="text-title text-foreground">
-                            {step.title}
-                          </h3>
-                        </div>
-                        <p className="mt-3 text-body text-foreground-2">
-                          {step.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
+                    <div className="min-w-0 pt-2 lg:pt-0">
+                      <h3 className="text-title text-foreground">
+                        {step.title}
+                      </h3>
+                      <p className="mt-1 text-body text-foreground-2">
+                        {step.description}
+                      </p>
+                    </div>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
             <p className="mt-10 text-center text-caption text-muted-foreground">
               Punya pertanyaan? Hubungi Ketua Logistik OSUI Mahawaditra.
             </p>
@@ -172,16 +130,16 @@ export default async function Home() {
                 )}
               </div>
             )}
-          </div>
+          </Reveal>
         </section>
 
         <LandingFaq />
 
         <LandingLegacy />
 
-        <section className="border-t border-border bg-surface px-6 py-12">
+        <section className="bg-background px-6 py-12">
           <div className="mx-auto max-w-4xl">
-            <div className="grid grid-cols-1 items-start gap-10 sm:grid-cols-[auto_1fr]">
+            <Reveal className="grid grid-cols-1 items-start gap-10 sm:grid-cols-[auto_1fr]">
               <div className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-xl bg-navy shadow-md">
                 <Image
                   src="/about/haseul-loona.gif"
@@ -264,24 +222,11 @@ export default async function Home() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
 
-        <footer className="bg-background px-6 py-6 text-left text-caption text-muted-foreground sm:text-center">
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-heading text-body leading-[18px] font-bold text-foreground sm:flex-col sm:gap-x-0">
-            <span>BATON</span>
-            <span aria-hidden className="text-gold sm:hidden">
-              ·
-            </span>
-            <span className="font-normal">
-              <span className="uppercase">Est. 2026</span> by haseulbintaro
-            </span>
-          </div>
-          <span className="mt-1 block text-micro leading-[18px] text-foreground/5">
-            #STANLOONA
-          </span>
-        </footer>
+        <PublicFooter />
       </div>
     </div>
   );

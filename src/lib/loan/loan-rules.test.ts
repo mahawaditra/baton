@@ -12,6 +12,8 @@ import {
   requiredDocumentTypesForPeriod,
   getRequestActionLabel,
   getRequestStep,
+  getStatusTurn,
+  displayedDueDate,
   waitingOnBorrowerLabel,
   getDocumentTypeLabel,
   hasAvailableSlot,
@@ -472,5 +474,144 @@ describe("resolveMaxConcurrentLoans", () => {
 
   it("falls back to 1 when no configured type matches", () => {
     expect(resolveMaxConcurrentLoans("Triangle", slots)).toBe(1);
+  });
+});
+
+describe("getStatusTurn", () => {
+  const base: Parameters<typeof getStatusTurn>[0] = {
+    status: "submitted",
+    instrumentConfirmed: false,
+    hasInitialAddendum: false,
+    hasFinalAddendum: false,
+    isExtensionPeriod: false,
+    needsExtensionDocuments: false,
+    canFillExtensionAddendum: false,
+    hasPendingExtension: false,
+  };
+
+  it("waits on staff while the request is being checked", () => {
+    expect(getStatusTurn(base)?.actor).toBe("staff");
+    expect(getStatusTurn({ ...base, status: "reviewing" })?.actor).toBe(
+      "staff",
+    );
+  });
+
+  it("hands over to the borrower once the instrument is confirmed", () => {
+    expect(
+      getStatusTurn({ ...base, status: "reviewing", instrumentConfirmed: true })
+        ?.actor,
+    ).toBe("borrower");
+  });
+
+  it("asks the borrower to sign and upload after the contract is generated", () => {
+    expect(
+      getStatusTurn({ ...base, status: "contract_generated" })?.actor,
+    ).toBe("borrower");
+  });
+
+  it("waits on staff while documents are reviewed", () => {
+    expect(
+      getStatusTurn({ ...base, status: "documents_uploaded" })?.actor,
+    ).toBe("staff");
+  });
+
+  it("splits pickup by whether the initial addendum is in", () => {
+    expect(getStatusTurn({ ...base, status: "ready_to_pickup" })?.actor).toBe(
+      "borrower",
+    );
+    expect(
+      getStatusTurn({
+        ...base,
+        status: "ready_to_pickup",
+        hasInitialAddendum: true,
+      })?.actor,
+    ).toBe("staff");
+  });
+
+  it("waits on staff after the return addendum is sent", () => {
+    expect(
+      getStatusTurn({ ...base, status: "active", hasFinalAddendum: true })
+        ?.actor,
+    ).toBe("staff");
+    expect(
+      getStatusTurn({ ...base, status: "overdue", hasFinalAddendum: true })
+        ?.actor,
+    ).toBe("staff");
+  });
+
+  it("follows the extension flow", () => {
+    const extension: typeof base = {
+      ...base,
+      status: "active",
+      isExtensionPeriod: true,
+    };
+    expect(
+      getStatusTurn({ ...extension, needsExtensionDocuments: true })?.actor,
+    ).toBe("borrower");
+    expect(getStatusTurn(extension)?.actor).toBe("staff");
+    expect(
+      getStatusTurn({ ...extension, canFillExtensionAddendum: true })?.actor,
+    ).toBe("borrower");
+    expect(
+      getStatusTurn({
+        ...extension,
+        hasInitialAddendum: true,
+        hasPendingExtension: true,
+      }),
+    ).toEqual({
+      actor: "staff",
+      message:
+        "Addendum perpanjangan kamu udah terkirim. Tinggal nunggu konfirmasi staf.",
+    });
+    expect(
+      getStatusTurn({ ...extension, hasInitialAddendum: true }),
+    ).toBeNull();
+  });
+
+  it("has no turn while the loan just runs or after it ends", () => {
+    expect(getStatusTurn({ ...base, status: "active" })).toBeNull();
+    expect(getStatusTurn({ ...base, status: "returned" })).toBeNull();
+    expect(getStatusTurn({ ...base, status: "rejected" })).toBeNull();
+    expect(getStatusTurn({ ...base, status: "cancelled" })).toBeNull();
+  });
+});
+
+describe("displayedDueDate", () => {
+  const initialDue = new Date("2026-11-16T00:00:00Z");
+  const extensionDue = new Date("2027-09-20T00:00:00Z");
+
+  it("shows the latest period's due date for a normal loan", () => {
+    expect(
+      displayedDueDate(
+        { dueDate: initialDue, startDate: new Date(), periodType: "initial" },
+        null,
+      ),
+    ).toEqual(initialDue);
+  });
+
+  it("keeps the previous due date while an extension awaits staff", () => {
+    expect(
+      displayedDueDate(
+        { dueDate: extensionDue, startDate: null, periodType: "extension" },
+        { dueDate: initialDue },
+      ),
+    ).toEqual(initialDue);
+  });
+
+  it("switches to the extension due date once staff confirms it", () => {
+    expect(
+      displayedDueDate(
+        {
+          dueDate: extensionDue,
+          startDate: new Date(),
+          periodType: "extension",
+        },
+        { dueDate: initialDue },
+      ),
+    ).toEqual(extensionDue);
+  });
+
+  it("returns null when there is no loan period yet", () => {
+    expect(displayedDueDate(null, null)).toBeNull();
   });
 });

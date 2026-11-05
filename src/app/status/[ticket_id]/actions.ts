@@ -19,6 +19,7 @@ import {
 import {
   documentTypesNeedingUpload,
   computeCanExtend,
+  displayedDueDate,
   formatNameWithNickname,
   requiredDocumentTypesForPeriod,
 } from "@/lib/loan/loan-rules";
@@ -26,12 +27,18 @@ import { RequestData } from "./types";
 import { sendEmailSafely } from "@/lib/send-email-safely";
 import { ADMIN_URL } from "@/lib/admin/admin-host";
 import { accessCodeLimiter, limitOrAllow } from "@/lib/rate-limit";
+import { normalizeAccessCode } from "@/lib/loan/id-generators";
 import { z } from "zod";
 import {
   validateDocumentUpload,
   validateImageUpload,
 } from "@/lib/files/file-validation";
 import * as Sentry from "@sentry/nextjs";
+import {
+  SERVER_ERROR_MESSAGE,
+  withServerErrorFallback,
+} from "@/lib/server-action-fallback";
+import { textFieldsOf } from "@/lib/network-fallback";
 
 type VerifyResult =
   | { success: true; request: RequestData }
@@ -71,7 +78,7 @@ async function requireTicketAccess(ticketId: string, accessCode: string) {
     where: { ticketId },
   });
 
-  if (!request || request.accessCode !== accessCode) {
+  if (!request || request.accessCode !== normalizeAccessCode(accessCode)) {
     throw new Error("Kode akses salah.");
   }
   return request;
@@ -111,7 +118,7 @@ export async function verifyAccessCode(
     }),
   ]);
 
-  if (!request || request.accessCode !== code) {
+  if (!request || request.accessCode !== normalizeAccessCode(code)) {
     const { success } = await limitOrAllow(
       accessCodeLimiter,
       `access-code:${ticketId}`,
@@ -132,6 +139,7 @@ export async function verifyAccessCode(
     approvedSignedContractCount,
     existingDocuments,
     contactSettings,
+    previousPeriod,
   ] = await Promise.all([
     latestPeriod
       ? prisma.addendum.count({
@@ -164,6 +172,15 @@ export async function verifyAccessCode(
           select: { signatoryPhone: true, signatoryLineAddFriendUrl: true },
         })
       : null,
+    latestPeriod && isExtensionPeriod && !latestPeriod.startDate
+      ? prisma.loanPeriod.findFirst({
+          where: {
+            requestId: latestPeriod.requestId,
+            sequence: latestPeriod.sequence - 1,
+          },
+          select: { dueDate: true },
+        })
+      : null,
   ]);
 
   const hasInitialAddendum = initialAddendumCount > 0;
@@ -188,7 +205,7 @@ export async function verifyAccessCode(
 
   const hasPendingExtension = isExtensionPeriod && !latestPeriod?.startDate;
 
-  const dueDate = latestPeriod?.dueDate ?? null;
+  const dueDate = displayedDueDate(latestPeriod, previousPeriod);
   const canExtend =
     computeCanExtend(request.status, dueDate) && !hasPendingExtension;
 
@@ -217,6 +234,7 @@ export async function verifyAccessCode(
       needsExtensionDocuments,
       canFillExtensionAddendum,
       isExtensionPeriod,
+      hasPendingExtension,
       uploadedDocumentTypes,
     },
   };
@@ -274,7 +292,7 @@ const addendumDataSchema = z.object({
   notes: z.string().trim().max(1000).nullable(),
 });
 
-export async function submitStage2(
+async function submitStage2Unguarded(
   ticketId: string,
   accessCode: string,
   prevState: FormActionState,
@@ -436,7 +454,7 @@ export async function submitStage2(
   return { success: true, error: null, generalError: null, fields: {} };
 }
 
-export async function submitExtension(
+async function submitExtensionUnguarded(
   ticketId: string,
   accessCode: string,
   prevState: FormActionState,
@@ -598,7 +616,7 @@ export async function getContractPdf(
     select: { id: true, accessCode: true },
   });
 
-  if (!request || request.accessCode !== accessCode) {
+  if (!request || request.accessCode !== normalizeAccessCode(accessCode)) {
     return { success: false, error: "Kode akses salah." };
   }
 
@@ -627,7 +645,7 @@ const UPLOAD_VALIDATORS: Record<
   ktp_scan: validateDocumentUpload,
 };
 
-export async function submitDocument(
+async function submitDocumentUnguarded(
   ticketId: string,
   accessCode: string,
   documentType: "signed_contract" | "deposit_proof" | "ktp_scan",
@@ -776,7 +794,7 @@ export async function submitDocument(
   return { success: true, error: null, generalError: null };
 }
 
-export async function submitAddendum(
+async function submitAddendumUnguarded(
   ticketId: string,
   accessCode: string,
   timing: "initial" | "final",
@@ -992,4 +1010,77 @@ export async function submitAddendum(
   }
 
   return { success: true, error: null, generalError: null, fields: {} };
+}
+
+function serverErrorFormState(formData: FormData): FormActionState {
+  return {
+    success: false,
+    error: null,
+    generalError: SERVER_ERROR_MESSAGE,
+    fields: textFieldsOf(formData),
+  };
+}
+
+export async function submitStage2(
+  ticketId: string,
+  accessCode: string,
+  prevState: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  return withServerErrorFallback(
+    () => submitStage2Unguarded(ticketId, accessCode, prevState, formData),
+    () => serverErrorFormState(formData),
+  );
+}
+
+export async function submitExtension(
+  ticketId: string,
+  accessCode: string,
+  prevState: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  return withServerErrorFallback(
+    () => submitExtensionUnguarded(ticketId, accessCode, prevState, formData),
+    () => serverErrorFormState(formData),
+  );
+}
+
+export async function submitDocument(
+  ticketId: string,
+  accessCode: string,
+  documentType: "signed_contract" | "deposit_proof" | "ktp_scan",
+  prevState: UploadState,
+  formData: FormData,
+): Promise<UploadState> {
+  return withServerErrorFallback(
+    () =>
+      submitDocumentUnguarded(
+        ticketId,
+        accessCode,
+        documentType,
+        prevState,
+        formData,
+      ),
+    () => ({ success: false, error: null, generalError: SERVER_ERROR_MESSAGE }),
+  );
+}
+
+export async function submitAddendum(
+  ticketId: string,
+  accessCode: string,
+  timing: "initial" | "final",
+  prevState: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  return withServerErrorFallback(
+    () =>
+      submitAddendumUnguarded(
+        ticketId,
+        accessCode,
+        timing,
+        prevState,
+        formData,
+      ),
+    () => serverErrorFormState(formData),
+  );
 }

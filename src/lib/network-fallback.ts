@@ -7,7 +7,7 @@ type FieldsActionState = {
   fields: Record<string, string>;
 };
 
-function textFieldsOf(formData: FormData): Record<string, string> {
+export function textFieldsOf(formData: FormData): Record<string, string> {
   const fields: Record<string, string> = {};
   for (const [key, value] of formData) {
     if (typeof value === "string") fields[key] = value;

@@ -9,6 +9,11 @@ import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { escapeHtml } from "@/lib/format";
 import { formatNameWithNickname, resolveNickname } from "@/lib/loan/loan-rules";
 import { Prisma } from "@/generated/prisma/client";
+import {
+  SERVER_ERROR_MESSAGE,
+  withServerErrorFallback,
+} from "@/lib/server-action-fallback";
+import { textFieldsOf } from "@/lib/network-fallback";
 
 type State = {
   ticketId: string | null;
@@ -34,7 +39,7 @@ const submitRequestSchema = z.object({
     .regex(/^\d{4}$/, "Angkatan harus 4 digit angka"),
 });
 
-export async function submitRequest(
+async function submitRequestUnguarded(
   prevState: State,
   formData: FormData,
 ): Promise<State> {
@@ -147,4 +152,20 @@ export async function submitRequest(
     generalError: null,
     fields: {},
   };
+}
+
+export async function submitRequest(
+  prevState: State,
+  formData: FormData,
+): Promise<State> {
+  return withServerErrorFallback(
+    () => submitRequestUnguarded(prevState, formData),
+    () => ({
+      ticketId: null,
+      accessCode: null,
+      error: null,
+      generalError: SERVER_ERROR_MESSAGE,
+      fields: textFieldsOf(formData),
+    }),
+  );
 }

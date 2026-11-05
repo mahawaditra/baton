@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
 
 const FAQ_ITEMS = [
   {
@@ -49,10 +50,10 @@ const RIGHT_COLUMN = FAQ_ITEMS.slice(5);
 
 function FaqItem({ item }: { item: { q: string; a: ReactNode } }) {
   return (
-    <details className="group w-full rounded-xl border border-border px-5 py-4">
+    <details className="faq-item group w-full rounded-xl border border-border bg-background px-5 py-4">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body font-medium text-foreground [&::-webkit-details-marker]:hidden">
         {item.q}
-        <span className="inline-flex shrink-0 text-muted-foreground group-open:rotate-180">
+        <span className="inline-flex shrink-0 text-muted-foreground transition-transform duration-250 group-open:rotate-180 motion-reduce:transition-none">
           <ChevronDown className="h-4 w-4" strokeWidth={1.75} />
         </span>
       </summary>
@@ -64,7 +65,7 @@ function FaqItem({ item }: { item: { q: string; a: ReactNode } }) {
 export function LandingFaq() {
   return (
     <section className="border-t border-border bg-surface px-6 py-12">
-      <div className="mx-auto max-w-5xl">
+      <Reveal className="mx-auto max-w-5xl">
         <h2 className="text-center font-heading text-h2 text-foreground">
           F.A.Q
         </h2>
@@ -80,7 +81,7 @@ export function LandingFaq() {
             ))}
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
