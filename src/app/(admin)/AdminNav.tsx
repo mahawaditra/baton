@@ -238,6 +238,25 @@ export function AdminNav({
           </div>
         </div>
       ))}
+      {mounted && (
+        <div>
+          <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Appearance
+          </div>
+          <button
+            type="button"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"
+          >
+            {isDark ? (
+              <Sun className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            ) : (
+              <Moon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            )}
+            {isDark ? "Switch to light mode" : "Switch to dark mode"}
+          </button>
+        </div>
+      )}
     </nav>
   );
 
@@ -263,7 +282,7 @@ export function AdminNav({
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-sidebar p-4 lg:flex">
+      <aside className="admin-sidebar sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-hero-bg p-4 text-foreground lg:flex">
         <BrandMark />
         {navGroups}
         {userFooter}
@@ -293,35 +312,7 @@ export function AdminNav({
                 </Dialog.Close>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3">
-                {navGroups}
-
-                <div className="mt-4 border-t border-border pt-3">
-                  <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Appearance
-                  </div>
-                  {mounted && (
-                    <button
-                      type="button"
-                      onClick={() => setTheme(isDark ? "light" : "dark")}
-                      className="flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"
-                    >
-                      {isDark ? (
-                        <Sun
-                          className="h-[18px] w-[18px]"
-                          strokeWidth={1.75}
-                        />
-                      ) : (
-                        <Moon
-                          className="h-[18px] w-[18px]"
-                          strokeWidth={1.75}
-                        />
-                      )}
-                      {isDark ? "Switch to light mode" : "Switch to dark mode"}
-                    </button>
-                  )}
-                </div>
-              </div>
+              <div className="flex-1 overflow-y-auto p-3">{navGroups}</div>
 
               <div className="p-4">{userFooter}</div>
             </Dialog.Popup>

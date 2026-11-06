@@ -67,10 +67,11 @@ type ActivityMetadataByAction =
   | {
       action: "confirm_return";
       metadata: {
-        condition: string;
-        status: string;
+        condition?: string;
+        status?: string;
         depositRefundAmount: number;
         daysLate: number;
+        remainingActiveHolders?: number;
       };
     }
   | {
@@ -158,8 +159,14 @@ export function formatActivityLog(log: ActivityLogLike): string {
       return "confirmed instrument handover";
     case "confirm_extension":
       return "confirmed extension";
-    case "confirm_return":
-      return `confirmed return (condition: ${getConditionLabel(typed.metadata.condition)}, refund: Rp${typed.metadata.depositRefundAmount.toLocaleString("id-ID")})`;
+    case "confirm_return": {
+      const refund = `refund: Rp${typed.metadata.depositRefundAmount.toLocaleString("id-ID")}`;
+      if (typed.metadata.condition) {
+        return `confirmed return (condition: ${getConditionLabel(typed.metadata.condition)}, ${refund})`;
+      }
+      const holders = typed.metadata.remainingActiveHolders ?? 0;
+      return `confirmed return (still with ${holders} other borrower${holders === 1 ? "" : "s"}, ${refund})`;
+    }
     case "update_goods": {
       const changes = diffFields(
         typed.metadata.before,

@@ -4,6 +4,7 @@ import { AssignSection } from "./AssignSection";
 import { NotifyAndRejectPanel } from "./NotifyAndRejectPanel";
 import { CancelRequestPanel } from "./CancelRequestPanel";
 import { DocumentReviewSection } from "./DocumentReviewSection";
+import { RequestTicket } from "./RequestTicket";
 import {
   confirmExtension,
   confirmHandover,
@@ -16,23 +17,26 @@ import {
   canCancelRequest,
   canNotifyBorrower,
   confirmedExtensionCount,
+  documentTypesNeedingUpload,
   formatNameWithNickname,
+  getAdminStatusNote,
   formatSharedLocation,
-  getRequestStep,
   hasAvailableSlot,
-  LOAN_STEP_LABELS,
   resolveMaxConcurrentLoans,
 } from "@/lib/loan/loan-rules";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { getAddendumTimingLabel } from "@/lib/labels";
-import { formatJakartaDate } from "@/lib/format";
+import {
+  formatCalendarDate,
+  formatJakartaDate,
+  formatRelativeDays,
+} from "@/lib/format";
 import {
   CONDITION_OPTIONS,
   STATUS_OPTIONS,
   getStatusLabel,
 } from "@/components/StatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
-import { LoanStepper } from "@/components/LoanStepper";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,9 +48,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Ban } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Clock, Hourglass } from "lucide-react";
+import { StatusRow } from "@/components/StatusRow";
 import { PhotoViewerModal } from "@/components/PhotoViewerModal";
+
+const TICKET_ACTION_CLASS =
+  "border-hero-fg/30 bg-transparent text-hero-fg hover:bg-hero-fg/10 hover:text-hero-fg dark:border-hero-fg/30 dark:bg-transparent dark:hover:bg-hero-fg/10";
 
 export default async function RequestDetailPage({
   params,
@@ -179,201 +186,137 @@ export default async function RequestDetailPage({
   const isLastHolder = remainingActiveHolders === 0;
 
   const isExtension = latestPeriod?.periodType === "extension";
-
-  const step = getRequestStep(request.status, request.instrumentConfirmed);
-  const stepLabels = LOAN_STEP_LABELS.map((label, index) =>
-    index === 3 && request.status === "returned" ? "Returned" : label,
-  );
+  const hasInitialAddendum = addendums.some((a) => a.timing === "initial");
+  const statusNote = getAdminStatusNote({
+    status: request.status,
+    instrumentConfirmed: request.instrumentConfirmed,
+    hasInitialAddendum,
+    hasFinalAddendum: addendums.some((a) => a.timing === "final"),
+    isExtensionPeriod: isExtension,
+    hasPendingExtension: isExtension && !latestPeriod?.startDate,
+    needsExtensionDocuments:
+      isExtension &&
+      documentTypesNeedingUpload(["signed_contract"], documents).length > 0,
+    canFillExtensionAddendum:
+      isExtension &&
+      !hasInitialAddendum &&
+      documents.some(
+        (d) => d.type === "signed_contract" && d.reviewStatus === "approved",
+      ),
+  });
+  const showOngoing =
+    Boolean(request.carriedOverAt) &&
+    (request.status === "active" || request.status === "overdue");
+  const statusNoteMeta =
+    statusNote?.kind === "info" && latestPeriod?.dueDate
+      ? `Due ${formatCalendarDate(latestPeriod.dueDate, "en-GB")}`
+      : `Last update ${formatRelativeDays(request.updatedAt).toLowerCase()}`;
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <div className="mb-2 flex flex-wrap items-center gap-3">
-          <RequestStatusBadge status={request.status} variant="pill" />
-          <ExtensionBadge count={confirmedExtensionCount(latestPeriod)} />
-          <span className="tabular text-xs text-muted-foreground">
-            Submitted {formatJakartaDate(request.createdAt)}
-          </span>
-        </div>
-        <h1 className="text-h1">
-          {formatNameWithNickname(request.borrowerName, request.borrowerNickname)}{" "}
-          <span className="tabular text-muted-foreground">
-            — {request.ticketId}
-          </span>
-        </h1>
-        <p className="mt-1 text-sm text-foreground-2">
-          {request.instrumentTypeRequested}
-          {request.status === "reviewing" &&
-            request.instrumentConfirmed &&
-            " · Instrument confirmed — waiting for borrower to fill in contract details"}
-        </p>
-      </div>
-
-      {step === "exception" ? (
-        <div
-          className={cn(
-            "flex items-start gap-3 rounded-md border p-4 text-sm",
-            request.status === "cancelled"
-              ? "border-border bg-muted/40"
-              : "border-destructive/40 bg-destructive-soft/40",
-          )}
-        >
-          {request.status === "cancelled" ? (
-            <Ban
-              className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-              strokeWidth={1.75}
-            />
-          ) : (
-            <AlertTriangle
-              className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-              strokeWidth={1.75}
-            />
-          )}
-          <div>
-            <div
-              className={cn(
-                "font-semibold",
-                request.status === "cancelled"
-                  ? "text-foreground"
-                  : "text-destructive",
+      <RequestTicket
+        badges={
+          <>
+            <RequestStatusBadge status={request.status} variant="pill" />
+            <ExtensionBadge count={confirmedExtensionCount(latestPeriod)} />
+            {showOngoing && request.carriedOverAt && (
+              <span className="tabular inline-flex items-center rounded-full border border-hero-fg/25 px-2.5 py-0.5 text-micro uppercase text-hero-fg/80">
+                Ongoing since {formatJakartaDate(request.carriedOverAt)}
+              </span>
+            )}
+            <span className="tabular text-xs text-hero-fg/70">
+              Submitted {formatJakartaDate(request.createdAt)}
+            </span>
+          </>
+        }
+        actions={
+          (showOngoing || canCancel) && (
+            <>
+              {showOngoing && (
+                <form action={revertFromOngoing.bind(null, id)}>
+                  <SubmitButton
+                    pendingText="Moving..."
+                    variant="outline"
+                    size="sm"
+                    className={TICKET_ACTION_CLASS}
+                  >
+                    Move back to active roster
+                  </SubmitButton>
+                </form>
               )}
+              {canCancel && (
+                <CancelRequestPanel
+                  requestId={id}
+                  triggerClassName={TICKET_ACTION_CLASS}
+                />
+              )}
+            </>
+          )
+        }
+        title={formatNameWithNickname(
+          request.borrowerName,
+          request.borrowerNickname,
+        )}
+        ticketId={request.ticketId}
+        subtitle={
+          !canAssign && request.instrument ? (
+            <Link
+              href={`/instruments/${request.instrument.id}`}
+              className="font-medium text-hero-fg underline-offset-4 hover:underline"
             >
-              {request.status === "rejected"
-                ? "Request Rejected"
-                : request.status === "cancelled"
-                  ? "Request Cancelled"
-                  : "Overdue"}
-            </div>
-            {request.status === "rejected" && request.rejectionReason && (
-              <div className="mt-0.5 text-foreground-2">
-                {request.rejectionReason}
-              </div>
-            )}
-            {request.status === "cancelled" && request.cancellationReason && (
-              <div className="mt-0.5 text-foreground-2">
-                {request.cancellationReason}
-              </div>
-            )}
-            {request.status === "overdue" && (
-              <div className="mt-0.5 text-foreground-2">
-                The borrower has not returned the instrument by the due date.
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <Card>
-          <CardContent>
-            <LoanStepper steps={stepLabels} current={step} />
-          </CardContent>
-        </Card>
-      )}
+              {request.instrument.type}
+              {request.instrument.brand && ` — ${request.instrument.brand}`}
+              {request.instrument.serialNumber &&
+                ` (S/N: ${request.instrument.serialNumber})`}
+            </Link>
+          ) : (
+            request.instrumentTypeRequested
+          )
+        }
+        fields={[
+          { label: "Year", value: request.borrowerYear },
+          { label: "Email", value: request.borrowerEmail },
+          { label: "Phone", value: request.borrowerPhone },
+          { label: "LINE", value: request.borrowerLineId },
+        ]}
+        status={request.status}
+        instrumentConfirmed={request.instrumentConfirmed}
+        rejectionReason={request.rejectionReason}
+        cancellationReason={request.cancellationReason}
+      />
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="flex flex-col gap-4">
+      {canAssign ? (
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Borrower</CardTitle>
+              <CardTitle>Assign Instrument</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted-foreground">Year</dt>
-                  <dd className="mt-0.5 font-medium">{request.borrowerYear}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Email</dt>
-                  <dd className="mt-0.5 font-medium">
-                    {request.borrowerEmail}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Phone</dt>
-                  <dd className="tabular mt-0.5 font-medium">
-                    {request.borrowerPhone}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">LINE</dt>
-                  <dd className="mt-0.5 font-medium">
-                    {request.borrowerLineId}
-                  </dd>
-                </div>
-              </dl>
+              <AssignSection
+                requestId={id}
+                currentInstrument={currentInstrumentWithSlot}
+                candidates={candidates}
+              />
             </CardContent>
           </Card>
-
-          {canAssign && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Assign Instrument</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AssignSection
-                  requestId={id}
-                  currentInstrument={currentInstrumentWithSlot}
-                  candidates={candidates}
-                />
-              </CardContent>
-            </Card>
-          )}
+          <NotifyAndRejectPanel requestId={id} canNotify={canNotify} />
         </div>
-
-        <div className="flex flex-col gap-4">
-          {canAssign ? (
-            <NotifyAndRejectPanel requestId={id} canNotify={canNotify} />
-          ) : (
-            request.instrument && (
-              <Card>
-                <CardContent>
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className="font-heading text-h3">Instrument</span>
-                    <Link
-                      href={`/instruments/${request.instrument.id}`}
-                      className="text-sm font-medium text-navy underline-offset-4 hover:underline"
-                    >
-                      {request.instrument.type}
-                      {request.instrument.brand &&
-                        ` — ${request.instrument.brand}`}
-                      {request.instrument.serialNumber &&
-                        ` (S/N: ${request.instrument.serialNumber})`}
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          )}
-          {canCancel && <CancelRequestPanel requestId={id} />}
-
-          {request.carriedOverAt &&
-            (request.status === "active" || request.status === "overdue") && (
-              <Card>
-                <CardContent>
-                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                    <div>
-                      <span className="font-heading text-h3">
-                        Ongoing Loans
-                      </span>{" "}
-                      <span className="text-sm text-muted-foreground">
-                        — since{" "}
-                        {formatJakartaDate(request.carriedOverAt)}.
-                      </span>
-                    </div>
-                    <form action={revertFromOngoing.bind(null, id)}>
-                      <SubmitButton
-                        pendingText="Moving..."
-                        variant="outline"
-                        size="sm"
-                      >
-                        Move back to active roster
-                      </SubmitButton>
-                    </form>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-        </div>
-      </div>
+      ) : (
+        statusNote && (
+          <StatusRow
+            icon={statusNote.kind === "waiting" ? Hourglass : Clock}
+            chipClassName={
+              statusNote.kind === "waiting"
+                ? "bg-muted text-muted-foreground"
+                : "bg-plum-soft text-plum"
+            }
+            title={statusNote.title}
+            message={statusNote.message}
+            meta={statusNoteMeta}
+            className="rounded-md border border-border bg-card px-5 py-4"
+          />
+        )
+      )}
 
       {(request.status === "documents_uploaded" ||
         (isExtension && documents.length > 0)) && (
@@ -539,12 +482,6 @@ export default async function RequestDetailPage({
               )}
           </CardContent>
         </Card>
-      )}
-
-      {isExtension && addendums.length === 0 && (
-        <p className="text-sm text-foreground-2">
-          Waiting for borrower to submit the addendum for this extension period.
-        </p>
       )}
     </div>
   );

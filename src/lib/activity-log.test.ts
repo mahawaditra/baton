@@ -117,6 +117,18 @@ describe("formatActivityLog", () => {
     ).toBe("confirmed return (condition: Perlu revitalisasi, refund: Rp0)");
   });
 
+  it("describes a shared-instrument return without a condition", () => {
+    expect(
+      formatActivityLog(
+        log("confirm_return", {
+          depositRefundAmount: 100000,
+          daysLate: 0,
+          remainingActiveHolders: 1,
+        }),
+      ),
+    ).toBe("confirmed return (still with 1 other borrower, refund: Rp100.000)");
+  });
+
   it("falls back to a plain message when nothing tracked actually changed", () => {
     const same = { condition: "ok", status: "available", location: "Sekre" };
     expect(

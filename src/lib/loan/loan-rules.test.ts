@@ -14,6 +14,8 @@ import {
   getRequestStep,
   getStatusTurn,
   displayedDueDate,
+  getAdminStatusNote,
+  getLoanStage,
   waitingOnBorrowerLabel,
   getDocumentTypeLabel,
   hasAvailableSlot,
@@ -613,5 +615,192 @@ describe("displayedDueDate", () => {
 
   it("returns null when there is no loan period yet", () => {
     expect(displayedDueDate(null, null)).toBeNull();
+  });
+});
+
+describe("getLoanStage", () => {
+  const base: Parameters<typeof getLoanStage>[0] = {
+    status: "submitted",
+    instrumentConfirmed: false,
+    hasInitialAddendum: false,
+    hasFinalAddendum: false,
+    isExtensionPeriod: false,
+    needsExtensionDocuments: false,
+    canFillExtensionAddendum: false,
+    hasPendingExtension: false,
+  };
+
+  it("walks the main loan flow", () => {
+    expect(getLoanStage(base)).toBe("review_request");
+    expect(
+      getLoanStage({ ...base, status: "reviewing", instrumentConfirmed: true }),
+    ).toBe("fill_contract_details");
+    expect(getLoanStage({ ...base, status: "contract_generated" })).toBe(
+      "sign_contract",
+    );
+    expect(getLoanStage({ ...base, status: "documents_uploaded" })).toBe(
+      "review_documents",
+    );
+    expect(getLoanStage({ ...base, status: "ready_to_pickup" })).toBe("pickup");
+    expect(
+      getLoanStage({
+        ...base,
+        status: "ready_to_pickup",
+        hasInitialAddendum: true,
+      }),
+    ).toBe("confirm_pickup");
+    expect(
+      getLoanStage({ ...base, status: "active", hasInitialAddendum: true }),
+    ).toBe("on_loan");
+    expect(
+      getLoanStage({ ...base, status: "overdue", hasInitialAddendum: true }),
+    ).toBe("return_overdue");
+    expect(
+      getLoanStage({ ...base, status: "overdue", hasFinalAddendum: true }),
+    ).toBe("confirm_return");
+  });
+
+  it("has no stage once the request is closed", () => {
+    expect(getLoanStage({ ...base, status: "returned" })).toBeNull();
+    expect(getLoanStage({ ...base, status: "rejected" })).toBeNull();
+    expect(getLoanStage({ ...base, status: "cancelled" })).toBeNull();
+  });
+
+  it("gives every borrower turn an admin waiting note and every staff turn none", () => {
+    const inputs: (typeof base)[] = [
+      base,
+      { ...base, status: "reviewing", instrumentConfirmed: true },
+      { ...base, status: "contract_generated" },
+      { ...base, status: "documents_uploaded" },
+      { ...base, status: "ready_to_pickup" },
+      { ...base, status: "ready_to_pickup", hasInitialAddendum: true },
+      { ...base, status: "active", hasFinalAddendum: true },
+      {
+        ...base,
+        status: "active",
+        isExtensionPeriod: true,
+        hasPendingExtension: true,
+        needsExtensionDocuments: true,
+      },
+      {
+        ...base,
+        status: "active",
+        isExtensionPeriod: true,
+        hasPendingExtension: true,
+      },
+      {
+        ...base,
+        status: "active",
+        isExtensionPeriod: true,
+        hasPendingExtension: true,
+        canFillExtensionAddendum: true,
+      },
+      {
+        ...base,
+        status: "active",
+        isExtensionPeriod: true,
+        hasPendingExtension: true,
+        hasInitialAddendum: true,
+      },
+    ];
+    for (const input of inputs) {
+      const turn = getStatusTurn(input);
+      const note = getAdminStatusNote(input);
+      expect(turn).not.toBeNull();
+      expect(note?.kind === "waiting").toBe(turn?.actor === "borrower");
+      if (turn?.actor === "staff") expect(note).toBeNull();
+    }
+  });
+});
+
+describe("getAdminStatusNote", () => {
+  const base: Parameters<typeof getAdminStatusNote>[0] = {
+    status: "submitted",
+    instrumentConfirmed: false,
+    hasInitialAddendum: false,
+    hasFinalAddendum: false,
+    isExtensionPeriod: false,
+    needsExtensionDocuments: false,
+    canFillExtensionAddendum: false,
+    hasPendingExtension: false,
+  };
+
+  it("has no note while the admin still has to act", () => {
+    expect(getAdminStatusNote(base)).toBeNull();
+    expect(
+      getAdminStatusNote({ ...base, status: "documents_uploaded" }),
+    ).toBeNull();
+    expect(
+      getAdminStatusNote({
+        ...base,
+        status: "ready_to_pickup",
+        hasInitialAddendum: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("waits on the borrower through the contract and pickup steps", () => {
+    expect(
+      getAdminStatusNote({
+        ...base,
+        status: "reviewing",
+        instrumentConfirmed: true,
+      })?.message,
+    ).toBe("Filling in contract details.");
+    expect(
+      getAdminStatusNote({ ...base, status: "contract_generated" })?.kind,
+    ).toBe("waiting");
+    expect(
+      getAdminStatusNote({ ...base, status: "ready_to_pickup" })?.kind,
+    ).toBe("waiting");
+  });
+
+  it("shows loan info while the instrument is out", () => {
+    expect(getAdminStatusNote({ ...base, status: "active" })?.kind).toBe(
+      "info",
+    );
+    expect(
+      getAdminStatusNote({
+        ...base,
+        status: "active",
+        hasFinalAddendum: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("waits on the borrower to return an overdue instrument", () => {
+    expect(getAdminStatusNote({ ...base, status: "overdue" })).toEqual({
+      kind: "waiting",
+      title: "Waiting for borrower",
+      message: "Returning the overdue instrument to Sekre.",
+    });
+    expect(
+      getAdminStatusNote({
+        ...base,
+        status: "overdue",
+        hasFinalAddendum: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("follows a pending extension", () => {
+    const pending: typeof base = {
+      ...base,
+      status: "active",
+      isExtensionPeriod: true,
+      hasPendingExtension: true,
+    };
+    expect(
+      getAdminStatusNote({ ...pending, needsExtensionDocuments: true })
+        ?.message,
+    ).toBe("Signing the extension contract and uploading it.");
+    expect(getAdminStatusNote(pending)).toBeNull();
+    expect(
+      getAdminStatusNote({ ...pending, canFillExtensionAddendum: true })
+        ?.message,
+    ).toBe("Submitting the extension condition addendum.");
+    expect(
+      getAdminStatusNote({ ...pending, hasInitialAddendum: true }),
+    ).toBeNull();
   });
 });

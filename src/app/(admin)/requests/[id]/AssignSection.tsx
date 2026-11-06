@@ -6,6 +6,7 @@ import { assignInstrument } from "./actions";
 import { ConditionIndicator, getConditionLabel } from "@/components/StatusBadge";
 import { toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { SlotMeter } from "@/components/SlotMeter";
 
 type InstrumentWithSlot = Instrument & {
   activeHolders: number;
@@ -61,14 +62,12 @@ export function AssignSection({
               <ConditionIndicator condition={currentInstrument.condition} />
               {getConditionLabel(currentInstrument.condition)}
               <span> · {currentInstrument.displayLocation}</span>
-              {currentInstrument.maxConcurrentLoans > 1 && (
-                <span className="tabular">
-                  · {currentInstrument.activeHolders}/
-                  {currentInstrument.maxConcurrentLoans} slot
-                </span>
-              )}
             </div>
           </div>
+          <SlotMeter
+            used={currentInstrument.activeHolders}
+            max={currentInstrument.maxConcurrentLoans}
+          />
           <span className="shrink-0 text-xs font-semibold text-navy">
             Assigned
           </span>
@@ -114,13 +113,12 @@ export function AssignSection({
                   <ConditionIndicator condition={inst.condition} />
                   {getConditionLabel(inst.condition)}
                   <span> · {inst.displayLocation}</span>
-                  {inst.maxConcurrentLoans > 1 && (
-                    <span className="tabular">
-                      · {inst.activeHolders}/{inst.maxConcurrentLoans} slot
-                    </span>
-                  )}
                 </div>
               </div>
+              <SlotMeter
+                used={inst.activeHolders}
+                max={inst.maxConcurrentLoans}
+              />
               <span className="shrink-0 text-xs font-medium text-navy">
                 {pendingId === inst.id ? "Assigning…" : "Assign"}
               </span>

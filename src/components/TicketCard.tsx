@@ -60,6 +60,7 @@ export function TicketCard({
   topTone = "card",
   bottomTone = "card",
   bottomClassName,
+  tearLine = true,
   className,
 }: {
   top: React.ReactNode;
@@ -67,6 +68,7 @@ export function TicketCard({
   topTone?: "card" | "hero";
   bottomTone?: keyof typeof BOTTOM_TONE;
   bottomClassName?: string;
+  tearLine?: boolean;
   className?: string;
 }) {
   const bottomStyle = BOTTOM_TONE[bottomTone];
@@ -96,10 +98,12 @@ export function TicketCard({
             bottomClassName,
           )}
         >
-          <div
-            aria-hidden
-            className="mx-3 border-t-[1.5px] border-dashed border-border-strong"
-          />
+          {tearLine && (
+            <div
+              aria-hidden
+              className="mx-3 border-t-[1.5px] border-dashed border-border-strong"
+            />
+          )}
           {bottom}
           <NotchOutline edge="top" className={bottomStyle.outline} />
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
+import Image from "next/image";
 import type { LoanSetting } from "@/generated/prisma/client";
 import {
   updateLoanSettings,
@@ -33,9 +34,48 @@ export function LoanSettingsForm({
     initialState,
   );
   const signatoryFacultyMajor = splitFacultyMajor(loanSettings?.signatoryFaculty);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [dirtyFields, setDirtyFields] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [prevState, setPrevState] = useState(state);
+
+  if (state !== prevState) {
+    setPrevState(state);
+    if (state.success) setDirtyFields(new Set());
+  }
+
+  function handleFieldChange(event: React.FormEvent<HTMLFormElement>) {
+    const field = event.target as HTMLInputElement;
+    if (!field.name || field.closest("[data-autosave]")) return;
+    const changed =
+      field.type === "file"
+        ? (field.files?.length ?? 0) > 0
+        : field.value !== field.defaultValue;
+    setDirtyFields((current) => {
+      if (changed === current.has(field.name)) return current;
+      const next = new Set(current);
+      if (changed) next.add(field.name);
+      else next.delete(field.name);
+      return next;
+    });
+  }
+
+  function handleDiscard() {
+    formRef.current?.reset();
+    setDirtyFields(new Set());
+  }
+
+  const isDirty = dirtyFields.size > 0;
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      ref={formRef}
+      action={formAction}
+      onInput={handleFieldChange}
+      onChange={handleFieldChange}
+      className="flex flex-col gap-4"
+    >
       {state.error && (
         <p className="text-sm text-destructive" aria-live="polite">
           {state.error}
@@ -258,14 +298,32 @@ export function LoanSettingsForm({
                   </span>
                 )}
               </Label>
-              <CompressedImageInput
-                id="signatoryImage"
-                name="signatoryImage"
-                format="image/png"
-                disabled={!canEdit}
-              />
+              <div className="flex items-center gap-3">
+                {loanSettings?.signatoryImageDriveId && (
+                  <div className="relative h-10 w-28 shrink-0 overflow-hidden rounded border border-border bg-hero-fg">
+                    <Image
+                      src={`/drive-files/${loanSettings.signatoryImageDriveId}`}
+                      alt="Current signature printed on contracts"
+                      fill
+                      unoptimized
+                      className="object-contain p-1"
+                    />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <CompressedImageInput
+                    id="signatoryImage"
+                    name="signatoryImage"
+                    format="image/png"
+                    disabled={!canEdit}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="border-t border-border pt-4 sm:col-span-2">
+            <div
+              data-autosave
+              className="border-t border-border pt-4 sm:col-span-2"
+            >
               <p className="mb-3 text-sm text-foreground-2">
                 These show up as contact buttons on the public landing page,
                 for people with questions. This applies immediately and
@@ -291,9 +349,35 @@ export function LoanSettingsForm({
         </CardContent>
       </Card>
 
-      <Button type="submit" disabled={isPending} className="self-start">
-        {isPending ? "Saving..." : "Save Loan Settings"}
-      </Button>
+      {isDirty ? (
+        <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-hero-bg px-4 py-3 text-hero-fg shadow-lg">
+          <span className="text-sm">
+            Unsaved changes in Loan Rules, Bank Account or Signatory Data
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleDiscard}
+              disabled={isPending}
+              className="text-hero-fg/80 hover:bg-hero-fg/10 hover:text-hero-fg"
+            >
+              Discard
+            </Button>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="bg-gold text-hero-bg hover:bg-gold-hover"
+            >
+              {isPending ? "Saving..." : "Save Loan Settings"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button type="submit" disabled={isPending} className="self-start">
+          {isPending ? "Saving..." : "Save Loan Settings"}
+        </Button>
+      )}
       </fieldset>
     </form>
   );

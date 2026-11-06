@@ -1,32 +1,42 @@
 "use client";
 
-import { useState } from "react";
 import { CancelRequestForm } from "./CancelRequestForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-export function CancelRequestPanel({ requestId }: { requestId: string }) {
-  const [showCancel, setShowCancel] = useState(false);
-
+export function CancelRequestPanel({
+  requestId,
+  triggerClassName,
+}: {
+  requestId: string;
+  triggerClassName?: string;
+}) {
   return (
-    <div className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={() => setShowCancel((v) => !v)}
-        className="self-start text-sm font-medium text-muted-foreground underline-offset-4 hover:text-destructive hover:underline"
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="sm" className={triggerClassName} />
+        }
       >
-        Cancel Request?
-      </button>
-
-      {showCancel && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Cancel Request</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CancelRequestForm requestId={requestId} />
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        Cancel Request
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cancel Request</DialogTitle>
+          <DialogDescription>
+            Stops this request. The borrower sees the reason on their status
+            page.
+          </DialogDescription>
+        </DialogHeader>
+        <CancelRequestForm requestId={requestId} />
+      </DialogContent>
+    </Dialog>
   );
 }

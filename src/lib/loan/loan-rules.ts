@@ -267,12 +267,22 @@ export function waitingOnBorrowerLabel(status: string): string {
   }
 }
 
-export type StatusTurn = {
-  actor: "borrower" | "staff";
-  message: string;
-};
+export type LoanStage =
+  | "fill_contract_details"
+  | "sign_contract"
+  | "sign_extension_contract"
+  | "pickup"
+  | "extension_addendum"
+  | "confirm_extension"
+  | "confirm_return"
+  | "confirm_pickup"
+  | "review_documents"
+  | "review_extension_documents"
+  | "review_request"
+  | "on_loan"
+  | "return_overdue";
 
-export function getStatusTurn(data: {
+export type LoanStageInput = {
   status: BorrowingRequestStatus;
   instrumentConfirmed: boolean;
   hasInitialAddendum: boolean;
@@ -281,78 +291,106 @@ export function getStatusTurn(data: {
   needsExtensionDocuments: boolean;
   canFillExtensionAddendum: boolean;
   hasPendingExtension: boolean;
-}): StatusTurn | null {
+};
+
+export function getLoanStage(data: LoanStageInput): LoanStage | null {
   if (data.status === "reviewing" && data.instrumentConfirmed) {
-    return {
-      actor: "borrower",
-      message:
-        "Instrumen kamu udah dikonfirmasi tersedia! Isi data di bawah ini untuk lanjut proses kontrak peminjaman.",
-    };
+    return "fill_contract_details";
   }
-  if (data.status === "contract_generated" || data.needsExtensionDocuments) {
-    return {
-      actor: "borrower",
-      message:
-        "Kontrak kamu udah siap! Download, pahami kontraknya, tanda tangan, lalu upload lagi bareng dokumen pendukung lainnya.",
-    };
-  }
+  if (data.status === "contract_generated") return "sign_contract";
+  if (data.needsExtensionDocuments) return "sign_extension_contract";
   if (data.status === "ready_to_pickup" && !data.hasInitialAddendum) {
-    return {
-      actor: "borrower",
-      message:
-        "Instrumen kamu udah siap diambil! Atur jadwal pengambilan dengan staf Logistik OSUI lewat kontak di bawah (atau cek email), terus isi kondisi awalnya di form bawah.",
-    };
+    return "pickup";
   }
-  if (data.canFillExtensionAddendum) {
-    return {
-      actor: "borrower",
-      message:
-        "Dokumen perpanjangan kamu udah disetujui! Isi addendum kondisi di bawah ya.",
-    };
-  }
+  if (data.canFillExtensionAddendum) return "extension_addendum";
   if (data.hasPendingExtension && data.hasInitialAddendum) {
-    return {
-      actor: "staff",
-      message:
-        "Addendum perpanjangan kamu udah terkirim. Tinggal nunggu konfirmasi staf.",
-    };
+    return "confirm_extension";
   }
   if (
     (data.status === "active" || data.status === "overdue") &&
     data.hasFinalAddendum
   ) {
-    return {
-      actor: "staff",
-      message:
-        "Addendum pengembalian udah terkirim. Tinggal nunggu staf konfirmasi pengembalian di Sekre.",
-    };
+    return "confirm_return";
   }
   if (data.status === "ready_to_pickup" && data.hasInitialAddendum) {
-    return {
-      actor: "staff",
-      message: "Addendum kamu udah terkirim. Tinggal nunggu konfirmasi staf.",
-    };
+    return "confirm_pickup";
   }
-  if (data.status === "documents_uploaded") {
-    return { actor: "staff", message: "Dokumen kamu lagi dicek staf." };
-  }
+  if (data.status === "documents_uploaded") return "review_documents";
   if (data.isExtensionPeriod && !data.hasInitialAddendum) {
-    return {
-      actor: "staff",
-      message: "Dokumen perpanjangan kamu lagi dicek staf.",
-    };
+    return "review_extension_documents";
   }
   if (
     (data.status === "submitted" || data.status === "reviewing") &&
     !data.instrumentConfirmed
   ) {
-    return {
-      actor: "staff",
-      message:
-        "Staf sedang mereview pengajuan dan mengecek ketersediaan instrumen kamu.",
-    };
+    return "review_request";
   }
+  if (data.status === "active") return "on_loan";
+  if (data.status === "overdue") return "return_overdue";
   return null;
+}
+
+export type StatusTurn = {
+  actor: "borrower" | "staff";
+  message: string;
+};
+
+const CONTRACT_READY_MESSAGE =
+  "Kontrak kamu udah siap! Download, pahami kontraknya, tanda tangan, lalu upload lagi bareng dokumen pendukung lainnya.";
+
+const BORROWER_TURNS: Partial<Record<LoanStage, StatusTurn>> = {
+  fill_contract_details: {
+    actor: "borrower",
+    message:
+      "Instrumen kamu udah dikonfirmasi tersedia! Isi data di bawah ini untuk lanjut proses kontrak peminjaman.",
+  },
+  sign_contract: { actor: "borrower", message: CONTRACT_READY_MESSAGE },
+  sign_extension_contract: {
+    actor: "borrower",
+    message: CONTRACT_READY_MESSAGE,
+  },
+  pickup: {
+    actor: "borrower",
+    message:
+      "Instrumen kamu udah siap diambil! Atur jadwal pengambilan dengan staf Logistik OSUI lewat kontak di bawah (atau cek email), terus isi kondisi awalnya di form bawah.",
+  },
+  extension_addendum: {
+    actor: "borrower",
+    message:
+      "Dokumen perpanjangan kamu udah disetujui! Isi addendum kondisi di bawah ya.",
+  },
+  confirm_extension: {
+    actor: "staff",
+    message:
+      "Addendum perpanjangan kamu udah terkirim. Tinggal nunggu konfirmasi staf.",
+  },
+  confirm_return: {
+    actor: "staff",
+    message:
+      "Addendum pengembalian udah terkirim. Tinggal nunggu staf konfirmasi pengembalian di Sekre.",
+  },
+  confirm_pickup: {
+    actor: "staff",
+    message: "Addendum kamu udah terkirim. Tinggal nunggu konfirmasi staf.",
+  },
+  review_documents: {
+    actor: "staff",
+    message: "Dokumen kamu lagi dicek staf.",
+  },
+  review_extension_documents: {
+    actor: "staff",
+    message: "Dokumen perpanjangan kamu lagi dicek staf.",
+  },
+  review_request: {
+    actor: "staff",
+    message:
+      "Staf sedang mereview pengajuan dan mengecek ketersediaan instrumen kamu.",
+  },
+};
+
+export function getStatusTurn(data: LoanStageInput): StatusTurn | null {
+  const stage = getLoanStage(data);
+  return (stage && BORROWER_TURNS[stage]) ?? null;
 }
 
 export function displayedDueDate(
@@ -369,4 +407,45 @@ export function displayedDueDate(
   return extensionPending
     ? (previousPeriod?.dueDate ?? null)
     : latestPeriod.dueDate;
+}
+
+export type AdminStatusNote = {
+  kind: "waiting" | "info";
+  title: string;
+  message: string;
+};
+
+function waitingForBorrower(message: string): AdminStatusNote {
+  return { kind: "waiting", title: "Waiting for borrower", message };
+}
+
+const ADMIN_STATUS_NOTES: Partial<Record<LoanStage, AdminStatusNote>> = {
+  fill_contract_details: waitingForBorrower("Filling in contract details."),
+  sign_contract: waitingForBorrower(
+    "Signing the contract and uploading the required documents.",
+  ),
+  sign_extension_contract: waitingForBorrower(
+    "Signing the extension contract and uploading it.",
+  ),
+  pickup: waitingForBorrower(
+    "Picking up the instrument at Sekre and submitting the initial condition addendum.",
+  ),
+  extension_addendum: waitingForBorrower(
+    "Submitting the extension condition addendum.",
+  ),
+  on_loan: {
+    kind: "info",
+    title: "Loan in progress",
+    message: "The borrower holds the instrument until it is returned.",
+  },
+  return_overdue: waitingForBorrower(
+    "Returning the overdue instrument to Sekre.",
+  ),
+};
+
+export function getAdminStatusNote(
+  data: LoanStageInput,
+): AdminStatusNote | null {
+  const stage = getLoanStage(data);
+  return (stage && ADMIN_STATUS_NOTES[stage]) ?? null;
 }

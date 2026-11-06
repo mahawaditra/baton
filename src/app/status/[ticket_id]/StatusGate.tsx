@@ -31,6 +31,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { ContactLink, LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 import { Card, CardContent } from "@/components/ui/card";
 import { TicketCard, TicketLabel } from "@/components/TicketCard";
+import { StatusRow } from "@/components/StatusRow";
 import { StatusLookupShell } from "../StatusLookupShell";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,22 +128,14 @@ function TurnRow({
   className?: string;
 }) {
   const tone = TURN_TONE[turn.actor];
-  const Icon = tone.icon;
   return (
-    <div className={cn("flex items-start gap-3", className)}>
-      <span
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-          tone.chip,
-        )}
-      >
-        <Icon className="h-4 w-4" strokeWidth={1.75} />
-      </span>
-      <div>
-        <div className="text-label text-foreground">{tone.label}</div>
-        <p className="mt-0.5 text-body text-foreground-2">{turn.message}</p>
-      </div>
-    </div>
+    <StatusRow
+      icon={tone.icon}
+      chipClassName={tone.chip}
+      title={tone.label}
+      message={turn.message}
+      className={className}
+    />
   );
 }
 
