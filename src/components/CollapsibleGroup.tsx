@@ -11,7 +11,7 @@ export function CollapsibleGroup<T>({
   onToggle,
   renderItem,
 }: {
-  label: string;
+  label: React.ReactNode;
   items: T[];
   isCollapsed: boolean;
   onToggle: () => void;

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, staggerStyle } from "@/lib/utils";
 
 export function SlotMeter({
   used,
@@ -16,11 +16,15 @@ export function SlotMeter({
         {Array.from({ length: max }).map((_, index) => (
           <span
             key={index}
-            className={cn(
-              "h-1 flex-1 rounded-full",
-              index < used ? "bg-plum" : "bg-border",
+            className="h-1 flex-1 overflow-hidden rounded-full bg-border"
+          >
+            {index < used && (
+              <span
+                className="slot-fill block h-full rounded-full bg-plum"
+                style={staggerStyle(index)}
+              />
             )}
-          />
+          </span>
         ))}
       </div>
       <div className="tabular mt-1 text-xs text-muted-foreground">

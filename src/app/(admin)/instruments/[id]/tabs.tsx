@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
-import { Users, History, ClipboardList, Activity } from "lucide-react";
 import type { ActivityAction } from "@/generated/prisma/client";
 import { PhotoViewerModal } from "@/components/PhotoViewerModal";
 import { uploadInstrumentPhoto } from "./actions";
@@ -29,13 +28,7 @@ export async function RiwayatPeminjam({
   });
 
   if (requests.length === 0) {
-    return (
-      <EmptyState
-        icon={Users}
-        size="compact"
-        title="No borrowing history yet"
-      />
-    );
+    return <EmptyState size="compact" title="No borrowing history yet" />;
   }
 
   return (
@@ -78,11 +71,7 @@ export async function RiwayatKondisi({
 
   if (logs.length === 0) {
     return (
-      <EmptyState
-        icon={History}
-        size="compact"
-        title="No condition changes recorded yet"
-      />
+      <EmptyState size="compact" title="No condition changes recorded yet" />
     );
   }
 
@@ -100,13 +89,7 @@ export async function RiwayatAddendum({
   });
 
   if (addendums.length === 0) {
-    return (
-      <EmptyState
-        icon={ClipboardList}
-        size="compact"
-        title="No addendums yet"
-      />
-    );
+    return <EmptyState size="compact" title="No addendums yet" />;
   }
 
   return (
@@ -161,9 +144,7 @@ export async function RiwayatAktivitas({
   });
 
   if (logs.length === 0) {
-    return (
-      <EmptyState icon={Activity} size="compact" title="No activity yet" />
-    );
+    return <EmptyState size="compact" title="No activity yet" />;
   }
 
   return <ActivityTimeline logs={logs} tags={ticketTags} />;

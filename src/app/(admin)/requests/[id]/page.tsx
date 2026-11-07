@@ -37,6 +37,7 @@ import {
   getStatusLabel,
 } from "@/components/StatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
+import { MusicGlyph } from "@/components/MusicGlyph";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -220,7 +221,8 @@ export default async function RequestDetailPage({
             <RequestStatusBadge status={request.status} variant="pill" />
             <ExtensionBadge count={confirmedExtensionCount(latestPeriod)} />
             {showOngoing && request.carriedOverAt && (
-              <span className="tabular inline-flex items-center rounded-full border border-hero-fg/25 px-2.5 py-0.5 text-micro uppercase text-hero-fg/80">
+              <span className="tabular inline-flex items-center gap-1.5 rounded-full border border-hero-fg/25 px-2.5 py-0.5 text-micro uppercase text-hero-fg/80">
+                <MusicGlyph glyph="fermata" className="text-[0.875rem]" />
                 Ongoing since {formatJakartaDate(request.carriedOverAt)}
               </span>
             )}
@@ -305,6 +307,9 @@ export default async function RequestDetailPage({
         statusNote && (
           <StatusRow
             icon={statusNote.kind === "waiting" ? Hourglass : Clock}
+            iconClassName={
+              statusNote.kind === "waiting" ? "hourglass-flip" : undefined
+            }
             chipClassName={
               statusNote.kind === "waiting"
                 ? "bg-muted text-muted-foreground"

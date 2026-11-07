@@ -11,7 +11,7 @@ import { CollapsibleGroup } from "@/components/CollapsibleGroup";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
-import { Package, SearchX, Hash, MapPin } from "lucide-react";
+import { SearchX, Hash, MapPin } from "lucide-react";
 import { cn, toggleSetValue } from "@/lib/utils";
 
 const MOBILE_SORT_OPTIONS = [
@@ -126,7 +126,6 @@ export function GoodsExplorer({
   const emptyState =
     goods.length === 0 ? (
       <EmptyState
-        icon={Package}
         title="No goods yet"
         description="Goods added by admin will appear here."
       />

@@ -15,7 +15,7 @@ import { CollapsibleGroup } from "@/components/CollapsibleGroup";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
-import { Boxes, SearchX, Hash, MapPin } from "lucide-react";
+import { SearchX, Hash, MapPin } from "lucide-react";
 import { cn, toggleSetValue } from "@/lib/utils";
 
 const MOBILE_SORT_OPTIONS = [
@@ -157,7 +157,6 @@ export function InstrumentsExplorer({
   const emptyState =
     instruments.length === 0 ? (
       <EmptyState
-        icon={Boxes}
         title="No instruments yet"
         description="Instruments added by admin will appear here."
       />

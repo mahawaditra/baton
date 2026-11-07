@@ -336,23 +336,23 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .faq-item::details-content {
+  :is(.faq-item, .details-animated)::details-content {
     opacity: 0;
     transition:
       opacity 250ms ease,
       content-visibility 250ms allow-discrete;
   }
 
-  .faq-item[open]::details-content {
+  :is(.faq-item, .details-animated)[open]::details-content {
     opacity: 1;
   }
 
   @supports (interpolate-size: allow-keywords) {
-    .faq-item {
+    :is(.faq-item, .details-animated) {
       interpolate-size: allow-keywords;
     }
 
-    .faq-item::details-content {
+    :is(.faq-item, .details-animated)::details-content {
       block-size: 0;
       overflow-y: clip;
       transition:
@@ -361,7 +361,7 @@
         content-visibility 250ms allow-discrete;
     }
 
-    .faq-item[open]::details-content {
+    :is(.faq-item, .details-animated)[open]::details-content {
       block-size: auto;
     }
   }
@@ -378,7 +378,95 @@
   }
 
   .ticket-unfold {
-    animation: ticket-unfold 450ms ease-out both;
+    animation: ticket-unfold 450ms ease-out backwards;
+  }
+
+  .admin-page-enter {
+    animation: admin-fade 200ms ease-out backwards;
+  }
+
+  [data-stagger] {
+    animation: admin-fade 300ms ease-out backwards;
+    animation-delay: calc(var(--stagger-index, 0) * 40ms);
+  }
+
+  .step-fill {
+    animation: admin-fade 400ms 300ms ease-out backwards;
+  }
+
+  .slide-up-enter {
+    animation: admin-fade 200ms ease-out backwards;
+  }
+
+  .slot-fill {
+    transform-origin: left;
+    animation: slot-fill 450ms ease-out backwards;
+    animation-delay: calc(var(--stagger-index, 0) * 60ms);
+  }
+
+  .hourglass-flip {
+    animation: hourglass-flip 5s ease-in-out infinite;
+  }
+
+  @media (min-width: 1024px) {
+    .admin-page-enter {
+      animation-name: admin-rise;
+      animation-duration: 260ms;
+    }
+
+    [data-stagger] {
+      animation-name: admin-rise;
+    }
+
+    .step-fill {
+      animation: step-wipe 550ms 350ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    .slide-up-enter {
+      animation: admin-slide-up 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+  }
+}
+
+@keyframes admin-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes admin-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@keyframes admin-slide-up {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+
+@keyframes step-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+@keyframes slot-fill {
+  from {
+    scale: 0 1;
+  }
+}
+
+@keyframes hourglass-flip {
+  0%,
+  80% {
+    rotate: 0deg;
+  }
+  100% {
+    rotate: 180deg;
   }
 }
 

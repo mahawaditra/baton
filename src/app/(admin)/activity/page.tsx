@@ -7,9 +7,10 @@ import {
   type ActivityLogWithAdmin,
 } from "@/components/ActivityTimeline";
 import { buttonVariants } from "@/components/ui/button";
-import { Activity, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ActivityLog } from "@/generated/prisma/client";
+import { FixedPortal } from "@/components/FixedPortal";
 
 const PAGE_SIZE = 30;
 
@@ -131,7 +132,7 @@ export default async function ActivityPage({
       <h1 className="hidden text-h1 lg:block">Activity Log</h1>
 
       {logs.length === 0 ? (
-        <EmptyState icon={Activity} title="No activity recorded yet" />
+        <EmptyState title="No activity recorded yet" />
       ) : (
         <div className="flex flex-col gap-6">
           {groupedLogs.map((group) => (
@@ -145,35 +146,37 @@ export default async function ActivityPage({
         </div>
       )}
 
-      <div className="fixed right-0 bottom-0 left-0 z-10 flex items-center justify-between border-t border-border bg-surface px-6 py-4 lg:left-60">
-        <Link
-          href={`/activity?page=${page - 1}`}
-          aria-disabled={page <= 1}
-          tabIndex={page <= 1 ? -1 : undefined}
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            page <= 1 && "pointer-events-none opacity-50",
-          )}
-        >
-          <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-          Prev
-        </Link>
-        <span className="tabular text-sm text-muted-foreground">
-          Page {page} of {totalPages}
-        </span>
-        <Link
-          href={`/activity?page=${page + 1}`}
-          aria-disabled={page >= totalPages}
-          tabIndex={page >= totalPages ? -1 : undefined}
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            page >= totalPages && "pointer-events-none opacity-50",
-          )}
-        >
-          Next
-          <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-        </Link>
-      </div>
+      <FixedPortal>
+        <div className="fixed right-0 bottom-0 left-0 z-10 flex items-center justify-between border-t border-border bg-surface px-6 py-4 lg:left-60">
+          <Link
+            href={`/activity?page=${page - 1}`}
+            aria-disabled={page <= 1}
+            tabIndex={page <= 1 ? -1 : undefined}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              page <= 1 && "pointer-events-none opacity-50",
+            )}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
+            Prev
+          </Link>
+          <span className="tabular text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Link
+            href={`/activity?page=${page + 1}`}
+            aria-disabled={page >= totalPages}
+            tabIndex={page >= totalPages ? -1 : undefined}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              page >= totalPages && "pointer-events-none opacity-50",
+            )}
+          >
+            Next
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+          </Link>
+        </div>
+      </FixedPortal>
     </div>
   );
 }

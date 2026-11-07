@@ -350,7 +350,7 @@ export function LoanSettingsForm({
       </Card>
 
       {isDirty ? (
-        <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-hero-bg px-4 py-3 text-hero-fg shadow-lg">
+        <div className="slide-up-enter sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-hero-bg px-4 py-3 text-hero-fg shadow-lg">
           <span className="text-sm">
             Unsaved changes in Loan Rules, Bank Account or Signatory Data
           </span>

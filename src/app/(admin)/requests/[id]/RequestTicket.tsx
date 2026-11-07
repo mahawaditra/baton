@@ -118,7 +118,7 @@ function StepSegments({
                 "relative px-5 pt-[calc(1rem+1.5px)] pb-4",
                 index > 0 &&
                   "border-t-2 border-dashed border-border-strong lg:border-t-0 lg:border-l-2",
-                state === "current" && "bg-gold text-hero-bg",
+                state === "current" && "step-fill bg-gold text-hero-bg",
                 state === "done" && "bg-muted text-muted-foreground",
                 state === "upcoming" && "text-muted-foreground",
               )}
@@ -196,6 +196,7 @@ export function RequestTicket({
     <TicketCard
       topTone="hero"
       tearLine={false}
+      bottomClassName="ticket-unfold"
       top={
         <div className="px-6 pt-5 pb-6">
           <div className="flex flex-wrap items-start justify-between gap-4">

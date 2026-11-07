@@ -12,7 +12,7 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Archive, ArchiveX, Search } from "lucide-react";
+import { ArchiveX, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toJakartaCalendarDate } from "@/lib/format";
 import { getRequestStatusLabel } from "@/lib/labels";
@@ -144,7 +144,7 @@ export default async function ArchivePage({
 
       {requests.length === 0 ? (
         <EmptyState
-          icon={isFiltered ? ArchiveX : Archive}
+          icon={isFiltered ? ArchiveX : undefined}
           title={
             isFiltered
               ? "No matching archived requests"

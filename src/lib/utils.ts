@@ -35,3 +35,7 @@ export function toggleSetValue<T>(set: Set<T>, value: T): Set<T> {
   }
   return next;
 }
+
+export function staggerStyle(index: number): React.CSSProperties {
+  return { "--stagger-index": index } as React.CSSProperties;
+}

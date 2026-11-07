@@ -1,5 +1,11 @@
 import { LoadingMarquee } from "@/components/LoadingMarquee";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import {
+  ROSTER_COLUMN_WIDTHS,
+  ROSTER_TABLE_CLASS,
+  rosterColumnPadding,
+} from "./roster-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardLoading() {
@@ -63,20 +69,38 @@ export default function DashboardLoading() {
           <CardTitle>Active Loans</CardTitle>
         </CardHeader>
         <CardContent className="gap-0 px-0">
-          <div className="px-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 border-b border-border py-3 last:border-b-0"
-              >
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-3 w-10" />
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="ml-auto h-5 w-14 shrink-0 rounded-full" />
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className={ROSTER_TABLE_CLASS}>
+              <thead>
+                <tr className="border-b border-border bg-muted">
+                  {ROSTER_COLUMN_WIDTHS.map((width, index) => (
+                    <th
+                      key={width + index}
+                      className={cn(width, rosterColumnPadding(index), "py-3")}
+                    >
+                      <Skeleton className="h-2.5 w-3/5" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 3 }).map((_, row) => (
+                  <tr
+                    key={row}
+                    className="border-b border-border last:border-b-0"
+                  >
+                    {ROSTER_COLUMN_WIDTHS.map((width, index) => (
+                      <td
+                        key={width + index}
+                        className={cn(rosterColumnPadding(index), "py-3.5")}
+                      >
+                        <Skeleton className="h-3 w-3/4" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>

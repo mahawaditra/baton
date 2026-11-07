@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 export function StatusRow({
   icon: Icon,
+  iconClassName,
   chipClassName,
   title,
   message,
@@ -10,6 +11,7 @@ export function StatusRow({
   className,
 }: {
   icon: LucideIcon;
+  iconClassName?: string;
   chipClassName: string;
   title: string;
   message: React.ReactNode;
@@ -24,7 +26,7 @@ export function StatusRow({
           chipClassName,
         )}
       >
-        <Icon className="h-4 w-4" strokeWidth={1.75} />
+        <Icon className={cn("h-4 w-4", iconClassName)} strokeWidth={1.75} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="text-label text-foreground">{title}</div>

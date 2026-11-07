@@ -8,6 +8,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { getRequestStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { MusicGlyph } from "@/components/MusicGlyph";
 
 const REQUEST_STATUSES = [
   "submitted",
@@ -76,7 +77,7 @@ export default async function RequestsPage({
     : "/requests?view=board";
 
   const filters = (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex gap-2 max-md:-mx-6 max-md:overflow-x-auto max-md:px-6 max-md:[scrollbar-width:none] max-md:mask-r-from-[calc(100%-1.5rem)] md:flex-wrap">
       <Link
         href={tableRootHref}
         className={cn(
@@ -85,6 +86,7 @@ export default async function RequestsPage({
               !ongoing && selectedStatuses.length === 0 ? "default" : "outline",
             size: "sm",
           }),
+          "shrink-0",
         )}
       >
         All
@@ -108,6 +110,8 @@ export default async function RequestsPage({
                 variant: isSelected ? "default" : "outline",
                 size: "sm",
               }),
+              "shrink-0",
+              isSelected && "max-md:-order-1",
             )}
           >
             {getRequestStatusLabel(s)}
@@ -121,8 +125,11 @@ export default async function RequestsPage({
             variant: ongoing ? "default" : "outline",
             size: "sm",
           }),
+          "shrink-0",
+          ongoing && "max-md:-order-1",
         )}
       >
+        <MusicGlyph glyph="fermata" className="text-[1.125rem]" />
         Ongoing
       </Link>
     </div>

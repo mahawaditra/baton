@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
+import { MusicGlyph } from "@/components/MusicGlyph";
 import {
   confirmedExtensionCount,
   formatNameWithNickname,
@@ -84,7 +85,7 @@ function BoardCard({ request }: { request: RequestRow }) {
   const ChipIcon = chipStyle?.icon;
 
   return (
-    <div className="relative flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm transition-transform has-[:focus-visible]:border-ring has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50 active:translate-y-px">
+    <div className="relative flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm transition-[translate,box-shadow] has-[:focus-visible]:border-ring has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50 active:translate-y-px lg:hover:-translate-y-0.5 lg:hover:shadow-md">
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/requests/${request.id}`}
@@ -176,11 +177,13 @@ function BoardCard({ request }: { request: RequestRow }) {
 
 function BoardColumnView({
   label,
+  ongoing,
   items,
   direction,
   onToggleSort,
 }: {
   label: string;
+  ongoing: boolean;
   items: RequestRow[];
   direction: BoardSortDirection;
   onToggleSort: () => void;
@@ -194,7 +197,12 @@ function BoardColumnView({
   return (
     <section className="flex w-72 shrink-0 snap-start flex-col rounded-lg bg-muted/40">
       <header className="flex shrink-0 items-center gap-2 py-3 pr-2 pl-3.5">
-        <h2 className="text-sm font-semibold text-foreground">{label}</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          {ongoing && (
+            <MusicGlyph glyph="fermata" className="text-[1.25rem] text-plum" />
+          )}
+          {label}
+        </h2>
         <span className="tabular flex h-5 min-w-6 items-center justify-center rounded-full bg-muted px-2 text-xs font-medium text-foreground-2">
           {items.length}
         </span>
@@ -297,6 +305,7 @@ export function RequestsBoard({ requests }: { requests: RequestRow[] }) {
           <BoardColumnView
             key={column.key}
             label={column.label}
+            ongoing={column.key === "ongoing"}
             items={grouped.get(column.key) ?? []}
             direction={sortDirections[column.key] ?? "oldest"}
             onToggleSort={() => toggleSort(column.key)}

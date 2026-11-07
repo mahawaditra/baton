@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HANDBOOK_SECTIONS } from "./handbook/sections";
+import { MusicGlyph } from "@/components/MusicGlyph";
 
 type LeafNavItem = {
   href: string;
@@ -90,7 +91,10 @@ function getInitials(name: string) {
 function BrandMark() {
   return (
     <div className="flex items-center gap-2 px-2">
-      <span className="h-6 w-2 rounded-sm bg-gold" />
+      <MusicGlyph
+        glyph="reverseFinalBarline"
+        className="text-[2rem] text-gold"
+      />
       <div>
         <div className="text-base font-extrabold tracking-tight">BATON</div>
         <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">

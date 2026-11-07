@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
-import { CUSTOM_FONT_SIZES, cn, toggleSetValue } from "./utils";
+import { CUSTOM_FONT_SIZES, cn, staggerStyle, toggleSetValue } from "./utils";
 
 describe("cn", () => {
   it("keeps a custom font-size token when a text color follows", () => {
@@ -57,5 +57,11 @@ describe("toggleSetValue", () => {
     expect([...original]).toEqual(["a"]);
     expect([...added].sort()).toEqual(["a", "b"]);
     expect([...removed]).toEqual(["b"]);
+  });
+});
+
+describe("staggerStyle", () => {
+  it("exposes the index as the --stagger-index custom property", () => {
+    expect(staggerStyle(3)).toEqual({ "--stagger-index": 3 });
   });
 });

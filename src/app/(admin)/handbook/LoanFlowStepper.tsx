@@ -168,7 +168,7 @@ function ChangeRow({ change }: { change: Change }) {
 function StepBody({ step, compact = false }: { step: Step; compact?: boolean }) {
   return (
     <>
-      <details className="group">
+      <details className="details-animated group">
         <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
           <h3
             className={cn(

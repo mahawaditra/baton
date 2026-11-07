@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MusicGlyph } from "@/components/MusicGlyph";
 
 const TONE_STYLE: Record<string, string> = {
   neutral: "bg-muted text-muted-foreground",
@@ -19,7 +20,7 @@ export function EmptyState({
   className,
   descriptionClassName,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -48,7 +49,14 @@ export function EmptyState({
         {tone === "neutral" && !compact && (
           <span className="absolute -inset-1.5 rounded-full border-2 border-dashed border-border-strong" />
         )}
-        <Icon className={compact ? "h-5 w-5" : "h-9 w-9"} strokeWidth={1.5} />
+        {Icon ? (
+          <Icon className={compact ? "h-5 w-5" : "h-9 w-9"} strokeWidth={1.5} />
+        ) : (
+          <MusicGlyph
+            glyph="quarterRest"
+            className={compact ? "text-[1.75rem]" : "text-[3rem]"}
+          />
+        )}
       </div>
       <h3 className={compact ? "text-sm font-semibold" : "text-h3"}>{title}</h3>
       {description && (

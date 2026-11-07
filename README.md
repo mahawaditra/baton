@@ -66,7 +66,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - A unique, bookmarkable status page per request (`/status/[ticket_id]`), gated by an access code
 - Two-stage form: light info up front, full contract details only once an instrument is actually assigned
 - Self-service document upload (signed contract, deposit proof, ID scan)
-- A deadline countdown that shifts from green, to yellow at 7 days out, to red once overdue
+- A status page that always says whose turn it is (the borrower's or the logistics staff's), shows the due date, and puts up a clear notice once a loan is overdue
 - One-click extension request (from 30 days before the due date) and early return
 - A web form — with phone-camera photos — for the condition addendums at pickup, extension, and return
 - Automatic email notifications at each status change
@@ -75,8 +75,9 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 
 ### For admins
 
-- Dashboard: requests needing action, recent activity, and the active loan roster — with a one-click carry-over that moves long-running loans into a separate _ongoing_ roster before each intake season
+- Dashboard: requests needing action, recent activity, and two loan rosters (this intake's active loans, and the carried-over _ongoing_ ones), with a one-click carry-over that moves long-running loans into the ongoing roster before each intake season
 - Requests as a table or a Kanban-style board that follows the loan workflow (read-only, one card per request, flagged by what is waiting on whom); the chosen view is remembered
+- A ticket-style page per request: borrower details on top, the four loan steps below, and a short note whenever the next move is the borrower's
 - Archive of returned, rejected, and cancelled requests, filterable by year and status
 - Real-time instrument inventory, sortable/filterable, edited from a per-instrument detail page, each with a catalog photo (crop and rotate on upload)
 - Configurable instrument sharing: how many borrowers a given instrument type can have on loan at once — Ketua and Overlord only, visible but locked for everyone else
@@ -118,8 +119,8 @@ flowchart TD
 
 Not in the diagram, three exceptions branch off the main path:
 
-- **Reject** — an admin can reject a request any time before it's `active` (typically: no matching instrument in stock). Any reserved instrument goes back to `available` — unless it's [shared](#sharing-one-instrument-between-two-borrowers) and another borrower is still actively holding it, in which case its status is left alone,
-- **Cancel** — a borrower can cancel their own request any time up through `ready_to_pickup`. Once the instrument is physically handed over (`active`), it can no longer be cancelled.
+- **Reject** — an admin can reject a request while it's still being reviewed, before the borrower is told an instrument is ready for them (typically: no matching instrument in stock). The borrower gets the reason by email and on their status page. Any reserved instrument goes back to `available` — unless it's [shared](#sharing-one-instrument-between-two-borrowers) and another borrower is still actively holding it, in which case its status is left alone,
+- **Cancel** — an admin can cancel a request any time up through `ready_to_pickup`, with a reason the borrower sees on their status page. Once the instrument is physically handed over (`active`), it can no longer be cancelled.
 - **Overdue** — not a manual action at all. A daily cron job flips `active` requests past their `due_date` to `overdue`; a return can still be confirmed from there.
 
 ## Technical Decisions & Challenges
@@ -221,19 +222,21 @@ Copy the environment template and fill it in:
 cp .env-example .env
 ```
 
-| Variable                                                                                           | Purpose                                                        |
-| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `DATABASE_URL`                                                                                     | Pooled (transaction-mode) Postgres connection, used at runtime |
-| `DIRECT_URL`                                                                                       | Session-mode Postgres connection, used for migrations          |
-| `BETTER_AUTH_SECRET`                                                                               | Better Auth session signing secret                             |
-| `BETTER_AUTH_URL`                                                                                  | Public base URL, no trailing slash; used in OAuth and emails   |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`                                                        | Google OAuth app credentials (admin login and Drive access)    |
-| `GOOGLE_DRIVE_REFRESH_TOKEN`                                                                       | Long-lived token for OAuth-as-user Drive access                |
-| `GOOGLE_DRIVE_ROOT_FOLDER_ID`                                                                      | Drive folder BATON uses as its root                            |
-| `GMAIL_USER` / `GMAIL_APP_PASSWORD`                                                                | Outgoing email                                                 |
-| `CRON_SECRET`                                                                                      | Shared secret checked by every `/api/cron/*` route             |
-| `CONTRACT_FONT_REGULAR_DRIVE_ID` / `CONTRACT_FONT_BOLD_DRIVE_ID` / `CONTRACT_FONT_ITALIC_DRIVE_ID` | Drive file IDs for the contract PDF's embedded fonts           |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`                                              | Rate limiting store                                            |
+| Variable                                                                                           | Purpose                                                              |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `DATABASE_URL`                                                                                     | Pooled (transaction-mode) Postgres connection, used at runtime       |
+| `DIRECT_URL`                                                                                       | Session-mode Postgres connection, used for migrations                |
+| `BETTER_AUTH_SECRET`                                                                               | Better Auth session signing secret                                   |
+| `BETTER_AUTH_URL`                                                                                  | Public base URL, no trailing slash; used in OAuth and emails         |
+| `NEXT_PUBLIC_ADMIN_HOST`                                                                           | Admin panel hostname (e.g. `admin.baton.my.id`); leave empty locally |
+| `DEV_ALLOWED_ORIGINS`                                                                              | Comma-separated LAN hosts allowed to open the dev server; dev only   |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`                                                        | Google OAuth app credentials (admin login and Drive access)          |
+| `GOOGLE_DRIVE_REFRESH_TOKEN`                                                                       | Long-lived token for OAuth-as-user Drive access                      |
+| `GOOGLE_DRIVE_ROOT_FOLDER_ID`                                                                      | Drive folder BATON uses as its root                                  |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD`                                                                | Outgoing email                                                       |
+| `CRON_SECRET`                                                                                      | Shared secret checked by every `/api/cron/*` route                   |
+| `CONTRACT_FONT_REGULAR_DRIVE_ID` / `CONTRACT_FONT_BOLD_DRIVE_ID` / `CONTRACT_FONT_ITALIC_DRIVE_ID` | Drive file IDs for the contract PDF's embedded fonts                 |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`                                              | Rate limiting store                                                  |
 
 <!-- PERSONAL: if you keep a private setup doc (Drive folder structure, OAuth consent screen steps, etc.), link it here instead of re-explaining it in this README. -->
 
@@ -264,6 +267,7 @@ src/
     (admin)/     Admin panel — dashboard, inventory, requests, settings.
                  Access-gated by proxy.ts (Next.js 16's replacement for middleware.ts);
                  the layout and every Server Action check the session again on their own.
+    (admin-auth)/ The admin login page, kept outside (admin) so it skips that layout's session check
     api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive),
                  /api/status/[ticket_id]/contract (contract PDF download, gated by a
                  60-second signed token)
@@ -296,9 +300,12 @@ npm run test:watch # watch mode
 Coverage is aimed at the business-logic layer that would cause real problems if it silently broke, rather than at a coverage percentage:
 
 - `roles.ts` / `handover.ts` / `admin-deletion.ts` — who may manage whom (the full role-versus-role matrix), and the Ketua handover run against a fake transaction: staff are removed before the new Ketua is created, every refusal happens before anything is written, and an admin's name is copied into the history rows before their account is deleted
-- `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, and name/nickname display resolution
+- `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, name/nickname display resolution, and the loan stage behind both the borrower's "whose turn" line and the admin's status note (a parity test keeps the two in step)
+- `board-rules.ts` — which Kanban column and chip a request lands in, and how cards are ordered within a column
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
-- `format.ts` / `mail.ts` — date/timezone handling, activity-log and annual-report wording, email content generation
+- `format.ts` — date/timezone handling (Jakarta calendar dates, relative days), WhatsApp numbers, the faculty/major split
+- `activity-log.ts` / `mail.ts` — activity-log and annual-report wording, the cached email footer
+- `server-action-fallback.ts` / `network-fallback.ts` — a server error or a dropped connection becomes an honest message instead of the error page
 - `labels.ts` / `StatusBadge` — every value of every Prisma enum the UI shows needs a human label, checked against the _generated_ enums, so a new enum value without one fails the tests instead of leaking to the screen as `need_repair`; the dropdown option lists must reuse those same labels
 - `sequential-upload.ts` — the document upload queue: strictly one request at a time, in order; a per-file error doesn't stop the others, a request-level error does
 - `download-token.ts` — the signed, expiring token behind the contract download link: valid for its own ticket only, rejected when expired, tampered with, or malformed

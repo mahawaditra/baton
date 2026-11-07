@@ -12,17 +12,11 @@ import { ExtensionBadge } from "@/components/ExtensionBadge";
 import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan/loan-rules";
 import { EntityCard } from "@/components/EntityCard";
 import { CollapsibleGroup } from "@/components/CollapsibleGroup";
+import { MusicGlyph } from "@/components/MusicGlyph";
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  FileText,
-  SearchX,
-  Hash,
-  Calendar,
-  SquareKanban,
-  Table2,
-} from "lucide-react";
+import { SearchX, Hash, Calendar, SquareKanban, Table2 } from "lucide-react";
 import { cn, toggleSetValue } from "@/lib/utils";
 import { formatJakartaDate, todayInJakarta } from "@/lib/format";
 import {
@@ -169,18 +163,25 @@ export function RequestsExplorer({
       }
     }
 
-    const groups: (readonly [string, RequestRow[]])[] = [];
+    const groups: { key: string; label: string; items: RequestRow[] }[] = [];
     for (const column of BOARD_COLUMNS) {
       const items = workflow.get(column.key);
       if (!items) continue;
-      groups.push([
-        column.label,
-        [...items].sort((a, b) => compareBoardRequests(a, b, today)),
-      ]);
+      groups.push({
+        key: column.key,
+        label: column.label,
+        items: [...items].sort((a, b) => compareBoardRequests(a, b, today)),
+      });
     }
     for (const status of CLOSED_STATUS_ORDER) {
       const items = closed.get(status);
-      if (items) groups.push([getRequestStatusLabel(status), items]);
+      if (items) {
+        groups.push({
+          key: status,
+          label: getRequestStatusLabel(status),
+          items,
+        });
+      }
     }
     return groups;
   }, [filtered]);
@@ -188,7 +189,6 @@ export function RequestsExplorer({
   const emptyState =
     requests.length === 0 ? (
       <EmptyState
-        icon={FileText}
         title="No requests"
         description="Submissions from the public form will show up here."
       />
@@ -254,16 +254,23 @@ export function RequestsExplorer({
           emptyState
         ) : (
           <div className="flex flex-col">
-            {mobileGroups.map(([statusLabel, items]) => (
+            {mobileGroups.map(({ key, label, items }) => (
               <CollapsibleGroup
-                key={statusLabel}
-                label={statusLabel}
-                items={items}
-                isCollapsed={collapsedGroups.has(statusLabel)}
-                onToggle={() =>
-                  setCollapsedGroups((prev) =>
-                    toggleSetValue(prev, statusLabel),
+                key={key}
+                label={
+                  key === "ongoing" ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <MusicGlyph glyph="fermata" className="text-[1rem]" />
+                      {label}
+                    </span>
+                  ) : (
+                    label
                   )
+                }
+                items={items}
+                isCollapsed={collapsedGroups.has(key)}
+                onToggle={() =>
+                  setCollapsedGroups((prev) => toggleSetValue(prev, key))
                 }
                 renderItem={(request) => (
                   <RequestCard key={request.id} request={request} />

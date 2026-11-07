@@ -1,5 +1,6 @@
 import { LoadingMarquee } from "@/components/LoadingMarquee";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FixedPortal } from "@/components/FixedPortal";
 
 export default function ActivityLoading() {
   return (
@@ -23,11 +24,13 @@ export default function ActivityLoading() {
         ))}
       </div>
 
-      <div className="fixed right-0 bottom-0 left-0 z-10 flex items-center justify-between border-t border-border bg-surface px-6 py-4 lg:left-60">
-        <Skeleton className="h-8 w-16" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-8 w-16" />
-      </div>
+      <FixedPortal>
+        <div className="fixed right-0 bottom-0 left-0 z-10 flex items-center justify-between border-t border-border bg-surface px-6 py-4 lg:left-60">
+          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-8 w-16" />
+        </div>
+      </FixedPortal>
     </div>
   );
 }
