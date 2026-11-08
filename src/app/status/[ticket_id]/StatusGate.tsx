@@ -8,6 +8,7 @@ import { UploadDocumentsForm } from "./UploadDocumentsForm";
 import { RequestData } from "./types";
 import { AddendumForm } from "./AddendumForm";
 import { ExtendForm } from "./ExtendForm";
+import { SurveySection } from "./SurveySection";
 import {
   getRequestStep,
   getStatusTurn,
@@ -318,7 +319,7 @@ export function StatusGate({
                       "Hubungi Logistik OSUI Mahawaditra kalau ada pertanyaan."}
                   </div>
                 )}
-                {data.status === "overdue" && (
+                {data.status === "overdue" && !data.hasFinalAddendum && (
                   <div className="mt-0.5 text-foreground-2">
                     Kamu belum mengembalikan instrumen sampai lewat tanggal
                     kembali. Mohon segera dikembalikan ke Sekre.
@@ -366,7 +367,7 @@ export function StatusGate({
             <StatusNote>Makasih udah balikin instrumennya!</StatusNote>
           )}
 
-          {data.status === "active" && (
+          {data.status === "active" && !data.hasFinalAddendum && (
             <StatusNote>
               Kamu lagi pinjam instrumennya. Dijaga baik-baik, dan jangan lupa
               balikin sebelum jatuh tempo ya!
@@ -380,6 +381,15 @@ export function StatusGate({
                 {formatCalendarDate(data.dueDate, "id-ID")}
               </span>
             </p>
+          )}
+
+          {data.canFillSurvey && (
+            <SurveySection
+              ticketId={data.ticketId}
+              accessCode={accessCode}
+              hasFilledSurvey={data.hasFilledSurvey}
+              onSubmitted={refetchAfterSave}
+            />
           )}
 
           {(data.status === "contract_generated" ||
@@ -469,7 +479,7 @@ export function StatusGate({
             />
           )}
 
-          {showExtendForm && (
+          {showExtendForm && data.canExtend && (
             <ExtendForm
               data={data}
               accessCode={accessCode}

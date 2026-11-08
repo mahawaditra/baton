@@ -6,6 +6,7 @@ import { assignInstrument } from "./actions";
 import { ConditionIndicator, getConditionLabel } from "@/components/StatusBadge";
 import { toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
 import { SlotMeter } from "@/components/SlotMeter";
 
 type InstrumentWithSlot = Instrument & {
@@ -75,9 +76,11 @@ export function AssignSection({
       )}
 
       {candidates.length === 0 && !currentInstrument && (
-        <p className="text-sm text-foreground-2">
-          No matching instruments available to assign right now.
-        </p>
+        <EmptyState
+          size="compact"
+          title="No matching instruments"
+          description="None are available to assign right now."
+        />
       )}
 
       {candidates.length > 0 && (

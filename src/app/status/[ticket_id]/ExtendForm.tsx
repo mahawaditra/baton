@@ -41,7 +41,7 @@ export function ExtendForm({
 
   useEffect(() => {
     if (state.generalError) toastError(state.generalError);
-  }, [state.generalError]);
+  }, [state]);
 
   return (
     <Card>

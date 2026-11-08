@@ -31,7 +31,7 @@ export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
 
   useEffect(() => {
     if (state.generalError) toastError(state.generalError);
-  }, [state.generalError]);
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-3">

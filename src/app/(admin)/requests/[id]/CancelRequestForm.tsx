@@ -19,7 +19,7 @@ export function CancelRequestForm({ requestId }: { requestId: string }) {
 
   useEffect(() => {
     if (state.generalError) toastError(state.generalError);
-  }, [state.generalError]);
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-2">

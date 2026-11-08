@@ -149,8 +149,9 @@ export function formatNameWithNickname(
 export function computeCanExtend(
   status: string,
   dueDate: Date | null,
+  hasFinalAddendum: boolean,
 ): boolean {
-  if (status !== "active" || !dueDate) return false;
+  if (status !== "active" || !dueDate || hasFinalAddendum) return false;
   const daysUntilDue = daysBetween(todayInJakarta(), dueDate);
   return daysUntilDue >= 0 && daysUntilDue <= 30;
 }
@@ -448,4 +449,12 @@ export function getAdminStatusNote(
 ): AdminStatusNote | null {
   const stage = getLoanStage(data);
   return (stage && ADMIN_STATUS_NOTES[stage]) ?? null;
+}
+
+export function canFillSurvey(
+  status: BorrowingRequestStatus,
+  hasFinalAddendum: boolean,
+): boolean {
+  if (status === "returned") return true;
+  return (status === "active" || status === "overdue") && hasFinalAddendum;
 }

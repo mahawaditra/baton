@@ -13,6 +13,11 @@ const MUSIC_GLYPHS = {
   rightRepeat: { char: "\u{1D107}", className: "" },
   fermata: { char: "\u{1D110}", className: "inline-block h-[0.36em]" },
   quarterRest: { char: "\u{1D13D}", className: "" },
+  dynamicP: { char: "\u{1D18F}", className: "" },
+  dynamicMP: { char: "\u{1D190}\u{1D18F}", className: "" },
+  dynamicMF: { char: "\u{1D190}\u{1D191}", className: "" },
+  dynamicF: { char: "\u{1D191}", className: "" },
+  dynamicSFZ: { char: "\u{1D18D}\u{1D191}\u{1D18E}", className: "" },
 } as const;
 
 export function MusicGlyph({

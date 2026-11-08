@@ -15,6 +15,7 @@ import {
   getStatusTurn,
   displayedDueDate,
   getAdminStatusNote,
+  canFillSurvey,
   getLoanStage,
   waitingOnBorrowerLabel,
   getDocumentTypeLabel,
@@ -221,25 +222,29 @@ describe("canNotifyBorrower", () => {
 
 describe("computeCanExtend", () => {
   it("allows right up to 30 days before the due date", () => {
-    expect(computeCanExtend("active", daysFromToday(30))).toBe(true);
-    expect(computeCanExtend("active", daysFromToday(0))).toBe(true);
+    expect(computeCanExtend("active", daysFromToday(30), false)).toBe(true);
+    expect(computeCanExtend("active", daysFromToday(0), false)).toBe(true);
   });
 
   it("blocks beyond the 30-day window", () => {
-    expect(computeCanExtend("active", daysFromToday(31))).toBe(false);
+    expect(computeCanExtend("active", daysFromToday(31), false)).toBe(false);
   });
 
   it("blocks once the due date has already passed", () => {
-    expect(computeCanExtend("active", daysFromToday(-1))).toBe(false);
+    expect(computeCanExtend("active", daysFromToday(-1), false)).toBe(false);
   });
 
   it("blocks when the request isn't active", () => {
-    expect(computeCanExtend("overdue", daysFromToday(5))).toBe(false);
-    expect(computeCanExtend("submitted", daysFromToday(5))).toBe(false);
+    expect(computeCanExtend("overdue", daysFromToday(5), false)).toBe(false);
+    expect(computeCanExtend("submitted", daysFromToday(5), false)).toBe(false);
   });
 
   it("blocks when there is no due date yet", () => {
-    expect(computeCanExtend("active", null)).toBe(false);
+    expect(computeCanExtend("active", null, false)).toBe(false);
+  });
+
+  it("blocks once the final addendum has been submitted", () => {
+    expect(computeCanExtend("active", daysFromToday(5), true)).toBe(false);
   });
 });
 
@@ -802,5 +807,36 @@ describe("getAdminStatusNote", () => {
     expect(
       getAdminStatusNote({ ...pending, hasInitialAddendum: true }),
     ).toBeNull();
+  });
+});
+
+describe("canFillSurvey", () => {
+  it("opens as soon as the final addendum is in, before staff confirm it", () => {
+    expect(canFillSurvey("active", true)).toBe(true);
+    expect(canFillSurvey("overdue", true)).toBe(true);
+  });
+
+  it("stays closed while the borrower still holds the instrument", () => {
+    expect(canFillSurvey("active", false)).toBe(false);
+    expect(canFillSurvey("overdue", false)).toBe(false);
+  });
+
+  it("stays open once the return is confirmed", () => {
+    expect(canFillSurvey("returned", true)).toBe(true);
+    expect(canFillSurvey("returned", false)).toBe(true);
+  });
+
+  it("is closed for every other status", () => {
+    for (const status of [
+      "submitted",
+      "reviewing",
+      "contract_generated",
+      "documents_uploaded",
+      "ready_to_pickup",
+      "rejected",
+      "cancelled",
+    ] as const) {
+      expect(canFillSurvey(status, true)).toBe(false);
+    }
   });
 });

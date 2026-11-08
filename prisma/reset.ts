@@ -102,6 +102,7 @@ async function main() {
   const counts = {
     "borrowing requests (+ periods, documents, addendums)":
       await prisma.borrowingRequest.count(),
+    "survey responses": await prisma.surveyResponse.count(),
     "activity logs": await prisma.activityLog.count(),
     "inventory snapshots": await prisma.inventorySnapshot.count(),
     "annual reports": await prisma.annualReport.count(),
@@ -146,6 +147,7 @@ async function main() {
 
   await prisma.$transaction(async (tx) => {
     await tx.borrowingRequest.deleteMany({});
+    await tx.surveyResponse.deleteMany({});
     await tx.activityLog.deleteMany({});
     await tx.inventorySnapshot.deleteMany({});
     await tx.annualReport.deleteMany({});

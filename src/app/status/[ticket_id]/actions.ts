@@ -17,6 +17,7 @@ import {
   toWhatsAppNumber,
 } from "@/lib/format";
 import {
+  canFillSurvey,
   documentTypesNeedingUpload,
   computeCanExtend,
   displayedDueDate,
@@ -24,6 +25,9 @@ import {
   requiredDocumentTypesForPeriod,
 } from "@/lib/loan/loan-rules";
 import { RequestData } from "./types";
+import { Prisma } from "@/generated/prisma/client";
+import { SURVEY_QUESTION_VERSION } from "@/lib/survey/survey-definition";
+import { parseSurveySubmission, surveyYearOf } from "@/lib/survey/survey-answers";
 import { sendEmailSafely } from "@/lib/send-email-safely";
 import { ADMIN_URL } from "@/lib/admin/admin-host";
 import { accessCodeLimiter, limitOrAllow } from "@/lib/rate-limit";
@@ -73,13 +77,30 @@ async function trashQuietly(fileIds: string[]) {
   );
 }
 
+class TicketAccessError extends Error {}
+
+async function recordWrongAccessCode(ticketId: string): Promise<string> {
+  const { success } = await limitOrAllow(
+    accessCodeLimiter,
+    `access-code:${ticketId}`,
+  );
+  return success
+    ? "Kode akses salah."
+    : "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.";
+}
+
+function ticketAccessMessage(err: unknown): string {
+  if (err instanceof TicketAccessError) return err.message;
+  throw err;
+}
+
 async function requireTicketAccess(ticketId: string, accessCode: string) {
   const request = await prisma.borrowingRequest.findUnique({
     where: { ticketId },
   });
 
   if (!request || request.accessCode !== normalizeAccessCode(accessCode)) {
-    throw new Error("Kode akses salah.");
+    throw new TicketAccessError(await recordWrongAccessCode(ticketId));
   }
   return request;
 }
@@ -119,16 +140,7 @@ export async function verifyAccessCode(
   ]);
 
   if (!request || request.accessCode !== normalizeAccessCode(code)) {
-    const { success } = await limitOrAllow(
-      accessCodeLimiter,
-      `access-code:${ticketId}`,
-    );
-    return {
-      success: false,
-      error: success
-        ? "Kode akses salah."
-        : "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
-    };
+    return { success: false, error: await recordWrongAccessCode(ticketId) };
   }
 
   const isExtensionPeriod = latestPeriod?.periodType === "extension";
@@ -140,6 +152,7 @@ export async function verifyAccessCode(
     existingDocuments,
     contactSettings,
     previousPeriod,
+    surveyParticipationCount,
   ] = await Promise.all([
     latestPeriod
       ? prisma.addendum.count({
@@ -181,6 +194,9 @@ export async function verifyAccessCode(
           select: { dueDate: true },
         })
       : null,
+    prisma.surveyParticipation.count({
+      where: { requestId: request.id },
+    }),
   ]);
 
   const hasInitialAddendum = initialAddendumCount > 0;
@@ -207,7 +223,8 @@ export async function verifyAccessCode(
 
   const dueDate = displayedDueDate(latestPeriod, previousPeriod);
   const canExtend =
-    computeCanExtend(request.status, dueDate) && !hasPendingExtension;
+    computeCanExtend(request.status, dueDate, hasFinalAddendum) &&
+    !hasPendingExtension;
 
   let pickupContact: RequestData["pickupContact"] = null;
   if (
@@ -229,6 +246,8 @@ export async function verifyAccessCode(
       pickupContact,
       hasInitialAddendum,
       hasFinalAddendum,
+      canFillSurvey: canFillSurvey(request.status, hasFinalAddendum),
+      hasFilledSurvey: surveyParticipationCount > 0,
       dueDate,
       canExtend,
       needsExtensionDocuments,
@@ -302,11 +321,11 @@ async function submitStage2Unguarded(
 
   try {
     request = await requireTicketAccess(ticketId, accessCode);
-  } catch {
+  } catch (err) {
     return {
       success: false,
       error: null,
-      generalError: "Kode akses salah.",
+      generalError: ticketAccessMessage(err),
       fields: {},
     };
   }
@@ -466,11 +485,11 @@ async function submitExtensionUnguarded(
 
   try {
     request = await requireTicketAccess(ticketId, accessCode);
-  } catch {
+  } catch (err) {
     return {
       success: false,
       error: null,
-      generalError: "Kode akses salah.",
+      generalError: ticketAccessMessage(err),
       fields: {},
     };
   }
@@ -480,6 +499,23 @@ async function submitExtensionUnguarded(
       success: false,
       error: null,
       generalError: "Pengajuan ini tidak bisa diperpanjang.",
+      fields: {},
+    };
+  }
+
+  const latestPeriod = await prisma.loanPeriod.findFirstOrThrow({
+    where: { requestId: request.id },
+    orderBy: { sequence: "desc" },
+  });
+  const finalAddendumCount = await prisma.addendum.count({
+    where: { periodId: latestPeriod.id, timing: "final" },
+  });
+  if (finalAddendumCount > 0) {
+    return {
+      success: false,
+      error: null,
+      generalError:
+        "Addendum pengembalian udah terkirim, jadi peminjaman ini nggak bisa diperpanjang. Hubungi Logistik OSUI Mahawaditra kalau kamu berubah pikiran.",
       fields: {},
     };
   }
@@ -516,18 +552,14 @@ async function submitExtensionUnguarded(
   } = parsed.data;
   const facultyMajor = `${faculty}/${major}`;
 
-  const [instrument, settings, latestPeriod] = await Promise.all([
+  const [instrument, settings] = await Promise.all([
     prisma.instrument.findUniqueOrThrow({
       where: { id: request.instrumentId },
     }),
     prisma.loanSetting.findFirstOrThrow(),
-    prisma.loanPeriod.findFirstOrThrow({
-      where: { requestId: request.id },
-      orderBy: { sequence: "desc" },
-    }),
   ]);
 
-  if (!computeCanExtend(request.status, latestPeriod.dueDate)) {
+  if (!computeCanExtend(request.status, latestPeriod.dueDate, false)) {
     return {
       success: false,
       error: null,
@@ -617,7 +649,7 @@ export async function getContractPdf(
   });
 
   if (!request || request.accessCode !== normalizeAccessCode(accessCode)) {
-    return { success: false, error: "Kode akses salah." };
+    return { success: false, error: await recordWrongAccessCode(ticketId) };
   }
 
   const period = await prisma.loanPeriod.findFirst({
@@ -656,11 +688,11 @@ async function submitDocumentUnguarded(
 
   try {
     request = await requireTicketAccess(ticketId, accessCode);
-  } catch {
+  } catch (err) {
     return {
       success: false,
       error: null,
-      generalError: "Kode akses salah.",
+      generalError: ticketAccessMessage(err),
     };
   }
 
@@ -810,11 +842,11 @@ async function submitAddendumUnguarded(
 
   try {
     await requireTicketAccess(ticketId, accessCode);
-  } catch {
+  } catch (err) {
     return {
       success: false,
       error: null,
-      generalError: "Kode akses salah.",
+      generalError: ticketAccessMessage(err),
       fields: {},
     };
   }
@@ -1019,6 +1051,95 @@ function serverErrorFormState(formData: FormData): FormActionState {
     generalError: SERVER_ERROR_MESSAGE,
     fields: textFieldsOf(formData),
   };
+}
+
+async function submitSurveyUnguarded(
+  ticketId: string,
+  accessCode: string,
+  formData: FormData,
+): Promise<FormActionState> {
+  const failure =(generalError: string): FormActionState => ({
+    success: false,
+    error: null,
+    generalError,
+    fields: {},
+  });
+
+  try {
+    await requireTicketAccess(ticketId, accessCode);
+  } catch (err) {
+    return failure(ticketAccessMessage(err));
+  }
+
+  const [request, latestPeriod] = await Promise.all([
+    prisma.borrowingRequest.findUniqueOrThrow({
+      where: { ticketId },
+      select: { id: true, status: true, createdAt: true },
+    }),
+    prisma.loanPeriod.findFirst({
+      where: { request: { ticketId } },
+      orderBy: { sequence: "desc" },
+      select: { id: true },
+    }),
+  ]);
+
+  const finalAddendumCount = latestPeriod
+    ? await prisma.addendum.count({
+        where: { periodId: latestPeriod.id, timing: "final" },
+      })
+    : 0;
+
+  if (!canFillSurvey(request.status, finalAddendumCount > 0)) {
+    return failure("Survey baru bisa diisi setelah kamu mengembalikan instrumen.");
+  }
+
+  const values = Object.fromEntries(
+    [...formData.entries()].filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
+  const submission = parseSurveySubmission(values);
+  if (!submission.success) {
+    return { success: false, error: submission.error, generalError: null, fields: {} };
+  }
+
+  const year = surveyYearOf(request.createdAt);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.surveyParticipation.create({
+        data: { requestId: request.id },
+      });
+      await tx.surveyResponse.createMany({
+        data: submission.responses.map(({ form, ratings, comments }) => ({
+          form,
+          year,
+          questionVersion: SURVEY_QUESTION_VERSION,
+          ratings,
+          comments,
+        })),
+      });
+    });
+  } catch (err) {
+    const alreadyFilled =
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002";
+    if (!alreadyFilled) throw err;
+  }
+
+  return { success: true, error: null, generalError: null, fields: {} };
+}
+
+export async function submitSurvey(
+  ticketId: string,
+  accessCode: string,
+  prevState: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  return withServerErrorFallback(
+    () => submitSurveyUnguarded(ticketId, accessCode, formData),
+    () => ({ success: false, error: null, generalError: SERVER_ERROR_MESSAGE, fields: {} }),
+  );
 }
 
 export async function submitStage2(

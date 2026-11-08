@@ -19,6 +19,8 @@ export type RequestData = {
   needsExtensionDocuments: boolean;
   canFillExtensionAddendum: boolean;
   hasFinalAddendum: boolean;
+  canFillSurvey: boolean;
+  hasFilledSurvey: boolean;
   borrowerKtpNumber: string | null;
   borrowerAddressKtp: string | null;
   borrowerAddressDomicile: string | null;

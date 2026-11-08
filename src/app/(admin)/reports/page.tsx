@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatJakartaDate } from "@/lib/format";
 import { resolveActorName } from "@/lib/activity-log";
@@ -90,6 +91,26 @@ export default async function ReportsPage() {
                 </ul>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Surveys</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-start gap-4">
+            <p className="text-sm text-foreground-2">
+              Anonymous feedback from borrowers, sent after they submit their
+              return addendum.
+            </p>
+            <Link
+              href="/reports/surveys"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+              )}
+            >
+              View results
+            </Link>
           </CardContent>
         </Card>
       </div>

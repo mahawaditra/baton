@@ -67,9 +67,10 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Two-stage form: light info up front, full contract details only once an instrument is actually assigned
 - Self-service document upload (signed contract, deposit proof, ID scan)
 - A status page that always says whose turn it is (the borrower's or the logistics staff's), shows the due date, and puts up a clear notice once a loan is overdue
-- One-click extension request (from 30 days before the due date) and early return
+- One-click extension request (from 30 days before the due date) and early return; once the return addendum is in, the loan can no longer be extended
 - A web form — with phone-camera photos — for the condition addendums at pickup, extension, and return
 - Automatic email notifications at each status change
+- An optional, anonymous two-page survey (the app, then the logistics team), open from the moment the return addendum is submitted and answered once per ticket
 - A landing-page FAQ, and a direct WhatsApp and/or LINE line to the logistics head, each shown independently when they choose to
 - A small tribute page (`/legacy`) to my fellow comrades in OSUI Mahawaditra. They had no hand in building BATON; they are there because I wanted to honor them
 
@@ -89,6 +90,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Extension and return handling
 - Per-instrument history page, and an activity feed of everything admins have done
 - A manually generated annual report summary
+- Survey results as an analytics page: scores by area on a radar chart, the rating spread per question, the overall score by year, and searchable comments, filtered by form and period. Every admin can read both surveys
 - An in-app Handbook (onboarding, workflow, dailies, seasonal chores, troubleshooting) for whoever inherits the admin seat
 - Annual settings (due dates, bank details, deposit amount, signatory data) — Ketua and Overlord only, visible but locked for everyone else
 - Admin management — Ketua (staff only), Pengurus and Overlord (staff and Ketua), each limited to deactivating roles below their own
@@ -282,10 +284,11 @@ src/
                    files/    Google Drive, PDF generation, image processing, upload validation, XLSX
                    legacy/   the crew list and photo helpers behind the /legacy page
                    loan/     pure loan rules, ticket ids, the signed download token, the upload queue
+                   survey/   survey questions, answer parsing, and the summaries behind the results page
                  Shared basics stay at the top level: Prisma client, auth, email, rate limiting,
                  formatting, and the enum → label maps the UI reads (labels.ts)
 prisma/
-  schema.prisma  Database schema (16 models)
+  schema.prisma  Database schema (18 models)
   migrations/    Migration history
   seed.ts        Seeds instruments and goods from prisma/seed-data/*.xlsx (gitignored)
   reset.ts       Guarded wipe behind `npm run db:reset` — keeps Overlord, Pengurus and Loan Settings
@@ -302,6 +305,7 @@ Coverage is aimed at the business-logic layer that would cause real problems if 
 
 - `roles.ts` / `handover.ts` / `admin-deletion.ts` — who may manage whom (the full role-versus-role matrix), and the Ketua handover run against a fake transaction: staff are removed before the new Ketua is created, every refusal happens before anything is written, and an admin's name is copied into the history rows before their account is deleted
 - `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, name/nickname display resolution, and the loan stage behind both the borrower's "whose turn" line and the admin's status note (a parity test keeps the two in step)
+- `survey.test.ts` — the question definitions, answer validation (a submission with one incomplete form is refused whole), who may read which form, and how results and yearly scores are summarized, including malformed stored answers
 - `board-rules.ts` — which Kanban column and chip a request lands in, and how cards are ordered within a column
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
 - `format.ts` — date/timezone handling (Jakarta calendar dates, relative days), WhatsApp numbers, the faculty/major split

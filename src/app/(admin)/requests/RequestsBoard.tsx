@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
+import { EmptyState } from "@/components/EmptyState";
 import { MusicGlyph } from "@/components/MusicGlyph";
 import {
   confirmedExtensionCount,
@@ -221,9 +222,7 @@ function BoardColumnView({
       </header>
       <div className="scrollbar-subtle flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto [scrollbar-gutter:stable] pt-0.5 pr-0.5 pb-2.5 pl-2.5">
         {items.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-caption text-muted-foreground">
-            No requests
-          </div>
+          <EmptyState size="compact" title="No requests" />
         ) : (
           items.map((request) => (
             <BoardCard key={request.id} request={request} />

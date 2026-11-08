@@ -154,7 +154,8 @@ model BorrowingRequest {
   createdAt     DateTime               @default(now()) @map("created_at")
   updatedAt     DateTime               @default(now()) @updatedAt @map("updated_at")
 
-  loanPeriods LoanPeriod[]
+  loanPeriods          LoanPeriod[]
+  surveyParticipation SurveyParticipation?
 
   @@index([status])
   @@map("borrowing_requests")
@@ -236,6 +237,31 @@ model Addendum {
   submittedAt          DateTime       @default(now()) @map("submitted_at")
 
   @@map("addendums")
+}
+
+enum SurveyForm {
+  baton
+  logistik
+}
+
+model SurveyParticipation {
+  requestId String @id @map("request_id") @db.Uuid
+
+  request BorrowingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("survey_participations")
+}
+
+model SurveyResponse {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  form            SurveyForm
+  year            Int
+  questionVersion Int        @map("question_version")
+  ratings         Json
+  comments        Json
+
+  @@index([form, year])
+  @@map("survey_responses")
 }
 
 enum AdminRole {

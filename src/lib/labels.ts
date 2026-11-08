@@ -5,6 +5,7 @@ import type {
   DocumentReviewStatus,
   InstrumentStatus,
   ItemCondition,
+  SurveyForm,
 } from "@/generated/prisma/client";
 
 export const REQUEST_STATUS_LABELS: Record<BorrowingRequestStatus, string> = {
@@ -91,3 +92,8 @@ export function getAddendumTimingLabel(timing: string): string {
 export function getRoleLabel(role: string): string {
   return ROLE_LABELS[role as AdminRole] ?? role;
 }
+
+export const SURVEY_FORM_LABELS: Record<SurveyForm, string> = {
+  baton: "BATON",
+  logistik: "Logistik",
+};

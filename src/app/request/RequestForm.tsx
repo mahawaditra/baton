@@ -118,7 +118,7 @@ export function RequestForm() {
     if (state.generalError) {
       toastError(state.generalError);
     }
-  }, [state.generalError]);
+  }, [state]);
 
   if (state.ticketId) {
     return (

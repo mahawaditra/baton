@@ -11,7 +11,7 @@ import { CollapsibleGroup } from "@/components/CollapsibleGroup";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
-import { SearchX, Hash, MapPin } from "lucide-react";
+import { Hash, MapPin } from "lucide-react";
 import { cn, toggleSetValue } from "@/lib/utils";
 
 const MOBILE_SORT_OPTIONS = [
@@ -131,7 +131,6 @@ export function GoodsExplorer({
       />
     ) : (
       <EmptyState
-        icon={SearchX}
         tone="search"
         title="No matching goods"
         description="Try a different search term, or reset the filters below."

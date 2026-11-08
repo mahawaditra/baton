@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useMemo, useOptimistic, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { BorrowingRequestStatus } from "@/generated/prisma/client";
 import { DataTable } from "@/components/DataTable";
 import { columns } from "./columns";
@@ -14,10 +14,10 @@ import { EntityCard } from "@/components/EntityCard";
 import { CollapsibleGroup } from "@/components/CollapsibleGroup";
 import { MusicGlyph } from "@/components/MusicGlyph";
 import { Input } from "@/components/ui/input";
-import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
-import { SearchX, Hash, Calendar, SquareKanban, Table2 } from "lucide-react";
-import { cn, toggleSetValue } from "@/lib/utils";
+import { SegmentedControl } from "@/components/SegmentedControl";
+import { Hash, Calendar, SquareKanban, Table2 } from "lucide-react";
+import { toggleSetValue } from "@/lib/utils";
 import { formatJakartaDate, todayInJakarta } from "@/lib/format";
 import {
   BOARD_COLUMNS,
@@ -72,36 +72,31 @@ function ViewToggle({
   tableHref: string;
   boardHref: string;
 }) {
-  const options = [
-    { value: "table", label: "Table", icon: Table2, href: tableHref },
-    { value: "board", label: "Board", icon: SquareKanban, href: boardHref },
-  ] as const;
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [activeView, setActiveView] = useOptimistic(view);
 
   return (
-    <div
-      role="group"
-      aria-label="Requests view"
-      className="inline-flex shrink-0 gap-0.5 rounded-md border border-border bg-surface p-0.5"
-    >
-      {options.map(({ value, label, icon: Icon, href }) => (
-        <Link
-          key={value}
-          href={href}
-          onClick={() => saveRequestsView(value)}
-          aria-current={view === value ? "true" : undefined}
-          className={cn(
-            buttonVariants({
-              variant: view === value ? "default" : "ghost",
-              size: "sm",
-              className: "rounded-[5px]",
-            }),
-          )}
-        >
-          <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
-          {label}
-        </Link>
-      ))}
-    </div>
+    <SegmentedControl
+      ariaLabel="Requests view"
+      options={
+        [
+          { id: "table", label: "Table", icon: Table2, href: tableHref },
+          { id: "board", label: "Board", icon: SquareKanban, href: boardHref },
+        ] as const
+      }
+      value={activeView}
+      onChange={(next) => {
+        saveRequestsView(next);
+        startTransition(() => {
+          setActiveView(next);
+          router.push(next === "table" ? tableHref : boardHref, {
+            scroll: false,
+          });
+        });
+      }}
+      className="shrink-0"
+    />
   );
 }
 
@@ -194,7 +189,6 @@ export function RequestsExplorer({
       />
     ) : (
       <EmptyState
-        icon={SearchX}
         tone="search"
         title="No matching requests"
         description="Try a different search term."

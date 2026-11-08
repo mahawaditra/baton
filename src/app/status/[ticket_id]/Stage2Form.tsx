@@ -38,7 +38,7 @@ export function Stage2Form({
 
   useEffect(() => {
     if (state.generalError) toastError(state.generalError);
-  }, [state.generalError]);
+  }, [state]);
 
   return (
     <Card>

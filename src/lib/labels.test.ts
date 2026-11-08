@@ -7,6 +7,7 @@ import {
   DocumentType,
   InstrumentStatus,
   ItemCondition,
+  SurveyForm,
 } from "@/generated/prisma/enums";
 import {
   ADDENDUM_TIMING_LABELS,
@@ -16,6 +17,7 @@ import {
   REQUEST_STATUS_LABELS,
   ROLE_LABELS,
   STATUS_LABELS,
+  SURVEY_FORM_LABELS,
   getAddendumTimingLabel,
   getConditionLabel,
   getDocumentReviewStatusLabel,
@@ -33,6 +35,7 @@ const LABEL_MAPS: [string, Record<string, string>, Record<string, string>][] = [
   ["AddendumTiming", AddendumTiming, ADDENDUM_TIMING_LABELS],
   ["DocumentType", DocumentType, DOCUMENT_TYPE_LABELS],
   ["AdminRole", AdminRole, ROLE_LABELS],
+  ["SurveyForm", SurveyForm, SURVEY_FORM_LABELS],
 ];
 
 describe("label coverage", () => {

@@ -843,6 +843,7 @@ export async function confirmReturn(requestId: string, formData: FormData) {
     <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
     <p>Pengembalian instrumen kamu sudah dikonfirmasi. Terima kasih sudah mengembalikan instrumennya!</p>
     ${depositMessage}
+    <p>Kalau belum sempat, kami minta tolong isi survey singkat di <a href="${process.env.BETTER_AUTH_URL}/status/${request.ticketId}">halaman status kamu</a>. Sifatnya opsional, dan jawabanmu nggak ditautkan ke tiketmu.</p>
     `,
   });
 

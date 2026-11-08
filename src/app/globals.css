@@ -82,6 +82,17 @@
   --color-navy-hover: var(--navy-hover);
   --color-plum: var(--plum);
   --color-plum-soft: var(--plum-soft);
+  --color-rating-1: var(--rating-1);
+  --color-rating-1-fg: var(--rating-1-fg);
+  --color-rating-2: var(--rating-2);
+  --color-rating-2-fg: var(--rating-2-fg);
+  --color-rating-3: var(--rating-3);
+  --color-rating-3-fg: var(--rating-3-fg);
+  --color-rating-4: var(--rating-4);
+  --color-rating-4-fg: var(--rating-4-fg);
+  --color-rating-5: var(--rating-5);
+  --color-rating-5-fg: var(--rating-5-fg);
+  --color-chart-compare: var(--chart-compare);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
 
@@ -213,6 +224,17 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
+  --rating-1: oklch(0.585 0.145 35);
+  --rating-1-fg: oklch(0.988 0.006 85);
+  --rating-2: oklch(0.74 0.105 35);
+  --rating-2-fg: oklch(0.225 0.024 275);
+  --rating-3: oklch(0.88 0.012 85);
+  --rating-3-fg: oklch(0.225 0.024 275);
+  --rating-4: oklch(0.66 0.07 292);
+  --rating-4-fg: oklch(0.225 0.024 275);
+  --rating-5: oklch(0.358 0.062 292);
+  --rating-5-fg: oklch(0.988 0.006 85);
+  --chart-compare: oklch(0.62 0.012 80);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -299,6 +321,17 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
+  --rating-1: oklch(0.68 0.15 35);
+  --rating-1-fg: oklch(0.185 0.028 285);
+  --rating-2: oklch(0.5 0.105 35);
+  --rating-2-fg: oklch(0.945 0.01 85);
+  --rating-3: oklch(0.355 0.015 285);
+  --rating-3-fg: oklch(0.945 0.01 85);
+  --rating-4: oklch(0.5 0.08 292);
+  --rating-4-fg: oklch(0.945 0.01 85);
+  --rating-5: oklch(0.72 0.085 292);
+  --rating-5-fg: oklch(0.185 0.028 285);
+  --chart-compare: oklch(0.5 0.015 285);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -404,6 +437,40 @@
     animation-delay: calc(var(--stagger-index, 0) * 60ms);
   }
 
+  .survey-enter {
+    animation: survey-rise 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .survey-page-forward {
+    animation: survey-from-right 280ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .survey-page-back {
+    animation: survey-from-left 280ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .peer:checked + .rating-pill {
+    animation: accent-pop 220ms ease-out;
+  }
+
+  .chart-grow {
+    animation: chart-grow 550ms 100ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .chart-wipe {
+    animation: step-wipe 600ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(100ms + var(--stagger-index, 0) * 50ms);
+  }
+
+  .chart-draw {
+    stroke-dasharray: 1;
+    animation: chart-draw 800ms 150ms ease-out backwards;
+  }
+
+  .chart-fade-late {
+    animation: admin-fade 300ms 650ms ease-out backwards;
+  }
+
   .hourglass-flip {
     animation: hourglass-flip 5s ease-in-out infinite;
   }
@@ -457,6 +524,46 @@
 @keyframes slot-fill {
   from {
     scale: 0 1;
+  }
+}
+
+@keyframes survey-rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+@keyframes survey-from-right {
+  from {
+    opacity: 0;
+    translate: 20px 0;
+  }
+}
+
+@keyframes survey-from-left {
+  from {
+    opacity: 0;
+    translate: -20px 0;
+  }
+}
+
+@keyframes accent-pop {
+  40% {
+    scale: 1.06;
+  }
+}
+
+@keyframes chart-grow {
+  from {
+    opacity: 0;
+    scale: 0.3;
+  }
+}
+
+@keyframes chart-draw {
+  from {
+    stroke-dashoffset: 1;
   }
 }
 

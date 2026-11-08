@@ -54,7 +54,7 @@ export function AddendumForm({
 
   useEffect(() => {
     if (state.generalError) toastError(state.generalError);
-  }, [state.generalError]);
+  }, [state]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
