@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Check } from "lucide-react";
 import { HeroMarquee } from "@/components/HeroMarquee";
+import { BarlineHeading } from "@/components/BarlineHeading";
 import { LandingHero } from "@/components/LandingHero";
 import { LandingFaq } from "@/components/LandingFaq";
 import { LandingLegacy } from "@/components/LandingLegacy";
@@ -66,9 +67,7 @@ export default async function Home() {
       <div className="relative isolate">
         <section className="bg-background px-6 py-12">
           <Reveal className="mx-auto max-w-7xl">
-            <h2 className="text-center font-heading text-h2 text-foreground">
-              Cara Pinjam
-            </h2>
+            <BarlineHeading>Cara Pinjam</BarlineHeading>
             <ol className="mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-4 lg:gap-6">
               {STEPS.map((step, index) => {
                 const isLast = index === STEPS.length - 1;
@@ -142,7 +141,7 @@ export default async function Home() {
             <Reveal className="grid grid-cols-1 items-start gap-10 sm:grid-cols-[auto_1fr]">
               <div className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-xl bg-navy shadow-md">
                 <Image
-                  src="/about/haseul-loona.gif"
+                  src="/about/haseul-loona.webp"
                   alt="haseulbintaro"
                   width={140}
                   height={140}
@@ -150,9 +149,9 @@ export default async function Home() {
                 />
               </div>
 
-              <h2 className="font-heading text-h2 text-foreground sm:order-first sm:col-span-2 sm:text-center">
+              <BarlineHeading className="justify-start sm:order-first sm:col-span-2 sm:justify-center">
                 Why is this a thing?
-              </h2>
+              </BarlineHeading>
 
               <div className="min-w-0">
                 <div className="flex flex-col gap-3.5 text-body-lg text-foreground">

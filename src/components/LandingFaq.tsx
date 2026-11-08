@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { BarlineHeading } from "@/components/BarlineHeading";
 import { Reveal } from "@/components/Reveal";
 
 const FAQ_ITEMS = [
@@ -66,9 +67,7 @@ export function LandingFaq() {
   return (
     <section className="border-t border-border bg-surface px-6 py-12">
       <Reveal className="mx-auto max-w-5xl">
-        <h2 className="text-center font-heading text-h2 text-foreground">
-          F.A.Q
-        </h2>
+        <BarlineHeading>F.A.Q</BarlineHeading>
         <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-center lg:gap-4">
           <div className="flex flex-col gap-3 lg:w-[460px]">
             {LEFT_COLUMN.map((item) => (

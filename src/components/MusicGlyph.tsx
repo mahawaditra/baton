@@ -9,6 +9,7 @@ const notoMusic = Noto_Music({
 
 const MUSIC_GLYPHS = {
   reverseFinalBarline: { char: "\u{1D103}", className: "" },
+  finalBarline: { char: "\u{1D102}", className: "" },
   rightRepeat: { char: "\u{1D107}", className: "" },
   fermata: { char: "\u{1D110}", className: "inline-block h-[0.36em]" },
   quarterRest: { char: "\u{1D13D}", className: "" },

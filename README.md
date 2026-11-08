@@ -230,6 +230,7 @@ cp .env-example .env
 | `BETTER_AUTH_URL`                                                                                  | Public base URL, no trailing slash; used in OAuth and emails         |
 | `NEXT_PUBLIC_ADMIN_HOST`                                                                           | Admin panel hostname (e.g. `admin.baton.my.id`); leave empty locally |
 | `DEV_ALLOWED_ORIGINS`                                                                              | Comma-separated LAN hosts allowed to open the dev server; dev only   |
+| `LEGACY_PHOTO_ORIGIN`                                                                              | Local only: site to fetch /legacy crew photos from                   |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`                                                        | Google OAuth app credentials (admin login and Drive access)          |
 | `GOOGLE_DRIVE_REFRESH_TOKEN`                                                                       | Long-lived token for OAuth-as-user Drive access                      |
 | `GOOGLE_DRIVE_ROOT_FOLDER_ID`                                                                      | Drive folder BATON uses as its root                                  |
