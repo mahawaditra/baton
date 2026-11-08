@@ -165,6 +165,7 @@ export function AdminNav({
                   <div key={item.label}>
                     <button
                       type="button"
+                      aria-expanded={handbookOpen}
                       onClick={() => setHandbookOpen((v) => !v)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm",
@@ -180,38 +181,48 @@ export function AdminNav({
                       {item.label}
                       <ChevronDown
                         className={cn(
-                          "ml-auto h-4 w-4 transition-transform",
+                          "ml-auto h-4 w-4 transition-transform duration-250 ease-out motion-reduce:transition-none",
                           !handbookOpen && "-rotate-90",
                         )}
                         strokeWidth={1.75}
                       />
                     </button>
-                    {handbookOpen && (
-                      <div className="mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
-                        {item.children.map((child) => {
-                          const active = isActive(pathname, child.href);
-                          const ChildIcon = child.icon;
-                          return (
-                            <Link
-                              key={child.href}
-                              href={child.href}
-                              className={cn(
-                                "flex items-center gap-2.5 rounded px-3 py-1.5 text-sm",
-                                active
-                                  ? "bg-gold-soft/40 font-semibold text-foreground"
-                                  : "text-muted-foreground hover:bg-muted",
-                              )}
-                            >
-                              <ChildIcon
-                                className="h-4 w-4"
-                                strokeWidth={1.75}
-                              />
-                              {child.label}
-                            </Link>
-                          );
-                        })}
+                    <div
+                      inert={!handbookOpen}
+                      className={cn(
+                        "grid transition-[grid-template-rows,opacity] duration-250 ease-out motion-reduce:transition-none",
+                        handbookOpen
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0",
+                      )}
+                    >
+                      <div className="min-h-0 overflow-hidden">
+                        <div className="mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
+                          {item.children.map((child) => {
+                            const active = isActive(pathname, child.href);
+                            const ChildIcon = child.icon;
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                className={cn(
+                                  "flex items-center gap-2.5 rounded px-3 py-1.5 text-sm",
+                                  active
+                                    ? "bg-gold-soft/40 font-semibold text-foreground"
+                                    : "text-muted-foreground hover:bg-muted",
+                                )}
+                              >
+                                <ChildIcon
+                                  className="h-4 w-4"
+                                  strokeWidth={1.75}
+                                />
+                                {child.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               }

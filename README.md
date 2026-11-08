@@ -91,7 +91,7 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Per-instrument history page, and an activity feed of everything admins have done
 - A manually generated annual report summary
 - Survey results as an analytics page: scores by area on a radar chart, the rating spread per question, the overall score by year, and searchable comments, filtered by form and period. Every admin can read both surveys
-- An in-app Handbook (onboarding, workflow, dailies, seasonal chores, troubleshooting) for whoever inherits the admin seat
+- An in-app Handbook for whoever inherits the admin seat: onboarding with a role table, the loan workflow, step-by-step dailies, a seasonal timeline across the term, and searchable troubleshooting labelled by who can fix what
 - Annual settings (due dates, bank details, deposit amount, signatory data) — Ketua and Overlord only, visible but locked for everyone else
 - Admin management — Ketua (staff only), Pengurus and Overlord (staff and Ketua), each limited to deactivating roles below their own
 - Ketua handover — when a term ends, the outgoing Ketua hands the position over in one step: the staff accounts are cleared and the next Ketua is seated. Activity history keeps everyone's names even though their accounts are gone
@@ -306,6 +306,7 @@ Coverage is aimed at the business-logic layer that would cause real problems if 
 - `roles.ts` / `handover.ts` / `admin-deletion.ts` — who may manage whom (the full role-versus-role matrix), and the Ketua handover run against a fake transaction: staff are removed before the new Ketua is created, every refusal happens before anything is written, and an admin's name is copied into the history rows before their account is deleted
 - `loan-rules.ts` — deposit refund calculation, instrument status transitions on return, extension eligibility, required documents per loan period, instrument-sharing slot resolution, name/nickname display resolution, and the loan stage behind both the borrower's "whose turn" line and the admin's status note (a parity test keeps the two in step)
 - `survey.test.ts` — the question definitions, answer validation (a submission with one incomplete form is refused whole), who may read which form, and how results and yearly scores are summarized, including malformed stored answers
+- `role-capabilities.ts` / `troubleshooting-entries.ts` — the Handbook's role table stays derived from the real role rules, with no way shown to add a Pengurus or an Overlord; troubleshooting search and filtering
 - `board-rules.ts` — which Kanban column and chip a request lands in, and how cards are ordered within a column
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
 - `format.ts` — date/timezone handling (Jakarta calendar dates, relative days), WhatsApp numbers, the faculty/major split

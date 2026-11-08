@@ -397,6 +397,17 @@ export async function cancelRequest(
     };
   }
 
+  await sendEmailSafely({
+    to: request.borrowerEmail,
+    subject: "Pengajuan peminjaman dibatalkan.",
+    html: `
+    <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
+    <p>Pengajuan peminjaman instrumen kamu (tiket ${request.ticketId}) dibatalkan oleh staf Logistik OSUI.</p>
+    <p>Alasan: ${escapeHtml(reason)}</p>
+    <p>Kalau kamu sudah setor deposit atau ada pertanyaan, silakan hubungi staf Logistik OSUI.</p>
+  `,
+  });
+
   await prisma.activityLog.create({
     data: {
       adminId: session.user.id,

@@ -93,7 +93,7 @@ const EXTEND_STEPS: Step[] = [
     title: "Generate kontrak baru",
     actor: "peminjam",
     detail:
-      "Kontrak perpanjangan baru plus addendum baru. Admin masih perlu confirm extension-nya sebelum ini keitung ongoing.",
+      "Kontrak perpanjangan baru plus addendum baru, dan nggak bisa lagi kalau addendum akhir udah terkirim. Admin masih perlu confirm extension-nya sebelum ini keitung ongoing.",
     note: "Balik jadi Loan aktif lagi.",
   },
 ];
@@ -105,10 +105,10 @@ const RETURN_STEPS: Step[] = [
     detail: "Kondisi akhir instrumen sebelum dikembalikan, plus foto.",
   },
   {
-    title: "Cek kondisi & refund",
+    title: "Cek kondisi",
     actor: "admin",
     detail:
-      "Cek kondisi sesuai addendum akhir, hitung refund deposit — penuh, parsial, atau hangus tergantung berapa hari telat vs grace days di Settings.",
+      "Cek kondisi sesuai addendum akhir, baru confirm return. Refund deposit dihitung otomatis — penuh, parsial, atau hangus tergantung berapa hari telat vs grace days di Settings — dan urusan balikin duitnya ke bendahara.",
   },
   {
     title: "Confirm return",

@@ -31,8 +31,8 @@ export function CancelRequestPanel({
         <DialogHeader>
           <DialogTitle>Cancel Request</DialogTitle>
           <DialogDescription>
-            Stops this request. The borrower sees the reason on their status
-            page.
+            Stops this request. The borrower gets the reason by email and on
+            their status page.
           </DialogDescription>
         </DialogHeader>
         <CancelRequestForm requestId={requestId} />
