@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { replaceSignatureImage } from "@/lib/files/drive";
 import { runHandover } from "@/lib/admin/handover";
-import { adminEmailSchema } from "@/lib/admin/email";
+import { addAdminSchema, handoverSchema } from "@/lib/admin/admin-schemas";
 import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
@@ -19,14 +19,6 @@ import {
   canSetActive,
   canViewAdminManagement,
 } from "@/lib/admin/roles";
-
-const addAdminSchema = z.object({
-  email: adminEmailSchema,
-  name: z.string().trim().min(1, "Name is required").max(100),
-  role: z.enum(["staff", "ketua"], "Invalid role"),
-});
-
-const handoverSchema = addAdminSchema.pick({ email: true, name: true });
 
 const updateLoanSettingsSchema = z
   .object({

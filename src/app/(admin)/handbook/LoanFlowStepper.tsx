@@ -1,11 +1,12 @@
-import { ArrowRight, ChevronDown, Split } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import type {
   BorrowingRequestStatus,
   InstrumentStatus,
 } from "@/generated/prisma/client";
+import { MusicGlyph, type MusicGlyphName } from "@/components/MusicGlyph";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { StatusBadge } from "@/components/StatusBadge";
-import { cn } from "@/lib/utils";
+import { cn, staggerStyle } from "@/lib/utils";
 
 type Actor = "peminjam" | "admin" | "sistem";
 
@@ -18,7 +19,7 @@ type Step = {
   actor: Actor;
   detail: string;
   changes?: Change[];
-  note?: string;
+  note?: { text: string; loop?: boolean };
 };
 
 const ACTOR_LABEL: Record<Actor, string> = {
@@ -55,7 +56,10 @@ const MAIN_STEPS: Step[] = [
     detail:
       "Lengkapi data kontrak (KTP, alamat, fakultas, dll), generate dan tanda tangan PDF kontrak, lalu upload 3 dokumen: kontrak tanda tangan, bukti deposit, KTP.",
     changes: [{ kind: "request", path: ["contract_generated", "documents_uploaded"] }],
-    note: "Kalau ada dokumen ditolak, balik ke sini buat upload ulang.",
+    note: {
+      text: "Kalau ada dokumen ditolak, balik ke sini buat upload ulang.",
+      loop: true,
+    },
   },
   {
     title: "Review dokumen",
@@ -94,7 +98,6 @@ const EXTEND_STEPS: Step[] = [
     actor: "peminjam",
     detail:
       "Kontrak perpanjangan baru plus addendum baru, dan nggak bisa lagi kalau addendum akhir udah terkirim. Admin masih perlu confirm extension-nya sebelum ini keitung ongoing.",
-    note: "Balik jadi Loan aktif lagi.",
   },
 ];
 
@@ -118,7 +121,9 @@ const RETURN_STEPS: Step[] = [
       { kind: "request", path: ["active", "returned"] },
       { kind: "instrument", path: ["borrowed", "available"] },
     ],
-    note: "Instrumen jadi Nonaktif kalau kondisinya Pensiun atau Hilang.",
+    note: {
+      text: "Instrumen jadi Nonaktif kalau kondisinya Pensiun atau Hilang.",
+    },
   },
 ];
 
@@ -165,17 +170,26 @@ function ChangeRow({ change }: { change: Change }) {
   );
 }
 
-function StepBody({ step, compact = false }: { step: Step; compact?: boolean }) {
+function StepBody({
+  step,
+  compact = false,
+  lead,
+}: {
+  step: Step;
+  compact?: boolean;
+  lead?: React.ReactNode;
+}) {
   return (
     <>
       <details className="details-animated group">
         <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
           <h3
             className={cn(
-              "font-heading text-foreground",
+              "flex items-center gap-2 font-heading text-foreground",
               compact ? "text-body font-semibold" : "text-title",
             )}
           >
+            {lead}
             {step.title}
           </h3>
           <span className="inline-flex items-center gap-1.5">
@@ -199,26 +213,40 @@ function StepBody({ step, compact = false }: { step: Step; compact?: boolean }) 
       )}
       {step.note && (
         <p className="mt-2.5 text-caption text-muted-foreground">
-          ↻ {step.note}
+          {step.note.loop && "↻ "}
+          {step.note.text}
         </p>
       )}
     </>
   );
 }
 
-function Branch({
-  letter,
+function Volta({
+  number,
   title,
   steps,
+  closed = false,
+  end,
 }: {
-  letter: string;
+  number: number;
   title: string;
   steps: Step[];
+  closed?: boolean;
+  end: { glyph: MusicGlyphName; label: string };
 }) {
   return (
-    <div className="border-t-2 border-gold pt-3">
-      <div className="flex items-baseline gap-2">
-        <span className="font-heading text-lg font-bold text-gold">{letter}</span>
+    <div className="relative pt-2.5">
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-x-0 top-0 h-6 border-t-2 border-l-2 border-gold",
+          closed && "border-r-2",
+        )}
+      />
+      <div className="flex items-baseline gap-2 pl-3">
+        <span className="font-heading text-lg font-bold text-gold">
+          {number}.
+        </span>
         <span className="text-caption uppercase tracking-wider text-muted-foreground">
           {title}
         </span>
@@ -233,6 +261,10 @@ function Branch({
           </li>
         ))}
       </ol>
+      <p className="mt-4 flex items-center gap-2 pl-2 text-caption text-muted-foreground">
+        <MusicGlyph glyph={end.glyph} className="text-[1.75rem] text-gold" />
+        {end.label}
+      </p>
     </div>
   );
 }
@@ -244,6 +276,8 @@ export function LoanFlowStepper() {
         {MAIN_STEPS.map((step, index) => (
           <li
             key={step.title}
+            data-stagger
+            style={staggerStyle(index)}
             className="grid grid-cols-[2.5rem_1fr] gap-x-3 sm:grid-cols-[4rem_1fr] sm:gap-x-4"
           >
             <div className="relative">
@@ -256,22 +290,40 @@ export function LoanFlowStepper() {
               />
             </div>
             <div className="pb-9">
-              <StepBody step={step} />
+              <StepBody
+                step={step}
+                lead={
+                  index === MAIN_STEPS.length - 1 ? (
+                    <MusicGlyph
+                      glyph="leftRepeat"
+                      className="text-[1.75rem] font-normal text-gold"
+                    />
+                  ) : undefined
+                }
+              />
             </div>
           </li>
         ))}
-        <li className="grid grid-cols-[2.5rem_1fr] gap-x-3 sm:grid-cols-[4rem_1fr] sm:gap-x-4">
-          <div className="relative">
-            <Split className="h-6 w-6 text-gold sm:h-7 sm:w-7" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-caption uppercase tracking-wider text-muted-foreground">
-              Lalu, salah satu
-            </p>
-            <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-2">
-              <Branch letter="A" title="Perpanjang" steps={EXTEND_STEPS} />
-              <Branch letter="B" title="Kembalikan" steps={RETURN_STEPS} />
-            </div>
+        <li
+          data-stagger
+          style={staggerStyle(MAIN_STEPS.length)}
+          className="grid grid-cols-[2.5rem_1fr] gap-x-3 sm:grid-cols-[4rem_1fr] sm:gap-x-4"
+        >
+          <div />
+          <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2">
+            <Volta
+              number={1}
+              title="Perpanjang"
+              steps={EXTEND_STEPS}
+              closed
+              end={{ glyph: "rightRepeat", label: "Balik ke Loan aktif" }}
+            />
+            <Volta
+              number={2}
+              title="Kembalikan"
+              steps={RETURN_STEPS}
+              end={{ glyph: "finalBarline", label: "Selesai" }}
+            />
           </div>
         </li>
       </ol>

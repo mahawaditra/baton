@@ -16,7 +16,7 @@ type HoldButtonProps = {
   holdMs?: number;
   size?: "default" | "lg";
   className?: string;
-  canStart?: () => boolean;
+  describedBy?: string;
   onConfirm: () => void;
 };
 
@@ -29,7 +29,7 @@ export function HoldButton({
   holdMs = 2000,
   size = "default",
   className,
-  canStart,
+  describedBy,
   onConfirm,
 }: HoldButtonProps) {
   const [holding, setHolding] = useState(false);
@@ -43,7 +43,6 @@ export function HoldButton({
 
   function start() {
     if (disabled || pending || timerRef.current !== null) return;
-    if (canStart && !canStart()) return;
 
     setHolding(true);
     timerRef.current = setTimeout(() => {
@@ -68,6 +67,7 @@ export function HoldButton({
       type="button"
       disabled={disabled}
       aria-busy={pending}
+      aria-describedby={describedBy}
       onPointerDown={(event) => {
         if (event.pointerType === "mouse" && event.button !== 0) return;
         start();

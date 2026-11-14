@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { addAdmin, AddAdminState } from "./actions";
+import { ADMIN_NAME_MAX_LENGTH } from "@/lib/admin/admin-schemas";
 import { toastError } from "@/lib/toast";
 import { getRoleLabel } from "@/lib/labels";
 import type { AdminRole } from "@/generated/prisma/client";
@@ -67,6 +68,7 @@ export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
             type="text"
             placeholder="New admin name"
             required
+            maxLength={ADMIN_NAME_MAX_LENGTH}
           />
         </div>
         {roleOptions.length > 1 && (

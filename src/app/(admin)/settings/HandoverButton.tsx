@@ -3,6 +3,11 @@
 import { useRef, useState, useTransition } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { handoverKetua } from "./actions";
+import { adminEmailSchema } from "@/lib/admin/email";
+import {
+  ADMIN_NAME_MAX_LENGTH,
+  handoverSchema,
+} from "@/lib/admin/admin-schemas";
 import { handoverDescription, handoverTitle } from "@/lib/admin/handover";
 import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
@@ -23,8 +28,22 @@ import {
 export function HandoverButton({ staffCount }: { staffCount: number }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [pending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+
+  const emailValid = adminEmailSchema.safeParse(email).success;
+  const canSacrifice = handoverSchema.safeParse({ email, name }).success;
+  const showEmailError = emailTouched && email.trim() !== "" && !emailValid;
+
+  function resetFields() {
+    setError(null);
+    setEmail("");
+    setName("");
+    setEmailTouched(false);
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,7 +65,7 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
       open={open}
       onOpenChange={(next) => {
         if (pending) return;
-        if (!next) setError(null);
+        if (!next) resetFields();
         setOpen(next);
       }}
     >
@@ -77,7 +96,19 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
                 placeholder="New Ketua email"
                 required
                 disabled={pending}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                onBlur={() => setEmailTouched(true)}
+                aria-invalid={showEmailError || undefined}
+                aria-describedby={
+                  showEmailError ? "handoverEmailError" : undefined
+                }
               />
+              {showEmailError && (
+                <p id="handoverEmailError" className="text-xs text-destructive">
+                  Enter a valid email address, like name@gmail.com.
+                </p>
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="handoverName">Name</Label>
@@ -87,9 +118,17 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
                 type="text"
                 placeholder="New Ketua name"
                 required
+                maxLength={ADMIN_NAME_MAX_LENGTH}
                 disabled={pending}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
               />
             </div>
+            {!canSacrifice && (
+              <p id="handoverHint" className="text-xs text-muted-foreground">
+                Fill in the new Ketua&apos;s email and name to continue.
+              </p>
+            )}
           </div>
 
           <AlertDialogFooter>
@@ -101,7 +140,8 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
               holdingLabel="Keep holding..."
               pendingLabel="Sacrificing..."
               pending={pending}
-              canStart={() => formRef.current?.reportValidity() ?? false}
+              disabled={!canSacrifice}
+              describedBy={canSacrifice ? undefined : "handoverHint"}
               onConfirm={() => formRef.current?.requestSubmit()}
             />
           </AlertDialogFooter>

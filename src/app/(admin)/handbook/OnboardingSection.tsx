@@ -64,6 +64,103 @@ const GLOSSARY = [
 ];
 
 export function OnboardingSection() {
+  const blocks = [
+    <TaskCard key="why" title="Kenapa BATON ada?">
+      <p>
+        Gw sempet jadi wakadiv (2022) dan kadiv Logistik (2023). Jadi gw tau
+        betapa resenya inventarisasi di Sheets gampang outdated karena
+        update-nya manual semua, pada males ngejar-ngejar peminjam soal
+        deadline, mana addendum alat cuma dokumen Word yang template-nya jelek
+        pula.
+      </p>
+      <p>
+        BATON ini setengah alat handoff, setengah proyek pribadi yang bakal
+        terus gw maintain selama masih inget atau dibutuhin. Sengaja masih
+        hybrid sama Google: file tetep di Drive Logistik, login pakai akun
+        Google, dan kontrak fisik bermaterai itu tetep yang beneran mengikat
+        secara legal.
+      </p>
+    </TaskCard>,
+    <TaskCard key="roles" title="Role di BATON">
+      <RoleMatrix />
+      <p className="text-caption">
+        Overlord itu cuma gw, dan nggak bakal ada yang lain. Kalau ada yang
+        kerasa &quot;kok gw nggak bisa X&quot;, kemungkinan itu emang fitur
+        khusus role di atas lu.
+      </p>
+      <HandoverNote className="text-caption" />
+    </TaskCard>,
+    <TaskCard key="install" title="Install BATON di HP">
+      <p>
+        Buka <strong>admin.baton.my.id</strong> di browser HP lu, bukan{" "}
+        <strong>baton.my.id</strong> (itu punya peminjam, beda PWA juga).
+      </p>
+      <InstallGuide />
+      <p className="text-caption">
+        Tetep aja bukan app native, jadi fitur kayak push notification belum
+        bisa.
+      </p>
+    </TaskCard>,
+    <HandbookCallout key="drive">
+      Semua file BATON (kontrak, addendum, foto items dll) ada di Drive
+      Logistik, folder BATON warna ungu. JANGAN PERNAH DIHAPUS! Isinya udah
+      organized, cek aja sendiri.
+    </HandbookCallout>,
+    <TaskCard key="help" title="Cara minta bantuan">
+      <ol className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {HELP_STEPS.map((step, index) => (
+          <li
+            key={step.title}
+            data-stagger
+            style={staggerStyle(index)}
+            className="flex flex-col gap-1.5 rounded-md bg-muted p-3"
+          >
+            <span className="tabular flex h-5 w-5 items-center justify-center rounded-full bg-surface text-micro font-semibold tracking-normal text-foreground">
+              {index + 1}
+            </span>
+            <span className="text-label text-foreground">{step.title}</span>
+            <span className="text-caption text-foreground-2">
+              {step.body}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p>
+        Pertanyaan operasional dari peminjam yang nggak kejawab di FAQ: arahin
+        ke Ketua Logistik OSUI Mahawaditra.
+      </p>
+    </TaskCard>,
+    <TaskCard key="features" title="Butuh fitur baru?">
+      <p>
+        Zuzurly bisa, TAPI tergantung. Omongin dulu sama ketua, terus ke gw.
+        Kalo kecil sih santuy ntar gw implementasikan free of charge. Kalo
+        besar, baru diomongin dulu karena gw as of now adalah (semi)
+        functional WORKING ADULT.
+      </p>
+    </TaskCard>,
+    <TaskCard key="glossary" title="Glosarium">
+      <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:gap-y-2">
+        {GLOSSARY.map(({ term, definition }) => (
+          <div key={term} className="flex flex-col gap-0.5 sm:contents">
+            <dt className="text-label text-foreground">{term}</dt>
+            <dd>{definition}</dd>
+          </div>
+        ))}
+      </dl>
+    </TaskCard>,
+    <div
+      key="closing"
+      className="rounded-md bg-gold-soft p-5 text-sm text-gold-soft-foreground"
+    >
+      <p className="font-heading text-title">PLS JANGAN MALES</p>
+      <p className="mt-1">
+        Harus self-aware memang Logistik for the most part divisi gabut, APA
+        LAGI ini udah gw buatin platform-nya. So GAK ADA ALASAN MACEM MAGER
+        MANUAL LAGI and please for the love of God JANGAN MALES.
+      </p>
+    </div>,
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -72,105 +169,11 @@ export function OnboardingSection() {
           Buat elu-elu yang baru pegang akses admin BATON — ini konteksnya.
         </p>
       </div>
-
-      <TaskCard title="Kenapa BATON ada?">
-        <p>
-          Gw sempet jadi wakadiv (2022) dan kadiv Logistik (2023). Jadi gw tau
-          betapa resenya inventarisasi di Sheets gampang outdated karena
-          update-nya manual semua, pada males ngejar-ngejar peminjam soal
-          deadline, mana addendum alat cuma dokumen Word yang template-nya jelek
-          pula.
-        </p>
-        <p>
-          BATON ini setengah alat handoff, setengah proyek pribadi yang bakal
-          terus gw maintain selama masih inget atau dibutuhin. Sengaja masih
-          hybrid sama Google: file tetep di Drive Logistik, login pakai akun
-          Google, dan kontrak fisik bermaterai itu tetep yang beneran mengikat
-          secara legal.
-        </p>
-      </TaskCard>
-
-      <TaskCard title="Role di BATON">
-        <RoleMatrix />
-        <p className="text-caption">
-          Overlord itu cuma gw, dan nggak bakal ada yang lain. Kalau ada yang
-          kerasa &quot;kok gw nggak bisa X&quot;, kemungkinan itu emang fitur
-          khusus role di atas lu.
-        </p>
-        <HandoverNote className="text-caption" />
-      </TaskCard>
-
-      <TaskCard title="Install BATON di HP">
-        <p>
-          Buka <strong>admin.baton.my.id</strong> di browser HP lu, bukan{" "}
-          <strong>baton.my.id</strong> (itu punya peminjam, beda PWA juga).
-        </p>
-        <InstallGuide />
-        <p className="text-caption">
-          Tetep aja bukan app native, jadi fitur kayak push notification belum
-          bisa.
-        </p>
-      </TaskCard>
-
-      <HandbookCallout>
-        Semua file BATON (kontrak, addendum, foto items dll) ada di Drive
-        Logistik, folder BATON warna ungu. JANGAN PERNAH DIHAPUS! Isinya udah
-        organized, cek aja sendiri.
-      </HandbookCallout>
-
-      <TaskCard title="Cara minta bantuan">
-        <ol className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {HELP_STEPS.map((step, index) => (
-            <li
-              key={step.title}
-              data-stagger
-              style={staggerStyle(index)}
-              className="flex flex-col gap-1.5 rounded-md bg-muted p-3"
-            >
-              <span className="tabular flex h-5 w-5 items-center justify-center rounded-full bg-surface text-micro font-semibold tracking-normal text-foreground">
-                {index + 1}
-              </span>
-              <span className="text-label text-foreground">{step.title}</span>
-              <span className="text-caption text-foreground-2">
-                {step.body}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <p>
-          Pertanyaan operasional dari peminjam yang nggak kejawab di FAQ: arahin
-          ke Ketua Logistik OSUI Mahawaditra.
-        </p>
-      </TaskCard>
-
-      <TaskCard title="Butuh fitur baru?">
-        <p>
-          Zuzurly bisa, TAPI tergantung. Omongin dulu sama ketua, terus ke gw.
-          Kalo kecil sih santuy ntar gw implementasikan free of charge. Kalo
-          besar, baru diomongin dulu karena gw as of now adalah (semi)
-          functional WORKING ADULT.
-        </p>
-      </TaskCard>
-
-      <TaskCard title="Glosarium">
-        <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:gap-y-2">
-          {GLOSSARY.map(({ term, definition }) => (
-            <div key={term} className="flex flex-col gap-0.5 sm:contents">
-              <dt className="text-label text-foreground">{term}</dt>
-              <dd>{definition}</dd>
-            </div>
-          ))}
-        </dl>
-      </TaskCard>
-
-      <div className="rounded-md bg-gold-soft p-5 text-sm text-gold-soft-foreground">
-        <p className="font-heading text-title">PLS JANGAN MALES</p>
-        <p className="mt-1">
-          Harus self-aware memang Logistik for the most part divisi gabut, APA
-          LAGI ini udah gw buatin platform-nya. So GAK ADA ALASAN MACEM MAGER
-          MANUAL LAGI and please for the love of God JANGAN MALES.
-        </p>
-      </div>
+      {blocks.map((block, index) => (
+        <div key={block.key} data-stagger style={staggerStyle(index)}>
+          {block}
+        </div>
+      ))}
     </div>
   );
 }
