@@ -14,7 +14,7 @@ export function StatusLookupShell({
     <main className="flex flex-1 flex-col items-center justify-center gap-8 p-6 py-12">
       <div className="w-full max-w-sm text-center">
         <div className="text-micro uppercase text-gold-soft-foreground">
-          Status Peminjaman
+          Status peminjaman
         </div>
         <h1 className="mt-3 font-heading text-h1 text-foreground">
           Cek status kamu

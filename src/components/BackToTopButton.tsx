@@ -29,7 +29,7 @@ export function BackToTopButton() {
         aria-label="Back to top"
         tabIndex={visible ? 0 : -1}
         className={cn(
-          "fixed right-6 bottom-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-navy text-background shadow-lg transition-all duration-200 hover:bg-navy-hover",
+          "fixed right-6 bottom-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-background shadow-lg transition-all duration-200 hover:bg-primary-hover",
           visible
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-2 opacity-0",

@@ -44,11 +44,47 @@ export function formatJakartaDateTime(date: Date | string | number): string {
   return `${formatJakartaDate(date)}, ${formatJakartaTime(date)}`;
 }
 
-export function formatCalendarDate(
+const calendarDateFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+const longCalendarDateFormat = {
+  id: new Intl.DateTimeFormat("id-ID", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }),
+  en: new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }),
+};
+
+export function formatCalendarDate(date: Date | string | number): string {
+  return calendarDateFormat.format(new Date(date));
+}
+
+export function formatLongCalendarDate(
   date: Date | string | number,
-  locale = "en-GB",
+  language: keyof typeof longCalendarDateFormat,
 ): string {
-  return new Date(date).toLocaleDateString(locale, { timeZone: "UTC" });
+  return longCalendarDateFormat[language].format(new Date(date));
+}
+
+const rupiahNumberFormat = new Intl.NumberFormat("id-ID");
+
+export function formatRupiah(amount: number): string {
+  return `Rp${rupiahNumberFormat.format(amount)}`;
+}
+
+export function formatRupiahFormal(amount: number): string {
+  return `Rp ${rupiahNumberFormat.format(amount)},00`;
 }
 
 export function currentYearInJakarta(): number {

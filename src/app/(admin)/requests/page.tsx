@@ -129,7 +129,7 @@ export default async function RequestsPage({
           ongoing && "max-md:-order-1",
         )}
       >
-        <MusicGlyph glyph="fermata" className="text-[1.125rem]" />
+        <MusicGlyph glyph="fermata" inline />
         Ongoing
       </Link>
     </div>

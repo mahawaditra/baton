@@ -5,7 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { CompressedFileInput } from "@/components/CompressedFileInput";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/Field";
 import {
   MAX_UPLOAD_SIZE_BYTES,
   MAX_UPLOAD_SIZE_LABEL,
@@ -45,10 +45,10 @@ function buildSlots(isExtension: boolean): SlotConfig[] {
   }
   slots.push({
     type: "ktp_scan",
-    label: isExtension
-      ? `${getDocumentTypeLabel("ktp_scan")} (opsional, cuma kalau ada perubahan)`
-      : getDocumentTypeLabel("ktp_scan"),
-    helperText: compressionHint,
+    label: getDocumentTypeLabel("ktp_scan"),
+    helperText: isExtension
+      ? `Cuma kalau ada perubahan. ${compressionHint}`
+      : compressionHint,
     accept: "image/*,.pdf",
     required: !isExtension,
   });
@@ -84,9 +84,13 @@ export function DocumentUploadsPanel({
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const tooLarge: Partial<Record<DocumentType, string>> = {};
+    const missing: Partial<Record<DocumentType, string>> = {};
     const items = openSlots.flatMap((slot) => {
       const file = formData.get(slot.type);
-      if (!(file instanceof File) || file.size === 0) return [];
+      if (!(file instanceof File) || file.size === 0) {
+        if (slot.required) missing[slot.type] = "Pilih file dulu.";
+        return [];
+      }
       if (file.size > MAX_UPLOAD_SIZE_BYTES) {
         tooLarge[slot.type] =
           `Ukuran file (${(file.size / (1024 * 1024)).toFixed(1)}MB) melebihi batas ${MAX_UPLOAD_SIZE_LABEL}. Perkecil dulu ukurannya.`;
@@ -94,6 +98,15 @@ export function DocumentUploadsPanel({
       }
       return [{ key: slot.type, file }];
     });
+
+    const [firstMissing] = Object.keys(missing);
+    if (firstMissing) {
+      setErrors({ ...missing, ...tooLarge });
+      event.currentTarget
+        .querySelector<HTMLInputElement>(`input[name="${firstMissing}"]`)
+        ?.focus();
+      return;
+    }
 
     setErrors(tooLarge);
     if (items.length === 0) return;
@@ -142,10 +155,14 @@ export function DocumentUploadsPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upload Dokumen yang Diperlukan</CardTitle>
+        <CardTitle>Upload dokumen yang diperlukan</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex flex-col gap-5"
+        >
           {slots.map((slot) =>
             isLocked(slot.type) ? (
               <div
@@ -159,30 +176,26 @@ export function DocumentUploadsPanel({
                 {slot.label} sudah diupload
               </div>
             ) : (
-              <div key={slot.type} className="flex flex-col gap-1.5">
-                <Label htmlFor={slot.type} required={slot.required}>
-                  {slot.label}
-                </Label>
-                {slot.helperText && (
-                  <p className="text-caption text-muted-foreground">
-                    {slot.helperText}
-                  </p>
+              <Field
+                key={slot.type}
+                id={slot.type}
+                label={slot.label}
+                optional={!slot.required}
+                hint={slot.helperText}
+                error={errors[slot.type]}
+              >
+                {(control) => (
+                  <CompressedFileInput
+                    {...control}
+                    name={slot.type}
+                    accept={slot.accept}
+                    required={slot.required}
+                    onCompressingChange={(isCompressing) =>
+                      setSlotCompressing(slot.type, isCompressing)
+                    }
+                  />
                 )}
-                <CompressedFileInput
-                  id={slot.type}
-                  name={slot.type}
-                  accept={slot.accept}
-                  required={slot.required}
-                  onCompressingChange={(isCompressing) =>
-                    setSlotCompressing(slot.type, isCompressing)
-                  }
-                />
-                {errors[slot.type] && (
-                  <p className="text-sm text-destructive" aria-live="polite">
-                    {errors[slot.type]}
-                  </p>
-                )}
-              </div>
+              </Field>
             ),
           )}
 

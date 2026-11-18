@@ -14,24 +14,42 @@ import {
   withServerErrorFallback,
 } from "@/lib/server-action-fallback";
 import { textFieldsOf } from "@/lib/network-fallback";
+import { validationErrors, type FieldErrors } from "@/lib/form-errors";
 
 type State = {
   ticketId: string | null;
   accessCode: string | null;
   error: string | null;
   generalError: string | null;
+  fieldErrors?: FieldErrors;
   fields: Record<string, string>;
 };
 
 const submitRequestSchema = z.object({
-  name: z.string().trim().min(1, "Nama wajib diisi").max(100),
-  nickname: z.string().trim().max(100).nullable(),
-  email: z.email("Alamat email tidak valid"),
-  phone: z.string().trim().min(1, "Nomor HP wajib diisi").max(20),
-  lineId: z.string().trim().min(1, "ID LINE wajib diisi").max(20),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Nama wajib diisi")
+    .max(100, "Maksimal 100 karakter."),
+  nickname: z.string().trim().max(100, "Maksimal 100 karakter.").nullable(),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email wajib diisi")
+    .pipe(z.email("Alamat email tidak valid")),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Nomor HP wajib diisi")
+    .max(20, "Maksimal 20 karakter."),
+  lineId: z
+    .string()
+    .trim()
+    .min(1, "ID LINE wajib diisi")
+    .max(20, "Maksimal 20 karakter."),
   instrumentType: z.enum(
     REQUESTABLE_INSTRUMENT_TYPES,
-    "Pilih jenis instrumen yang valid",
+    "Pilih instrumen yang mau kamu pinjam.",
   ),
   year: z
     .string()
@@ -60,7 +78,7 @@ async function submitRequestUnguarded(
       ticketId: null,
       accessCode: null,
       error: null,
-      generalError: "Terlalu banyak pengajuan. Coba lagi nanti.",
+      generalError: "Terlalu banyak pengajuan dari jaringan ini. Coba lagi dalam beberapa menit.",
       fields,
     };
   }
@@ -79,7 +97,7 @@ async function submitRequestUnguarded(
     return {
       ticketId: null,
       accessCode: null,
-      error: parsed.error.issues[0].message,
+      ...validationErrors(parsed.error),
       generalError: null,
       fields,
     };

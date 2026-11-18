@@ -5,10 +5,11 @@ import { requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { validationErrors, type FieldErrors } from "@/lib/form-errors";
 
 const createGoodSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100),
-  brand: z.string().trim().max(100).nullable(),
+  name: z.string().trim().min(1, "Name is required").max(100, "100 characters max."),
+  brand: z.string().trim().max(100, "100 characters max.").nullable(),
   quantity: z.coerce
     .number("Quantity must be a number")
     .int()
@@ -17,13 +18,14 @@ const createGoodSchema = z.object({
     ["ok", "need_repair", "retired", "lost"],
     "Invalid condition value",
   ),
-  location: z.string().trim().min(1, "Location is required").max(100),
-  registrationNo: z.string().trim().max(100).nullable(),
-  notes: z.string().trim().max(1000).nullable(),
+  location: z.string().trim().min(1, "Location is required").max(100, "100 characters max."),
+  registrationNo: z.string().trim().max(100, "100 characters max.").nullable(),
+  notes: z.string().trim().max(1000, "1000 characters max.").nullable(),
 });
 
 export type CreateGoodState = {
   error: string | null;
+  fieldErrors?: FieldErrors;
 };
 
 export async function createGood(
@@ -43,7 +45,7 @@ export async function createGood(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+    return validationErrors(parsed.error);
   }
 
   const { name, brand, quantity, condition, location, registrationNo, notes } =

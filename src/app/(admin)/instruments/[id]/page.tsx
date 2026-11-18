@@ -22,8 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { key: "peminjam", label: "Borrower History" },
-  { key: "kondisi", label: "Condition History" },
+  { key: "peminjam", label: "Borrower history" },
+  { key: "kondisi", label: "Condition history" },
   { key: "addendum", label: "Addendum" },
   { key: "aktivitas", label: "Activity" },
 ] as const;
@@ -99,7 +99,7 @@ export default async function InstrumentDetailPage({
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Serial No.</dt>
+                    <dt className="text-muted-foreground">Serial no.</dt>
                     <dd className="tabular mt-0.5 font-medium">
                       {instrument.serialNumber || "—"}
                     </dd>
@@ -164,7 +164,7 @@ export default async function InstrumentDetailPage({
                   href={`/instruments/${id}?edit=true`}
                   className={cn(buttonVariants({ size: "sm" }), "self-start")}
                 >
-                  Edit Instrument
+                  Edit instrument
                 </Link>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default async function InstrumentDetailPage({
               className={cn(
                 "shrink-0 px-5 py-3.5 text-sm whitespace-nowrap",
                 tab === t.key
-                  ? "-mb-px border-b-2 border-navy font-semibold text-foreground"
+                  ? "-mb-px border-b-2 border-primary font-semibold text-foreground"
                   : "text-muted-foreground",
               )}
             >

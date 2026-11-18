@@ -1,12 +1,9 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import type { Instrument, ItemCondition } from "@/generated/prisma/client";
 import { StatusBadge } from "@/components/StatusBadge";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { EmptyCell } from "@/components/DataTable";
 
 const CONDITION_TRIAGE_ORDER: Record<ItemCondition, number> = {
   need_repair: 0,
@@ -25,11 +22,14 @@ export const columns: ColumnDef<InstrumentWithDisplayLocation>[] = [
   { accessorKey: "brand", header: "Brand" },
   {
     accessorKey: "serialNumber",
-    header: "Serial No.",
+    header: "Serial no.",
     enableSorting: false,
-    cell: ({ row }) => (
-      <span className="tabular">{row.original.serialNumber}</span>
-    ),
+    cell: ({ row }) =>
+      row.original.serialNumber ? (
+        <span className="tabular">{row.original.serialNumber}</span>
+      ) : (
+        <EmptyCell />
+      ),
   },
   {
     id: "status",
@@ -43,18 +43,4 @@ export const columns: ColumnDef<InstrumentWithDisplayLocation>[] = [
     ),
   },
   { accessorKey: "displayLocation", header: "Location" },
-  {
-    id: "view",
-    header: "",
-    enableSorting: false,
-    cell: ({ row }) => (
-      <Link
-        href={`/instruments/${row.original.id}`}
-        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-      >
-        View
-        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-      </Link>
-    ),
-  },
 ];

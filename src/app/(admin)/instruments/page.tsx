@@ -31,7 +31,7 @@ export default async function InstrumentsPage() {
       <AdminHeaderAction>
         <Link
           href="/instruments/new"
-          aria-label="New Instrument"
+          aria-label="New instrument"
           className="flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-muted"
         >
           <Plus className="h-5 w-5" strokeWidth={1.75} />
@@ -42,7 +42,7 @@ export default async function InstrumentsPage() {
         action={
           <Link href="/instruments/new" className={buttonVariants()}>
             <Plus className="h-4 w-4" strokeWidth={1.75} />
-            New Instrument
+            New instrument
           </Link>
         }
       />

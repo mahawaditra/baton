@@ -5,10 +5,10 @@ import { addAdmin, AddAdminState } from "./actions";
 import { ADMIN_NAME_MAX_LENGTH } from "@/lib/admin/admin-schemas";
 import { toastError } from "@/lib/toast";
 import { getRoleLabel } from "@/lib/labels";
+import { submitWithoutReset } from "@/lib/submit-without-reset";
 import type { AdminRole } from "@/generated/prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Field, useFocusFirstInvalid } from "@/components/Field";
+import { Notice } from "@/components/Notice";
 
 const initialState: AddAdminState = {
   success: false,
@@ -25,6 +27,8 @@ const initialState: AddAdminState = {
 
 export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
   const [state, formAction, isPending] = useActionState(addAdmin, initialState);
+  const errors = state.fieldErrors ?? {};
+  const formRef = useFocusFirstInvalid(state.fieldErrors);
   const roleOptions = roles.map((role) => ({
     value: role,
     label: getRoleLabel(role),
@@ -32,14 +36,20 @@ export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
 
   useEffect(() => {
     if (state.generalError) toastError(state.generalError);
-  }, [state]);
+    if (state.success) formRef.current?.reset();
+  }, [state, formRef]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form
+      ref={formRef}
+      onSubmit={submitWithoutReset(formAction)}
+      noValidate
+      className="flex flex-col gap-3"
+    >
       {state.error && (
-        <p className="text-sm text-destructive" aria-live="polite">
+        <Notice tone="danger" compact aria-live="polite">
           {state.error}
-        </p>
+        </Notice>
       )}
       {state.success && (
         <p
@@ -49,47 +59,62 @@ export function AddAdminForm({ roles }: { roles: AdminRole[] }) {
           Admin added successfully.
         </p>
       )}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <div className="flex flex-col gap-1.5 sm:min-w-48 sm:flex-1">
-          <Label htmlFor="newAdminEmail">Email</Label>
-          <Input
-            id="newAdminEmail"
-            name="email"
-            type="email"
-            placeholder="New admin email"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1.5 sm:min-w-48 sm:flex-1">
-          <Label htmlFor="newAdminName">Name</Label>
-          <Input
-            id="newAdminName"
-            name="name"
-            type="text"
-            placeholder="New admin name"
-            required
-            maxLength={ADMIN_NAME_MAX_LENGTH}
-          />
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
+        <Field
+          label="Email"
+          error={errors.email}
+          className="sm:min-w-48 sm:flex-1"
+        >
+          {(control) => (
+            <Input
+              {...control}
+              name="email"
+              type="email"
+              placeholder="New admin email"
+              required
+            />
+          )}
+        </Field>
+        <Field
+          label="Name"
+          error={errors.name}
+          className="sm:min-w-48 sm:flex-1"
+        >
+          {(control) => (
+            <Input
+              {...control}
+              name="name"
+              type="text"
+              placeholder="New admin name"
+              required
+              maxLength={ADMIN_NAME_MAX_LENGTH}
+            />
+          )}
+        </Field>
         {roleOptions.length > 1 && (
-          <div className="flex flex-col gap-1.5 sm:w-40">
-            <Label htmlFor="newAdminRole">Role</Label>
-            <Select name="role" items={roleOptions} defaultValue="staff">
-              <SelectTrigger id="newAdminRole" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {roleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Field label="Role" error={errors.role} className="sm:w-40">
+            {(control) => (
+              <Select name="role" items={roleOptions} defaultValue="staff">
+                <SelectTrigger {...control} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {roleOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
         )}
-        <Button type="submit" disabled={isPending} className="self-start sm:self-auto">
-          {isPending ? "Adding..." : "Add Admin"}
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="self-start sm:mt-[1.625rem]"
+        >
+          {isPending ? "Adding..." : "Add admin"}
         </Button>
       </div>
     </form>

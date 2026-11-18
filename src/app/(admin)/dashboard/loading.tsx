@@ -30,7 +30,7 @@ export default function DashboardLoading() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Requests In Progress</CardTitle>
+            <CardTitle>Requests in progress</CardTitle>
           </CardHeader>
           <CardContent className="gap-0 px-0">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -51,7 +51,7 @@ export default function DashboardLoading() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Recent activity</CardTitle>
           </CardHeader>
           <CardContent className="gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -66,7 +66,7 @@ export default function DashboardLoading() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Active Loans</CardTitle>
+          <CardTitle>Active loans</CardTitle>
         </CardHeader>
         <CardContent className="gap-0 px-0">
           <div className="overflow-x-auto">

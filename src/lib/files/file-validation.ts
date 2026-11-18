@@ -41,13 +41,13 @@ async function validateFile(
   typeLabel: string,
 ): Promise<FileValidationResult> {
   if (!file || file.size === 0) {
-    return { valid: false, error: "File wajib dipilih." };
+    return { valid: false, error: "Pilih file dulu." };
   }
 
   if (file.size > MAX_UPLOAD_SIZE_BYTES) {
     return {
       valid: false,
-      error: `Ukuran file maksimal ${MAX_UPLOAD_SIZE_LABEL}.`,
+      error: `Ukuran file maksimal ${MAX_UPLOAD_SIZE_LABEL}. Perkecil dulu ukurannya.`,
     };
   }
 

@@ -199,7 +199,7 @@ function LoanRosterTable({
                 <td className={cn("py-3", rosterColumnPadding(0))}>
                   <Link
                     href={`/requests/${req.id}`}
-                    className="font-medium text-navy hover:underline"
+                    className="font-medium text-primary hover:underline"
                   >
                     {resolveNickname(req.borrowerName, req.borrowerNickname)}
                   </Link>
@@ -319,14 +319,14 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          label="Request Pending"
+          label="Request pending"
           index={0}
           value={pendingCount}
           icon={FileText}
           iconClassName="bg-gold-soft text-gold-soft-foreground"
         />
         <StatCard
-          label="Currently Borrowed"
+          label="Currently borrowed"
           index={1}
           value={activeCount}
           icon={Clock}
@@ -345,7 +345,7 @@ export default async function DashboardPage() {
           iconClassName="bg-destructive-soft text-destructive"
         />
         <StatCard
-          label="Needs Repair"
+          label="Needs repair"
           index={3}
           value={needRepairCount}
           icon={Wrench}
@@ -356,7 +356,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
         <Card data-stagger style={staggerStyle(4)}>
           <CardHeader>
-            <CardTitle>Requests In Progress</CardTitle>
+            <CardTitle>Requests in progress</CardTitle>
             <CardAction>
               <Link
                 href="/requests"
@@ -426,7 +426,7 @@ export default async function DashboardPage() {
 
         <Card data-stagger style={staggerStyle(5)}>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Recent activity</CardTitle>
             <CardAction>
               <Link
                 href="/activity"
@@ -453,7 +453,7 @@ export default async function DashboardPage() {
 
       <Card data-stagger style={staggerStyle(6)}>
         <CardHeader>
-          <CardTitle>Active Loans</CardTitle>
+          <CardTitle>Active loans</CardTitle>
           <CardAction>
             <div className="flex gap-2">
               <TransferToOngoingButton transferableCount={transferableCount} />
@@ -487,11 +487,8 @@ export default async function DashboardPage() {
         <Card data-stagger style={staggerStyle(7)}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MusicGlyph
-                glyph="fermata"
-                className="text-[1.75rem] text-plum"
-              />
-              Ongoing Loans
+              <MusicGlyph glyph="fermata" inline className="text-plum" />
+              Ongoing loans
             </CardTitle>
             <CardAction>
               <Link

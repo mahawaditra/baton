@@ -1,12 +1,9 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import type { Good, ItemCondition } from "@/generated/prisma/client";
 import { ConditionIndicator, getConditionLabel } from "@/components/StatusBadge";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { EmptyCell } from "@/components/DataTable";
 
 const CONDITION_TRIAGE_ORDER: Record<ItemCondition, number> = {
   need_repair: 0,
@@ -33,24 +30,13 @@ export const columns: ColumnDef<Good>[] = [
   { accessorKey: "location", header: "Location" },
   {
     accessorKey: "registrationNo",
-    header: "Reg. No.",
+    header: "Reg. no.",
     enableSorting: false,
-    cell: ({ row }) => (
-      <span className="tabular">{row.original.registrationNo}</span>
-    ),
-  },
-  {
-    id: "view",
-    header: "",
-    enableSorting: false,
-    cell: ({ row }) => (
-      <Link
-        href={`/goods/${row.original.id}`}
-        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-      >
-        View
-        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-      </Link>
-    ),
+    cell: ({ row }) =>
+      row.original.registrationNo ? (
+        <span className="tabular">{row.original.registrationNo}</span>
+      ) : (
+        <EmptyCell />
+      ),
   },
 ];

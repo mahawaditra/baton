@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, staggerStyle } from "@/lib/utils";
 import { HandbookAccordionRow } from "./HandbookAccordionRow";
-import { HandbookCallout } from "./HandbookCallout";
+import { Notice } from "@/components/Notice";
 import {
   TROUBLESHOOTING_GROUPS,
   TROUBLESHOOTING_OWNER_LABELS,
@@ -80,7 +80,7 @@ function EntryRow({
         </ol>
       </div>
       {entry.note && <p className="text-foreground">{entry.note}</p>}
-      {entry.warning && <HandbookCallout>{entry.warning}</HandbookCallout>}
+      {entry.warning && <Notice tone="danger" compact className="font-medium">{entry.warning}</Notice>}
     </HandbookAccordionRow>
   );
 }

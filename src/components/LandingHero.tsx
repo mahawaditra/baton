@@ -74,14 +74,14 @@ export function LandingHero() {
                 className="h-5 w-5 shrink-0"
                 strokeWidth={1.75}
               />
-              Ajukan Peminjaman
+              Ajukan peminjaman
             </Link>
             <Link
               href="/status"
               className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-hero-fg/40 bg-transparent text-sm font-medium whitespace-nowrap text-hero-fg uppercase transition-colors hover:bg-surface/10 dark:border-hero-fg/30 dark:hover:bg-hero-fg/8"
             >
               <Search className="h-5 w-5 shrink-0" strokeWidth={1.75} />
-              Cek Status Peminjaman
+              Cek status peminjaman
             </Link>
           </div>
         </div>

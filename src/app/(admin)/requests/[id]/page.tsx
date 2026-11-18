@@ -37,7 +37,7 @@ import {
   getStatusLabel,
 } from "@/components/StatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
-import { MusicGlyph } from "@/components/MusicGlyph";
+import { GlyphBadge } from "@/components/GlyphBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Clock, Hourglass } from "lucide-react";
-import { StatusRow } from "@/components/StatusRow";
+import { Notice } from "@/components/Notice";
+import { ActionConsequence } from "@/components/ActionConsequence";
 import { PhotoViewerModal } from "@/components/PhotoViewerModal";
 
 const TICKET_ACTION_CLASS =
@@ -210,7 +211,7 @@ export default async function RequestDetailPage({
     (request.status === "active" || request.status === "overdue");
   const statusNoteMeta =
     statusNote?.kind === "info" && latestPeriod?.dueDate
-      ? `Due ${formatCalendarDate(latestPeriod.dueDate, "en-GB")}`
+      ? `Due ${formatCalendarDate(latestPeriod.dueDate)}`
       : `Last update ${formatRelativeDays(request.updatedAt).toLowerCase()}`;
 
   return (
@@ -219,12 +220,19 @@ export default async function RequestDetailPage({
         badges={
           <>
             <RequestStatusBadge status={request.status} variant="pill" />
-            <ExtensionBadge count={confirmedExtensionCount(latestPeriod)} />
+            <ExtensionBadge
+              count={confirmedExtensionCount(latestPeriod)}
+              variant="outline"
+            />
             {showOngoing && request.carriedOverAt && (
-              <span className="tabular inline-flex items-center gap-1.5 rounded-full border border-hero-fg/25 px-2.5 py-0.5 text-micro uppercase text-hero-fg/80">
-                <MusicGlyph glyph="fermata" className="text-[0.875rem]" />
-                Ongoing since {formatJakartaDate(request.carriedOverAt)}
-              </span>
+              <>
+                <GlyphBadge glyph="fermata" variant="outline">
+                  Ongoing
+                </GlyphBadge>
+                <span className="tabular text-xs text-hero-fg/70">
+                  Since {formatJakartaDate(request.carriedOverAt)}
+                </span>
+              </>
             )}
             <span className="tabular text-xs text-hero-fg/70">
               Submitted {formatJakartaDate(request.createdAt)}
@@ -291,7 +299,7 @@ export default async function RequestDetailPage({
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Assign Instrument</CardTitle>
+              <CardTitle>Assign instrument</CardTitle>
             </CardHeader>
             <CardContent>
               <AssignSection
@@ -305,21 +313,17 @@ export default async function RequestDetailPage({
         </div>
       ) : (
         statusNote && (
-          <StatusRow
+          <Notice
+            tone="info"
             icon={statusNote.kind === "waiting" ? Hourglass : Clock}
             iconClassName={
               statusNote.kind === "waiting" ? "hourglass-flip" : undefined
             }
-            chipClassName={
-              statusNote.kind === "waiting"
-                ? "bg-muted text-muted-foreground"
-                : "bg-plum-soft text-plum"
-            }
             title={statusNote.title}
-            message={statusNote.message}
             meta={statusNoteMeta}
-            className="rounded-md border border-border bg-card px-5 py-4"
-          />
+          >
+            {statusNote.message}
+          </Notice>
         )
       )}
 
@@ -335,7 +339,7 @@ export default async function RequestDetailPage({
       {addendums.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Condition Addendum</CardTitle>
+            <CardTitle>Condition addendum</CardTitle>
           </CardHeader>
           <CardContent className="gap-4">
             {addendums.map((a) => (
@@ -354,7 +358,7 @@ export default async function RequestDetailPage({
                     {a.accessoriesCondition && (
                       <div>
                         <dt className="text-xs text-muted-foreground">
-                          Accessories Condition
+                          Accessories condition
                         </dt>
                         <dd className="mt-0.5">{a.accessoriesCondition}</dd>
                       </div>
@@ -363,7 +367,7 @@ export default async function RequestDetailPage({
                   <div className="flex flex-col gap-2.5">
                     <div>
                       <dt className="text-xs text-muted-foreground">
-                        Body Condition
+                        Body condition
                       </dt>
                       <dd className="mt-0.5">{a.bodyCondition}</dd>
                     </div>
@@ -389,7 +393,7 @@ export default async function RequestDetailPage({
             {request.status === "ready_to_pickup" && (
               <form action={confirmHandover.bind(null, id)}>
                 <SubmitButton pendingText="Confirming..." className="w-full">
-                  Confirm Handover
+                  Confirm handover
                 </SubmitButton>
               </form>
             )}
@@ -397,7 +401,7 @@ export default async function RequestDetailPage({
             {isExtension && !latestPeriod?.startDate && (
               <form action={confirmExtension.bind(null, id)}>
                 <SubmitButton pendingText="Confirming..." className="w-full">
-                  Confirm Extension
+                  Confirm extension
                 </SubmitButton>
               </form>
             )}
@@ -408,7 +412,7 @@ export default async function RequestDetailPage({
                   action={confirmReturn.bind(null, id)}
                   className="flex flex-col gap-3 rounded-md border border-border p-4"
                 >
-                  <div className="text-sm font-semibold">Confirm Return</div>
+                  <div className="text-sm font-semibold">Confirm return</div>
                   {isLastHolder ? (
                     <>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -464,6 +468,7 @@ export default async function RequestDetailPage({
                         <Input
                           id="location"
                           name="location"
+                          maxLength={100}
                           defaultValue="Sekre"
                           required
                         />
@@ -471,18 +476,25 @@ export default async function RequestDetailPage({
                     </>
                   ) : (
                     <p className="text-xs text-foreground-2">
-                      Instrumen ini masih dipegang {remainingActiveHolders}{" "}
-                      peminjam lain — kondisi/status/lokasi instrumen gak
-                      diminta di sini, cuma nutup pengembalian{" "}
-                      {formatNameWithNickname(request.borrowerName, request.borrowerNickname)}.
+                      {remainingActiveHolders === 1
+                        ? "1 other borrower still holds"
+                        : `${remainingActiveHolders} other borrowers still hold`}{" "}
+                      this instrument, so condition, status and location stay
+                      as they are. This only closes{" "}
+                      {formatNameWithNickname(request.borrowerName, request.borrowerNickname)}
+                      &apos;s loan.
                     </p>
                   )}
                   <SubmitButton
                     pendingText="Confirming..."
                     className="self-start"
                   >
-                    Confirm Return
+                    Confirm return
                   </SubmitButton>
+                  <ActionConsequence>
+                    Emails the borrower a return confirmation with the deposit
+                    refund amount.
+                  </ActionConsequence>
                 </form>
               )}
           </CardContent>

@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { Hash, MapPin } from "lucide-react";
 import { toggleSetValue } from "@/lib/utils";
+import { useTableFit } from "@/lib/use-table-fit";
 
 const MOBILE_SORT_OPTIONS = [
   { id: "section", label: "Section" },
@@ -65,9 +66,7 @@ export function InstrumentsExplorer({
   const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
   const [mobileSort, setMobileSort] = useState<MobileSort>("section");
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
-    new Set(),
-  );
+  const { rootRef, tableFits, onOverflow } = useTableFit();
 
   function handleReset() {
     setSearch("");
@@ -174,9 +173,33 @@ export function InstrumentsExplorer({
       />
     );
 
+  const cardList =
+    mobileFiltered.length === 0 ? (
+      emptyState
+    ) : mobileGroups ? (
+      <div className="flex flex-col">
+        {mobileGroups.map(([sectionLabel, items]) => (
+          <CollapsibleGroup
+            key={sectionLabel}
+            label={sectionLabel}
+            items={items}
+            renderItem={(instrument) => (
+              <InstrumentCard key={instrument.id} instrument={instrument} />
+            )}
+          />
+        ))}
+      </div>
+    ) : (
+      <div className="flex flex-col gap-2.5">
+        {mobileFlat!.map((instrument) => (
+          <InstrumentCard key={instrument.id} instrument={instrument} />
+        ))}
+      </div>
+    );
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="hidden flex-col gap-4 lg:flex">
+      <div ref={rootRef} className="hidden flex-col gap-4 lg:flex">
         <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder="Search section, type, brand, serial number, location…"
@@ -202,13 +225,21 @@ export function InstrumentsExplorer({
         </div>
 
         <div className="text-xs text-muted-foreground">
-          {filtered.length} dari {instruments.length} instrumen
+          {filtered.length} of {instruments.length} instruments
         </div>
 
         {filtered.length === 0 ? (
           emptyState
+        ) : tableFits ? (
+          <DataTable
+            data={filtered}
+            columns={columns}
+            getRowHref={(instrument) => `/instruments/${instrument.id}`}
+            linkColumn="type"
+            onOverflow={onOverflow}
+          />
         ) : (
-          <DataTable data={filtered} columns={columns} />
+          cardList
         )}
       </div>
 
@@ -220,7 +251,7 @@ export function InstrumentsExplorer({
         />
 
         <div className="text-xs text-muted-foreground">
-          {mobileFiltered.length} dari {instruments.length} instrumen
+          {mobileFiltered.length} of {instruments.length} instruments
         </div>
 
         <div className="flex flex-col gap-2 sm:-mx-2 sm:flex-row sm:items-center sm:overflow-x-auto sm:px-2">
@@ -260,34 +291,7 @@ export function InstrumentsExplorer({
           </div>
         </div>
 
-        {mobileFiltered.length === 0 ? (
-          emptyState
-        ) : mobileGroups ? (
-          <div className="flex flex-col">
-            {mobileGroups.map(([sectionLabel, items]) => (
-              <CollapsibleGroup
-                key={sectionLabel}
-                label={sectionLabel}
-                items={items}
-                isCollapsed={collapsedSections.has(sectionLabel)}
-                onToggle={() =>
-                  setCollapsedSections((prev) =>
-                    toggleSetValue(prev, sectionLabel),
-                  )
-                }
-                renderItem={(instrument) => (
-                  <InstrumentCard key={instrument.id} instrument={instrument} />
-                )}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {mobileFlat!.map((instrument) => (
-              <InstrumentCard key={instrument.id} instrument={instrument} />
-            ))}
-          </div>
-        )}
+        {cardList}
       </div>
     </div>
   );

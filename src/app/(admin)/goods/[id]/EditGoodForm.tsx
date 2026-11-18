@@ -4,26 +4,11 @@ import Link from "next/link";
 import { useActionState } from "react";
 import type { Good } from "@/generated/prisma/client";
 import { updateGood, UpdateGoodState } from "./actions";
+import { GoodFields } from "../GoodFields";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Autocomplete,
-  AutocompleteContent,
-  AutocompleteEmpty,
-  AutocompleteInput,
-  AutocompleteItem,
-  AutocompleteList,
-} from "@/components/ui/autocomplete";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CONDITION_OPTIONS } from "@/components/StatusBadge";
+import { useFocusFirstInvalid } from "@/components/Field";
+import { Notice } from "@/components/Notice";
+import { submitWithoutReset } from "@/lib/submit-without-reset";
 import { cn } from "@/lib/utils";
 
 const initialState: UpdateGoodState = {
@@ -39,90 +24,26 @@ export function EditGoodForm({
 }) {
   const action = updateGood.bind(null, good.id);
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const formRef = useFocusFirstInvalid(state.fieldErrors);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      ref={formRef}
+      onSubmit={submitWithoutReset(formAction)}
+      noValidate
+      className="flex flex-col gap-4"
+    >
       {state.error && (
-        <p className="text-sm text-destructive" aria-live="polite">
+        <Notice tone="danger" compact aria-live="polite">
           {state.error}
-        </p>
+        </Notice>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="brand">Brand</Label>
-          <Input id="brand" name="brand" defaultValue={good.brand ?? ""} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="registrationNo">Reg. No.</Label>
-          <Input
-            id="registrationNo"
-            name="registrationNo"
-            defaultValue={good.registrationNo ?? ""}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" defaultValue={good.name} required />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="condition">Condition</Label>
-          <Select
-            name="condition"
-            items={CONDITION_OPTIONS}
-            defaultValue={good.condition}
-          >
-            <SelectTrigger id="condition" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CONDITION_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="location">Location</Label>
-          <Autocomplete
-            name="location"
-            items={locations}
-            defaultValue={good.location}
-          >
-            <AutocompleteInput id="location" required />
-            <AutocompleteContent>
-              <AutocompleteEmpty>
-                No match — will be saved as a new location.
-              </AutocompleteEmpty>
-              <AutocompleteList>
-                {(item: string) => (
-                  <AutocompleteItem key={item} value={item}>
-                    {item}
-                  </AutocompleteItem>
-                )}
-              </AutocompleteList>
-            </AutocompleteContent>
-          </Autocomplete>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="quantity">Quantity</Label>
-          <Input
-            id="quantity"
-            name="quantity"
-            type="number"
-            defaultValue={good.quantity}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea id="notes" name="notes" defaultValue={good.notes ?? ""} />
-        </div>
-      </div>
+      <GoodFields
+        values={good}
+        errors={state.fieldErrors ?? {}}
+        locations={locations}
+      />
 
       <div className="flex gap-2">
         <Button type="submit" disabled={isPending}>

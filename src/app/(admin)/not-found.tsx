@@ -7,7 +7,7 @@ export default function AdminNotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <EmptyState
-        title="Page Not Found"
+        title="Page not found"
         description="The page you're looking for doesn't exist or has been moved."
         action={
           <Link href="/" className={cn(buttonVariants())}>

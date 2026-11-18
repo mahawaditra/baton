@@ -1,15 +1,21 @@
-import { MusicGlyph } from "@/components/MusicGlyph";
+import { GlyphBadge, type GlyphBadgeVariant } from "@/components/GlyphBadge";
 
-export function ExtensionBadge({ count }: { count: number }) {
+export function ExtensionBadge({
+  count,
+  variant,
+}: {
+  count: number;
+  variant?: GlyphBadgeVariant;
+}) {
   if (count < 1) return null;
   return (
-    <span
+    <GlyphBadge
+      glyph="rightRepeat"
+      variant={variant}
       title={`Extension ${count}`}
-      className="inline-flex h-[22px] items-center gap-1 rounded-sm bg-plum-soft px-1.5 text-micro font-semibold text-plum"
     >
-      <MusicGlyph glyph="rightRepeat" className="text-[0.875rem]" />
       <span className="sr-only">Extension</span>
       {count}
-    </span>
+    </GlyphBadge>
   );
 }

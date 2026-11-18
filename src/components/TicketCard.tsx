@@ -6,6 +6,10 @@ const BOTTOM_TONE = {
   gold: { surface: "border-gold/40 bg-gold-soft", outline: "border-gold/40" },
 } as const;
 
+const PERFORATION_POSITIONS = ["25%", "50%", "75%"];
+
+const RING_CLASS = "pointer-events-none absolute rounded-full border";
+
 function NotchOutline({
   edge,
   className,
@@ -13,44 +17,65 @@ function NotchOutline({
   edge: "top" | "bottom";
   className?: string;
 }) {
-  const vertical = edge === "top" ? "-top-[11.5px]" : "-bottom-[11.5px]";
+  const ringClass = cn(
+    RING_CLASS,
+    "size-[calc(2*var(--ticket-notch)+3px)]",
+    edge === "top"
+      ? "-top-[calc(var(--ticket-notch)+1.5px)]"
+      : "-bottom-[calc(var(--ticket-notch)+1.5px)]",
+    className,
+  );
   return (
     <>
       <span
         aria-hidden
-        className={cn(
-          "pointer-events-none absolute -left-[12.5px] h-[23px] w-[23px] rounded-full border",
-          vertical,
-          className,
-        )}
+        className={cn(ringClass, "-left-[calc(var(--ticket-notch)+2.5px)]")}
       />
       <span
         aria-hidden
-        className={cn(
-          "pointer-events-none absolute -right-[12.5px] h-[23px] w-[23px] rounded-full border",
-          vertical,
-          className,
-        )}
+        className={cn(ringClass, "-right-[calc(var(--ticket-notch)+2.5px)]")}
       />
     </>
   );
 }
 
+function PerforationOutline({ className }: { className?: string }) {
+  return PERFORATION_POSITIONS.map((left) => (
+    <span
+      key={left}
+      aria-hidden
+      style={{ left }}
+      className={cn(
+        RING_CLASS,
+        "z-20 hidden size-[calc(2*var(--ticket-perforation)+3px)] -translate-x-1/2 -bottom-[calc(var(--ticket-perforation)+2.5px)] lg:block",
+        className,
+      )}
+    />
+  ));
+}
+
 export function TicketLabel({
+  as = "div",
   htmlFor,
+  className,
   children,
 }: {
+  as?: "div" | "dt" | "label";
   htmlFor?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
-  const className =
-    "text-micro uppercase text-gold dark:text-gold-soft-foreground";
-  return htmlFor ? (
-    <label htmlFor={htmlFor} className={className}>
+  const Element = htmlFor ? "label" : as;
+  return (
+    <Element
+      htmlFor={htmlFor}
+      className={cn(
+        "text-micro uppercase text-gold dark:text-gold-soft-foreground",
+        className,
+      )}
+    >
       {children}
-    </label>
-  ) : (
-    <div className={className}>{children}</div>
+    </Element>
   );
 }
 
@@ -61,6 +86,7 @@ export function TicketCard({
   bottomTone = "card",
   bottomClassName,
   tearLine = true,
+  perforated = false,
   className,
 }: {
   top: React.ReactNode;
@@ -69,6 +95,7 @@ export function TicketCard({
   bottomTone?: keyof typeof BOTTOM_TONE;
   bottomClassName?: string;
   tearLine?: boolean;
+  perforated?: boolean;
   className?: string;
 }) {
   const bottomStyle = BOTTOM_TONE[bottomTone];
@@ -80,6 +107,7 @@ export function TicketCard({
         className={cn(
           "relative border",
           bottom ? "ticket-notch-bottom rounded-t-md border-b-0" : "rounded-md",
+          perforated && "ticket-perforated",
           topTone === "hero"
             ? "ticket-hero border-transparent bg-hero-bg text-hero-fg"
             : "border-border bg-card",
@@ -94,6 +122,7 @@ export function TicketCard({
         <div
           className={cn(
             "ticket-notch-top relative rounded-b-md border border-t-0",
+            perforated && "ticket-perforated",
             bottomStyle.surface,
             bottomClassName,
           )}
@@ -106,6 +135,7 @@ export function TicketCard({
           )}
           {bottom}
           <NotchOutline edge="top" className={bottomStyle.outline} />
+          {perforated && <PerforationOutline className={bottomStyle.outline} />}
         </div>
       )}
     </div>

@@ -67,8 +67,8 @@ describe("label coverage", () => {
 describe("request status labels", () => {
   it("uses the Indonesian labels shown on the status badge", () => {
     expect(getRequestStatusLabel("submitted")).toBe("Diajukan");
-    expect(getRequestStatusLabel("ready_to_pickup")).toBe("Siap Diambil");
-    expect(getRequestStatusLabel("active")).toBe("Sedang Dipinjam");
+    expect(getRequestStatusLabel("ready_to_pickup")).toBe("Siap diambil");
+    expect(getRequestStatusLabel("active")).toBe("Sedang dipinjam");
     expect(getRequestStatusLabel("returned")).toBe("Selesai");
     expect(getRequestStatusLabel("overdue")).toBe("Terlambat");
   });
@@ -84,8 +84,8 @@ describe("document review status labels", () => {
 
 describe("addendum timing labels", () => {
   it("labels initial and final condition", () => {
-    expect(getAddendumTimingLabel("initial")).toBe("Kondisi Awal");
-    expect(getAddendumTimingLabel("final")).toBe("Kondisi Akhir");
+    expect(getAddendumTimingLabel("initial")).toBe("Kondisi awal");
+    expect(getAddendumTimingLabel("final")).toBe("Kondisi akhir");
   });
 });
 

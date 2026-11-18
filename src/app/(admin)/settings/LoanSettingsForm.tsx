@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import Image from "next/image";
 import type { LoanSetting } from "@/generated/prisma/client";
 import {
@@ -16,6 +16,46 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PublicContactToggle } from "./PublicContactToggle";
 import { LineContactToggle } from "./LineContactToggle";
 import { splitFacultyMajor } from "@/lib/format";
+import { Notice } from "@/components/Notice";
+import { Field, useFocusFirstInvalid } from "@/components/Field";
+import type { FieldErrors } from "@/lib/form-errors";
+import { submitWithoutReset } from "@/lib/submit-without-reset";
+
+function SettingsField({
+  name,
+  label,
+  type,
+  maxLength,
+  defaultValue,
+  placeholder,
+  className,
+  errors,
+}: {
+  name: string;
+  label: string;
+  type?: "date" | "number";
+  maxLength?: number;
+  defaultValue?: string | number;
+  placeholder?: string;
+  className?: string;
+  errors: FieldErrors;
+}) {
+  return (
+    <Field label={label} error={errors[name]} className={className}>
+      {(control) => (
+        <Input
+          {...control}
+          name={name}
+          type={type}
+          maxLength={maxLength}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          required
+        />
+      )}
+    </Field>
+  );
+}
 
 const initialState: UpdateLoanSettingsState = {
   success: false,
@@ -34,7 +74,8 @@ export function LoanSettingsForm({
     initialState,
   );
   const signatoryFacultyMajor = splitFacultyMajor(loanSettings?.signatoryFaculty);
-  const formRef = useRef<HTMLFormElement>(null);
+  const errors = state.fieldErrors ?? {};
+  const formRef = useFocusFirstInvalid(state.fieldErrors);
   const [dirtyFields, setDirtyFields] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -71,15 +112,16 @@ export function LoanSettingsForm({
   return (
     <form
       ref={formRef}
-      action={formAction}
+      onSubmit={submitWithoutReset(formAction)}
+      noValidate
       onInput={handleFieldChange}
       onChange={handleFieldChange}
       className="flex flex-col gap-4"
     >
       {state.error && (
-        <p className="text-sm text-destructive" aria-live="polite">
+        <Notice tone="danger" compact aria-live="polite">
           {state.error}
-        </p>
+        </Notice>
       )}
       {state.success && (
         <p
@@ -91,8 +133,8 @@ export function LoanSettingsForm({
       )}
       {!canEdit && (
         <p className="text-sm text-foreground-2">
-          Cuma Ketua (atau Overlord) yang bisa ubah Loan Settings. Kamu bisa
-          liat isinya, tapi nggak bisa nyimpen perubahan.
+          Only the Ketua (or Overlord) can change loan settings. You can view
+          them but not save changes.
         </p>
       )}
 
@@ -100,91 +142,72 @@ export function LoanSettingsForm({
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Loan Rules</CardTitle>
+            <CardTitle>Loan rules</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Input
-                  id="dueDate"
-                  name="dueDate"
-                  type="date"
-                  defaultValue={
-                    loanSettings?.dueDate?.toISOString().split("T")[0]
-                  }
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="depositGraceDays">Deposit Grace Days</Label>
-                <Input
-                  id="depositGraceDays"
-                  name="depositGraceDays"
-                  type="number"
-                  defaultValue={loanSettings?.depositGraceDays ?? 14}
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="depositAmount">Deposit Amount (full)</Label>
-                <Input
-                  id="depositAmount"
-                  name="depositAmount"
-                  type="number"
-                  defaultValue={loanSettings?.depositAmount ?? 100000}
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="depositPartialAmount">
-                  Deposit Amount (partial)
-                </Label>
-                <Input
-                  id="depositPartialAmount"
-                  name="depositPartialAmount"
-                  type="number"
-                  defaultValue={loanSettings?.depositPartialAmount ?? 50000}
-                  required
-                />
-              </div>
+              <SettingsField
+                name="dueDate"
+                label="Due date"
+                type="date"
+                defaultValue={
+                  loanSettings?.dueDate?.toISOString().split("T")[0]
+                }
+                errors={errors}
+              />
+              <SettingsField
+                name="depositGraceDays"
+                label="Deposit grace days"
+                type="number"
+                defaultValue={loanSettings?.depositGraceDays ?? 14}
+                errors={errors}
+              />
+              <SettingsField
+                name="depositAmount"
+                label="Deposit amount (full)"
+                type="number"
+                defaultValue={loanSettings?.depositAmount ?? 100000}
+                errors={errors}
+              />
+              <SettingsField
+                name="depositPartialAmount"
+                label="Deposit amount (partial)"
+                type="number"
+                defaultValue={loanSettings?.depositPartialAmount ?? 50000}
+                errors={errors}
+              />
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Bank Account</CardTitle>
+            <CardTitle>Bank account</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="bankName">Bank Name</Label>
-                <Input
-                  id="bankName"
-                  name="bankName"
-                  defaultValue={loanSettings?.bankName ?? ""}
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="bankAccount">Bank Account Number</Label>
-                <Input
-                  id="bankAccount"
-                  name="bankAccount"
-                  defaultValue={loanSettings?.bankAccount ?? ""}
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <Label htmlFor="bankHolder">Bank Account Holder</Label>
-                <Input
-                  id="bankHolder"
-                  name="bankHolder"
-                  defaultValue={loanSettings?.bankHolder ?? ""}
-                  required
-                />
-              </div>
+              <SettingsField
+                name="bankName"
+                maxLength={100}
+                label="Bank name"
+                defaultValue={loanSettings?.bankName ?? ""}
+                errors={errors}
+              />
+              <SettingsField
+                name="bankAccount"
+                maxLength={50}
+                label="Bank account number"
+                defaultValue={loanSettings?.bankAccount ?? ""}
+                errors={errors}
+              />
+              <SettingsField
+                name="bankHolder"
+                maxLength={100}
+                label="Bank account holder"
+                defaultValue={loanSettings?.bankHolder ?? ""}
+                className="sm:col-span-2"
+                errors={errors}
+              />
             </div>
           </CardContent>
         </Card>
@@ -192,106 +215,86 @@ export function LoanSettingsForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Signatory Data (PIHAK PERTAMA)</CardTitle>
+          <CardTitle>Signatory data (PIHAK PERTAMA)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryName">Name</Label>
-              <Input
-                id="signatoryName"
-                name="signatoryName"
-                defaultValue={loanSettings?.signatoryName ?? ""}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryPhone">Phone</Label>
-              <Input
-                id="signatoryPhone"
-                name="signatoryPhone"
-                defaultValue={loanSettings?.signatoryPhone ?? ""}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryLineId">LINE ID</Label>
-              <Input
-                id="signatoryLineId"
-                name="signatoryLineId"
-                defaultValue={loanSettings?.signatoryLineId ?? ""}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryKtpNumber">KTP Number</Label>
-              <Input
-                id="signatoryKtpNumber"
-                name="signatoryKtpNumber"
-                defaultValue={loanSettings?.signatoryKtpNumber ?? ""}
-                placeholder="16 digit"
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryAddressKtp">Address (as per KTP)</Label>
-              <Input
-                id="signatoryAddressKtp"
-                name="signatoryAddressKtp"
-                defaultValue={loanSettings?.signatoryAddressKtp ?? ""}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryAddressDomicile">Current Address</Label>
-              <Input
-                id="signatoryAddressDomicile"
-                name="signatoryAddressDomicile"
-                defaultValue={loanSettings?.signatoryAddressDomicile ?? ""}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryFaculty">Faculty</Label>
-              <Input
-                id="signatoryFaculty"
-                name="signatoryFaculty"
-                defaultValue={signatoryFacultyMajor.faculty}
-                placeholder="Contoh: FT"
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryMajor">Major</Label>
-              <Input
-                id="signatoryMajor"
-                name="signatoryMajor"
-                defaultValue={signatoryFacultyMajor.major}
-                placeholder="Contoh: Teknik Elektro"
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatoryYear">Year</Label>
-              <Input
-                id="signatoryYear"
-                name="signatoryYear"
-                defaultValue={loanSettings?.signatoryYear ?? ""}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="signatorySection">Section/Instrument</Label>
-              <Input
-                id="signatorySection"
-                name="signatorySection"
-                defaultValue={loanSettings?.signatorySection ?? ""}
-                required
-              />
-            </div>
+            <SettingsField
+              name="signatoryName"
+              maxLength={100}
+              label="Name"
+              defaultValue={loanSettings?.signatoryName ?? ""}
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryPhone"
+              maxLength={20}
+              label="Phone"
+              defaultValue={loanSettings?.signatoryPhone ?? ""}
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryLineId"
+              maxLength={50}
+              label="LINE ID"
+              defaultValue={loanSettings?.signatoryLineId ?? ""}
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryKtpNumber"
+              maxLength={16}
+              label="KTP number"
+              defaultValue={loanSettings?.signatoryKtpNumber ?? ""}
+              placeholder="16 digit"
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryAddressKtp"
+              maxLength={300}
+              label="Address (as per KTP)"
+              defaultValue={loanSettings?.signatoryAddressKtp ?? ""}
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryAddressDomicile"
+              maxLength={300}
+              label="Current address"
+              defaultValue={loanSettings?.signatoryAddressDomicile ?? ""}
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryFaculty"
+              maxLength={60}
+              label="Faculty"
+              defaultValue={signatoryFacultyMajor.faculty}
+              placeholder="e.g. FT"
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryMajor"
+              maxLength={60}
+              label="Major"
+              defaultValue={signatoryFacultyMajor.major}
+              placeholder="e.g. Teknik Elektro"
+              errors={errors}
+            />
+            <SettingsField
+              name="signatoryYear"
+              maxLength={4}
+              label="Year"
+              defaultValue={loanSettings?.signatoryYear ?? ""}
+              errors={errors}
+            />
+            <SettingsField
+              name="signatorySection"
+              maxLength={100}
+              label="Section/instrument"
+              defaultValue={loanSettings?.signatorySection ?? ""}
+              errors={errors}
+            />
             <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="signatoryImage">
-                Signature Image{" "}
+                Signature image{" "}
                 {loanSettings?.signatoryImageDriveId && (
                   <span className="font-normal text-muted-foreground">
                     (already uploaded — leave empty to keep current)
@@ -327,7 +330,7 @@ export function LoanSettingsForm({
               <p className="mb-3 text-sm text-foreground-2">
                 These show up as contact buttons on the public landing page,
                 for people with questions. This applies immediately and
-                independently from Save Loan Settings.
+                independently from Save loan settings.
                 {!canEdit && " Only Ketua or Overlord can change this."}
               </p>
               <div className="flex flex-col gap-4 sm:flex-row sm:gap-8">
@@ -352,7 +355,7 @@ export function LoanSettingsForm({
       {isDirty ? (
         <div className="slide-up-enter sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-hero-bg px-4 py-3 text-hero-fg shadow-lg">
           <span className="text-sm">
-            Unsaved changes in Loan Rules, Bank Account or Signatory Data
+            Unsaved changes in Loan rules, Bank Account or Signatory Data
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -369,13 +372,13 @@ export function LoanSettingsForm({
               disabled={isPending}
               className="bg-gold text-hero-bg hover:bg-gold-hover"
             >
-              {isPending ? "Saving..." : "Save Loan Settings"}
+              {isPending ? "Saving..." : "Save loan settings"}
             </Button>
           </div>
         </div>
       ) : (
         <Button type="submit" disabled={isPending} className="self-start">
-          {isPending ? "Saving..." : "Save Loan Settings"}
+          {isPending ? "Saving..." : "Save loan settings"}
         </Button>
       )}
       </fieldset>

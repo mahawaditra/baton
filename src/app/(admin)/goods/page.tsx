@@ -14,7 +14,7 @@ export default async function GoodsPage() {
       <AdminHeaderAction>
         <Link
           href="/goods/new"
-          aria-label="New Good"
+          aria-label="New good"
           className="flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-muted"
         >
           <Plus className="h-5 w-5" strokeWidth={1.75} />
@@ -25,7 +25,7 @@ export default async function GoodsPage() {
         action={
           <Link href="/goods/new" className={buttonVariants()}>
             <Plus className="h-4 w-4" strokeWidth={1.75} />
-            New Good
+            New good
           </Link>
         }
       />

@@ -9,6 +9,7 @@ import { prepareImageFile } from "@/lib/files/image-processing";
 import { toastError } from "@/lib/toast";
 import { HoldButton } from "@/components/HoldButton";
 import { cn } from "@/lib/utils";
+import { Notice } from "@/components/Notice";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png"];
 
@@ -125,9 +126,9 @@ export function LimboForm() {
         </p>
       )}
       {error && (
-        <p className="text-sm text-destructive" aria-live="polite">
+        <Notice tone="danger" compact aria-live="polite">
           {error}
-        </p>
+        </Notice>
       )}
 
       <HoldButton

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/Notice";
 
 function GoogleIcon() {
   return (
@@ -68,9 +69,9 @@ export function AdminGoogleLogin() {
         {isPending ? "Membuka Google..." : "Masuk dengan Google"}
       </Button>
       {error && (
-        <p className="mt-2 text-sm text-destructive" aria-live="polite">
+        <Notice tone="danger" compact className="mt-2" aria-live="polite">
           {error}
-        </p>
+        </Notice>
       )}
     </div>
   );

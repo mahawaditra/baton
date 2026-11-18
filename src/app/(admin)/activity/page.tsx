@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { toJakartaCalendarDate, todayInJakarta } from "@/lib/format";
+import {
+  formatLongCalendarDate,
+  toJakartaCalendarDate,
+  todayInJakarta,
+} from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import {
   ActivityTimeline,
@@ -16,11 +20,11 @@ const PAGE_SIZE = 30;
 
 const ENTITY_TYPE_LABEL: Record<string, string> = {
   goods: "Goods",
-  loan_settings: "Loan Settings",
+  loan_settings: "Loan settings",
   admin: "Admin",
   inventory_snapshot: "Snapshot",
-  loan_period: "Loan Period",
-  instrument_type_slot: "Instrument Slot",
+  loan_period: "Loan period",
+  instrument_type_slot: "Instrument slot",
 };
 
 function groupLogsByDay(logs: ActivityLogWithAdmin[]) {
@@ -43,12 +47,7 @@ function groupLogsByDay(logs: ActivityLogWithAdmin[]) {
     } else if (day.getTime() === yesterday.getTime()) {
       label = "Yesterday";
     } else {
-      label = day.toLocaleDateString("en-GB", {
-        timeZone: "UTC",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
+      label = formatLongCalendarDate(day, "en");
     }
 
     if (!groups.has(key)) {
@@ -129,7 +128,7 @@ export default async function ActivityPage({
 
   return (
     <div className="flex flex-col gap-6 pb-20">
-      <h1 className="hidden text-h1 lg:block">Activity Log</h1>
+      <h1 className="hidden text-h1 lg:block">Activity log</h1>
 
       {logs.length === 0 ? (
         <EmptyState title="No activity recorded yet" />

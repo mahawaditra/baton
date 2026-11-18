@@ -40,10 +40,10 @@ export function documentTypesNeedingUpload(
 }
 
 export const LOAN_STEP_LABELS = [
-  "Pengajuan Dikirim",
-  "Lengkapi Data & Dokumen",
-  "Ambil & Isi Addendum",
-  "Sedang Dipinjam",
+  "Pengajuan dikirim",
+  "Lengkapi data & dokumen",
+  "Ambil & isi addendum",
+  "Sedang dipinjam",
 ] as const;
 
 export function getRequestStep(

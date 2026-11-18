@@ -6,7 +6,6 @@ import type { ItemCondition } from "@/generated/prisma/client";
 import { createInstrument, CreateInstrumentState } from "./actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LoanableCheckbox } from "@/components/LoanableCheckbox";
 import {
@@ -27,6 +26,9 @@ import {
 import { CONDITION_OPTIONS } from "@/components/StatusBadge";
 import { isOutOfServiceCondition } from "@/lib/loan/loan-rules";
 import { cn } from "@/lib/utils";
+import { Notice } from "@/components/Notice";
+import { Field, useFocusFirstInvalid } from "@/components/Field";
+import { submitWithoutReset } from "@/lib/submit-without-reset";
 
 const initialState: CreateInstrumentState = {
   error: null,
@@ -45,87 +47,119 @@ export function CreateInstrumentForm({
   );
   const [condition, setCondition] = useState<ItemCondition>("ok");
   const [isLoanable, setIsLoanable] = useState(true);
+  const errors = state.fieldErrors ?? {};
+  const formRef = useFocusFirstInvalid(state.fieldErrors);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      ref={formRef}
+      onSubmit={submitWithoutReset(formAction)}
+      noValidate
+      className="flex flex-col gap-4"
+    >
       {state.error && (
-        <p className="text-sm text-destructive" aria-live="polite">
+        <Notice tone="danger" compact aria-live="polite">
           {state.error}
-        </p>
+        </Notice>
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="section">Section</Label>
-          <Autocomplete name="section" items={sections}>
-            <AutocompleteInput id="section" placeholder="e.g. Strings" />
-            <AutocompleteContent>
-              <AutocompleteEmpty>
-                No match — will be saved as a new section.
-              </AutocompleteEmpty>
-              <AutocompleteList>
-                {(item: string) => (
-                  <AutocompleteItem key={item} value={item}>
-                    {item}
-                  </AutocompleteItem>
-                )}
-              </AutocompleteList>
-            </AutocompleteContent>
-          </Autocomplete>
-        </div>
+        <Field label="Section" error={errors.section}>
+          {(control) => (
+            <Autocomplete name="section" items={sections}>
+              <AutocompleteInput
+                {...control}
+                maxLength={100}
+                placeholder="e.g. Strings"
+                required
+              />
+              <AutocompleteContent>
+                <AutocompleteEmpty>
+                  No match — will be saved as a new section.
+                </AutocompleteEmpty>
+                <AutocompleteList>
+                  {(item: string) => (
+                    <AutocompleteItem key={item} value={item}>
+                      {item}
+                    </AutocompleteItem>
+                  )}
+                </AutocompleteList>
+              </AutocompleteContent>
+            </Autocomplete>
+          )}
+        </Field>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="type">Type</Label>
-          <Autocomplete name="type" items={types}>
-            <AutocompleteInput id="type" placeholder="e.g. Timpani" />
-            <AutocompleteContent>
-              <AutocompleteEmpty>
-                No match — will be saved as a new type.
-              </AutocompleteEmpty>
-              <AutocompleteList>
-                {(item: string) => (
-                  <AutocompleteItem key={item} value={item}>
-                    {item}
-                  </AutocompleteItem>
-                )}
-              </AutocompleteList>
-            </AutocompleteContent>
-          </Autocomplete>
-        </div>
+        <Field label="Type" error={errors.type}>
+          {(control) => (
+            <Autocomplete name="type" items={types}>
+              <AutocompleteInput
+                {...control}
+                maxLength={100}
+                placeholder="e.g. Timpani"
+                required
+              />
+              <AutocompleteContent>
+                <AutocompleteEmpty>
+                  No match — will be saved as a new type.
+                </AutocompleteEmpty>
+                <AutocompleteList>
+                  {(item: string) => (
+                    <AutocompleteItem key={item} value={item}>
+                      {item}
+                    </AutocompleteItem>
+                  )}
+                </AutocompleteList>
+              </AutocompleteContent>
+            </Autocomplete>
+          )}
+        </Field>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="brand">Brand</Label>
-          <Input id="brand" name="brand" />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="serialNumber">Serial No.</Label>
-          <Input id="serialNumber" name="serialNumber" />
-        </div>
+        <Field label="Brand" optional language="en" error={errors.brand}>
+          {(control) => <Input {...control} name="brand" maxLength={100} />}
+        </Field>
+        <Field
+          label="Serial no."
+          optional
+          language="en"
+          error={errors.serialNumber}
+        >
+          {(control) => (
+            <Input {...control} name="serialNumber" maxLength={100} />
+          )}
+        </Field>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="location">Location</Label>
-          <Input id="location" name="location" defaultValue="Sekre" />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="condition">Condition</Label>
-          <Select
-            name="condition"
-            items={CONDITION_OPTIONS}
-            value={condition}
-            onValueChange={(value) => setCondition(value as ItemCondition)}
-          >
-            <SelectTrigger id="condition" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CONDITION_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Field label="Location" error={errors.location}>
+          {(control) => (
+            <Input
+              {...control}
+              name="location"
+              maxLength={100}
+              defaultValue="Sekre"
+              required
+            />
+          )}
+        </Field>
+        <Field label="Condition" error={errors.condition}>
+          {(control) => (
+            <Select
+              name="condition"
+              items={CONDITION_OPTIONS}
+              value={condition}
+              onValueChange={(value) => setCondition(value as ItemCondition)}
+            >
+              <SelectTrigger {...control} className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CONDITION_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </Field>
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <LoanableCheckbox
@@ -139,10 +173,15 @@ export function CreateInstrumentForm({
           </p>
         </div>
 
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea id="notes" name="notes" />
-        </div>
+        <Field
+          label="Notes"
+          optional
+          language="en"
+          error={errors.notes}
+          className="sm:col-span-2"
+        >
+          {(control) => <Textarea {...control} name="notes" maxLength={1000} />}
+        </Field>
       </div>
 
       <div className="flex gap-2">

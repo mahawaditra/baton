@@ -18,7 +18,6 @@ import {
   Archive,
   Settings,
   BookOpen,
-  ChevronDown,
   Menu,
   X,
   Moon,
@@ -27,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { HANDBOOK_SECTIONS } from "./handbook/sections";
 import { MusicGlyph } from "@/components/MusicGlyph";
+import { Collapse, CollapseChevron } from "@/components/Collapse";
 
 type LeafNavItem = {
   href: string;
@@ -179,50 +179,34 @@ export function AdminNav({
                         strokeWidth={1.75}
                       />
                       {item.label}
-                      <ChevronDown
-                        className={cn(
-                          "ml-auto h-4 w-4 transition-transform duration-250 ease-out motion-reduce:transition-none",
-                          !handbookOpen && "-rotate-90",
-                        )}
-                        strokeWidth={1.75}
-                      />
+                      <CollapseChevron open={handbookOpen} className="ml-auto" />
                     </button>
-                    <div
-                      inert={!handbookOpen}
-                      className={cn(
-                        "grid transition-[grid-template-rows,opacity] duration-250 ease-out motion-reduce:transition-none",
-                        handbookOpen
-                          ? "grid-rows-[1fr] opacity-100"
-                          : "grid-rows-[0fr] opacity-0",
-                      )}
-                    >
-                      <div className="min-h-0 overflow-hidden">
-                        <div className="mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
-                          {item.children.map((child) => {
-                            const active = isActive(pathname, child.href);
-                            const ChildIcon = child.icon;
-                            return (
-                              <Link
-                                key={child.href}
-                                href={child.href}
-                                className={cn(
-                                  "flex items-center gap-2.5 rounded px-3 py-1.5 text-sm",
-                                  active
-                                    ? "bg-gold-soft/40 font-semibold text-foreground"
-                                    : "text-muted-foreground hover:bg-muted",
-                                )}
-                              >
-                                <ChildIcon
-                                  className="h-4 w-4"
-                                  strokeWidth={1.75}
-                                />
-                                {child.label}
-                              </Link>
-                            );
-                          })}
-                        </div>
+                    <Collapse open={handbookOpen}>
+                      <div className="mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
+                        {item.children.map((child) => {
+                          const active = isActive(pathname, child.href);
+                          const ChildIcon = child.icon;
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className={cn(
+                                "flex items-center gap-2.5 rounded px-3 py-1.5 text-sm",
+                                active
+                                  ? "bg-gold-soft/40 font-semibold text-foreground"
+                                  : "text-muted-foreground hover:bg-muted",
+                              )}
+                            >
+                              <ChildIcon
+                                className="h-4 w-4"
+                                strokeWidth={1.75}
+                              />
+                              {child.label}
+                            </Link>
+                          );
+                        })}
                       </div>
-                    </div>
+                    </Collapse>
                   </div>
                 );
               }
@@ -315,7 +299,7 @@ export function AdminNav({
             <Menu className="h-[22px] w-[22px]" strokeWidth={1.75} />
           </Dialog.Trigger>
           <Dialog.Portal>
-            <Dialog.Backdrop className="fixed inset-0 z-50 bg-[oklch(0.185_0.028_285_/_0.55)] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
+            <Dialog.Backdrop className="fixed inset-0 z-50 bg-overlay data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
             <Dialog.Popup className="fixed top-0 bottom-0 left-0 z-50 flex w-[300px] pt-[env(safe-area-inset-top,0px)] max-w-[85vw] flex-col border-r border-border bg-surface shadow-lg data-open:animate-in data-open:slide-in-from-left data-open:duration-200 data-closed:animate-out data-closed:slide-out-to-left data-closed:duration-200">
               <div className="flex items-center gap-2.5 border-b border-border p-4">
                 <BrandMark />

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { Hash, MapPin } from "lucide-react";
 import { cn, toggleSetValue } from "@/lib/utils";
+import { useTableFit } from "@/lib/use-table-fit";
 
 const MOBILE_SORT_OPTIONS = [
   { id: "location", label: "Location" },
@@ -60,9 +61,7 @@ export function GoodsExplorer({
     new Set(),
   );
   const [mobileSort, setMobileSort] = useState<MobileSort>("location");
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    new Set(),
-  );
+  const { rootRef, tableFits, onOverflow } = useTableFit();
 
   function handleReset() {
     setSearch("");
@@ -142,9 +141,31 @@ export function GoodsExplorer({
       />
     );
 
+  const cardList =
+    mobileFiltered.length === 0 ? (
+      emptyState
+    ) : mobileGroups ? (
+      <div className="flex flex-col">
+        {mobileGroups.map(([locationLabel, items]) => (
+          <CollapsibleGroup
+            key={locationLabel}
+            label={locationLabel}
+            items={items}
+            renderItem={(good) => <GoodCard key={good.id} good={good} />}
+          />
+        ))}
+      </div>
+    ) : (
+      <div className="flex flex-col gap-2.5">
+        {mobileFlat!.map((good) => (
+          <GoodCard key={good.id} good={good} />
+        ))}
+      </div>
+    );
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="hidden flex-col gap-4 lg:flex">
+      <div ref={rootRef} className="hidden flex-col gap-4 lg:flex">
         <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder="Search name, brand, location, registration no…"
@@ -164,13 +185,21 @@ export function GoodsExplorer({
         </div>
 
         <div className="text-xs text-muted-foreground">
-          {filtered.length} dari {goods.length} barang
+          {filtered.length} of {goods.length} goods
         </div>
 
         {filtered.length === 0 ? (
           emptyState
+        ) : tableFits ? (
+          <DataTable
+            data={filtered}
+            columns={columns}
+            getRowHref={(good) => `/goods/${good.id}`}
+            linkColumn="name"
+            onOverflow={onOverflow}
+          />
         ) : (
-          <DataTable data={filtered} columns={columns} />
+          cardList
         )}
       </div>
 
@@ -182,7 +211,7 @@ export function GoodsExplorer({
         />
 
         <div className="text-xs text-muted-foreground">
-          {mobileFiltered.length} dari {goods.length} barang
+          {mobileFiltered.length} of {goods.length} goods
         </div>
 
         <div className="flex flex-col gap-2 sm:-mx-2 sm:flex-row sm:items-center sm:overflow-x-auto sm:px-2">
@@ -225,32 +254,7 @@ export function GoodsExplorer({
           </div>
         </div>
 
-        {mobileFiltered.length === 0 ? (
-          emptyState
-        ) : mobileGroups ? (
-          <div className="flex flex-col">
-            {mobileGroups.map(([locationLabel, items]) => (
-              <CollapsibleGroup
-                key={locationLabel}
-                label={locationLabel}
-                items={items}
-                isCollapsed={collapsedGroups.has(locationLabel)}
-                onToggle={() =>
-                  setCollapsedGroups((prev) =>
-                    toggleSetValue(prev, locationLabel),
-                  )
-                }
-                renderItem={(good) => <GoodCard key={good.id} good={good} />}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {mobileFlat!.map((good) => (
-              <GoodCard key={good.id} good={good} />
-            ))}
-          </div>
-        )}
+        {cardList}
       </div>
     </div>
   );

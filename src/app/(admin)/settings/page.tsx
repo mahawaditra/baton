@@ -68,13 +68,13 @@ export default async function SettingsPage() {
       {showAdminManagement && (
         <Card>
           <CardHeader>
-            <CardTitle>Admin Management</CardTitle>
+            <CardTitle>Admin management</CardTitle>
           </CardHeader>
           <CardContent className="gap-4">
             <AddAdminForm roles={assignableRoles(role)} />
 
             <div className="flex flex-col gap-2 border-t border-border pt-4">
-              <div className="text-sm font-semibold">Admin List</div>
+              <div className="text-sm font-semibold">Admin list</div>
               <div className="flex flex-col gap-1.5">
                 {admins.map((admin) => (
                   <div

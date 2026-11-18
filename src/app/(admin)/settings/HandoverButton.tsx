@@ -13,7 +13,6 @@ import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { HoldButton } from "@/components/HoldButton";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -24,6 +23,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Notice } from "@/components/Notice";
+import { Field } from "@/components/Field";
 
 export function HandoverButton({ staffCount }: { staffCount: number }) {
   const [open, setOpen] = useState(false);
@@ -73,7 +74,12 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
         Handover
       </AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-[480px]">
-        <form ref={formRef} onSubmit={handleSubmit} className="grid gap-6">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          noValidate
+          className="grid gap-6"
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>{handoverTitle(staffCount)}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -83,47 +89,47 @@ export function HandoverButton({ staffCount }: { staffCount: number }) {
 
           <div className="flex flex-col gap-3">
             {error && (
-              <p className="text-sm text-destructive" aria-live="polite">
+              <Notice tone="danger" compact aria-live="polite">
                 {error}
-              </p>
+              </Notice>
             )}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="handoverEmail">Email</Label>
-              <Input
-                id="handoverEmail"
-                name="email"
-                type="email"
-                placeholder="New Ketua email"
-                required
-                disabled={pending}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                onBlur={() => setEmailTouched(true)}
-                aria-invalid={showEmailError || undefined}
-                aria-describedby={
-                  showEmailError ? "handoverEmailError" : undefined
-                }
-              />
-              {showEmailError && (
-                <p id="handoverEmailError" className="text-xs text-destructive">
-                  Enter a valid email address, like name@gmail.com.
-                </p>
+            <Field
+              label="Email"
+              error={
+                showEmailError
+                  ? "Enter a valid email address, like name@gmail.com."
+                  : undefined
+              }
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  name="email"
+                  type="email"
+                  placeholder="New Ketua email"
+                  required
+                  disabled={pending}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  onBlur={() => setEmailTouched(true)}
+                />
               )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="handoverName">Name</Label>
-              <Input
-                id="handoverName"
-                name="name"
-                type="text"
-                placeholder="New Ketua name"
-                required
-                maxLength={ADMIN_NAME_MAX_LENGTH}
-                disabled={pending}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </div>
+            </Field>
+            <Field label="Name">
+              {(control) => (
+                <Input
+                  {...control}
+                  name="name"
+                  type="text"
+                  placeholder="New Ketua name"
+                  required
+                  maxLength={ADMIN_NAME_MAX_LENGTH}
+                  disabled={pending}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              )}
+            </Field>
             {!canSacrifice && (
               <p id="handoverHint" className="text-xs text-muted-foreground">
                 Fill in the new Ketua&apos;s email and name to continue.

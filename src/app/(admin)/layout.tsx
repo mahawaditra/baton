@@ -34,7 +34,7 @@ export default async function AdminLayout({
         className="pointer-events-none fixed right-0 bottom-0 left-0 -z-10 overflow-hidden select-none lg:left-60"
       >
         <span
-          className="font-heading block text-center text-[clamp(6rem,22vw,18rem)] leading-none font-extrabold tracking-tighter text-navy/[0.09]"
+          className="font-heading block text-center text-[clamp(6rem,22vw,18rem)] leading-none font-extrabold tracking-tighter text-primary/[0.09]"
           style={{
             maskImage: "linear-gradient(to bottom, transparent 0%, black 70%)",
             WebkitMaskImage:

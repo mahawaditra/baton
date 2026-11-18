@@ -11,7 +11,7 @@ export default async function NewInstrumentPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-h1">New Instrument</h1>
+      <h1 className="text-h1">New instrument</h1>
 
       <Card>
         <CardHeader>

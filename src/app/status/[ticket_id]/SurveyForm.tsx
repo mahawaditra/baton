@@ -22,9 +22,10 @@ import { MusicGlyph } from "@/components/MusicGlyph";
 import { SegmentBar } from "@/components/SegmentBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldError } from "@/components/Field";
 import { cn } from "@/lib/utils";
+import { Notice } from "@/components/Notice";
 
 const initialState = {
   success: false,
@@ -44,22 +45,30 @@ const RATING_DYNAMICS = {
   5: "dynamicSFZ",
 } as const;
 
+const RATING_REQUIRED_MESSAGE = "Pilih salah satu dulu.";
+
 function RatingQuestion({
   name,
   label,
   value,
+  error,
   onChange,
 }: {
   name: string;
   label: string;
   value: string;
+  error?: string;
   onChange: (value: string) => void;
 }) {
+  const errorId = `${name}-error`;
   const lowest = SURVEY_RATING_SCALE[0].label;
   const highest = SURVEY_RATING_SCALE[SURVEY_RATING_SCALE.length - 1].label;
 
   return (
-    <fieldset className="flex min-w-0 flex-col gap-2">
+    <fieldset
+      aria-describedby={error ? errorId : undefined}
+      className="flex min-w-0 flex-col gap-2"
+    >
       <legend className="text-label text-foreground">{label}</legend>
       <div className="mt-2 grid grid-cols-5 gap-1.5">
         {SURVEY_RATING_SCALE.map((option) => (
@@ -90,6 +99,7 @@ function RatingQuestion({
         <span>{lowest}</span>
         <span>{highest}</span>
       </div>
+      {error && <FieldError id={errorId}>{error}</FieldError>}
     </fieldset>
   );
 }
@@ -112,7 +122,9 @@ export function SurveyForm({
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [missing, setMissing] = useState<Set<string>>(new Set());
   const topRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const form = SURVEY_PAGE_ORDER[page];
   const definition = SURVEY_DEFINITIONS[form];
@@ -128,6 +140,12 @@ export function SurveyForm({
 
   function setAnswer(name: string, value: string) {
     setAnswers((current) => ({ ...current, [name]: value }));
+    setMissing((current) => {
+      if (!current.has(name)) return current;
+      const next = new Set(current);
+      next.delete(name);
+      return next;
+    });
   }
 
   function goToPage(nextPage: number) {
@@ -139,6 +157,16 @@ export function SurveyForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const unanswered = definition.questions
+      .map((question) => ratingFieldName(form, question.key))
+      .filter((name) => !answers[name]);
+    if (unanswered.length > 0) {
+      setMissing(new Set(unanswered));
+      formRef.current
+        ?.querySelector<HTMLInputElement>(`input[name="${unanswered[0]}"]`)
+        ?.focus();
+      return;
+    }
     if (!isLastPage) {
       goToPage(page + 1);
       return;
@@ -167,8 +195,10 @@ export function SurveyForm({
       </CardHeader>
       <CardContent>
         <form
+          ref={formRef}
           key={form}
           onSubmit={handleSubmit}
+          noValidate
           className={cn(
             "flex flex-col gap-5",
             (page > 0 || direction === "back") && `survey-page-${direction}`,
@@ -184,6 +214,7 @@ export function SurveyForm({
                 name={name}
                 label={question.label}
                 value={answers[name] ?? ""}
+                error={missing.has(name) ? RATING_REQUIRED_MESSAGE : undefined}
                 onChange={(value) => setAnswer(name, value)}
               />
             );
@@ -192,28 +223,30 @@ export function SurveyForm({
           {definition.comments.map((comment) => {
             const name = commentFieldName(form, comment.key);
             return (
-              <div key={name} className="flex flex-col gap-1.5">
-                <Label htmlFor={name}>{comment.label} (opsional)</Label>
-                {comment.hint && (
-                  <p className="text-caption text-muted-foreground">
-                    {comment.hint}
-                  </p>
+              <Field
+                key={name}
+                id={name}
+                label={comment.label}
+                optional
+                hint={comment.hint}
+              >
+                {(control) => (
+                  <Textarea
+                    {...control}
+                    name={name}
+                    maxLength={SURVEY_COMMENT_MAX_LENGTH}
+                    value={answers[name] ?? ""}
+                    onChange={(event) => setAnswer(name, event.target.value)}
+                  />
                 )}
-                <Textarea
-                  id={name}
-                  name={name}
-                  maxLength={SURVEY_COMMENT_MAX_LENGTH}
-                  value={answers[name] ?? ""}
-                  onChange={(event) => setAnswer(name, event.target.value)}
-                />
-              </div>
+              </Field>
             );
           })}
 
           {state.error && (
-            <p className="text-sm text-destructive" aria-live="polite">
+            <Notice tone="danger" compact aria-live="polite">
               {state.error}
-            </p>
+            </Notice>
           )}
 
           <div className="flex flex-wrap gap-2">
@@ -222,7 +255,7 @@ export function SurveyForm({
                 ? "Lanjut"
                 : isPending
                   ? "Mengirim..."
-                  : "Kirim Survey"}
+                  : "Kirim survey"}
             </Button>
             {page > 0 && (
               <Button

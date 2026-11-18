@@ -2,7 +2,12 @@ import fs from "fs";
 import path from "path";
 import type { LoanSetting, Instrument } from "@/generated/prisma/client";
 import { downloadFileAsBase64 } from "@/lib/files/drive";
-import { escapeHtml, todayInJakarta } from "@/lib/format";
+import {
+  escapeHtml,
+  formatLongCalendarDate,
+  formatRupiahFormal,
+  todayInJakarta,
+} from "@/lib/format";
 
 let cachedContractFonts: {
   regular: string;
@@ -43,31 +48,6 @@ const headerTemplate = `<div style="width: 100%; margin: 0 24px;">
   </div>
 `;
 
-function formatRupiah(amount: number): string {
-  return `Rp ${amount.toLocaleString("id-ID")},00`;
-}
-
-function formatTanggalIndo(date: Date): string {
-  const bulan = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ];
-  const tanggal = date.getUTCDate();
-  const bulanIndex = date.getUTCMonth();
-  const tahun = date.getUTCFullYear();
-  return `${tanggal} ${bulan[bulanIndex]} ${tahun}`;
-}
-
 type ContractData = {
   signatory: {
     name: string;
@@ -107,8 +87,8 @@ type ContractData = {
 
 async function buildContractHTML(data: ContractData): Promise<string> {
   const fonts = await getContractFonts();
-  const dueDateStr = formatTanggalIndo(data.dueDate);
-  const todayStr = formatTanggalIndo(todayInJakarta());
+  const dueDateStr = formatLongCalendarDate(data.dueDate, "id");
+  const todayStr = formatLongCalendarDate(todayInJakarta(), "id");
 
   const signatory = {
     name: escapeHtml(data.signatory.name),
@@ -226,7 +206,7 @@ async function buildContractHTML(data: ContractData): Promise<string> {
   <li>INSTRUMEN adalah alat musik ${instrumentType} milik OSUI Mahawaditra dengan ciri-ciri yang akan dijelaskan selanjutnya dalam Addendum Perjanjian.</li>
   <li>PIHAK PERTAMA mewakili OSUI Mahawaditra adalah kepala divisi perlengkapan OSUI Mahawaditra sebagai penanggung jawab dalam peminjaman INSTRUMEN kepada PIHAK KEDUA.</li>
   <li>PIHAK KEDUA adalah calon anggota aktif/anggota aktif OSUI Mahawaditra yang bermaksud untuk meminjam instrumen milik OSUI Mahawaditra dan disetujui oleh PIHAK PERTAMA.</li>
-  <li>DEPOSIT adalah uang sebesar ${formatRupiah(data.depositAmount)} yang diberikan oleh PIHAK KEDUA kepada PIHAK PERTAMA sebelum surat ini ditandatangani sebagai jaminan agar PIHAK KEDUA mengembalikan INSTRUMEN tepat pada waktunya. DEPOSIT akan dikembalikan pada saat INSTRUMEN dikembalikan.</li>
+  <li>DEPOSIT adalah uang sebesar ${formatRupiahFormal(data.depositAmount)} yang diberikan oleh PIHAK KEDUA kepada PIHAK PERTAMA sebelum surat ini ditandatangani sebagai jaminan agar PIHAK KEDUA mengembalikan INSTRUMEN tepat pada waktunya. DEPOSIT akan dikembalikan pada saat INSTRUMEN dikembalikan.</li>
   <li>DEPOSIT telah ditransfer ke rekening bank ${bankName} dengan nomor <b>${bankAccount}</b> atas nama <b>${bankHolder}</b>.</li>
 </ol>
 
@@ -237,8 +217,8 @@ async function buildContractHTML(data: ContractData): Promise<string> {
   <li>Apabila sebelum masa peminjaman berakhir, terdapat perubahan status keanggotaan PIHAK KEDUA, maka peminjaman dapat dihentikan oleh PIHAK PERTAMA.</li>
   <li>Perubahan status keanggotaan sebagaimana dimaksud pada ayat (2) termasuk, namun tidak terbatas pada pengunduran diri, menjadi anggota pasif OSUI Mahawaditra, pemutihan status keanggotaan, dan cuti.</li>
   <li>PIHAK PERTAMA dapat sewaktu-waktu menghentikan masa peminjaman sebelum waktu yang dimaksud pada ayat (1) secara sepihak.</li>
-  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN sebelum atau saat selesainya masa peminjaman pada ayat (1), DEPOSIT akan dikembalikan sebanyak ${formatRupiah(data.depositAmount)}.</li>
-  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN maksimal ${data.depositGraceDays} hari dari selesainya masa peminjaman, DEPOSIT hanya akan dikembalikan sebanyak ${formatRupiah(data.depositPartialAmount)}.</li>
+  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN sebelum atau saat selesainya masa peminjaman pada ayat (1), DEPOSIT akan dikembalikan sebanyak ${formatRupiahFormal(data.depositAmount)}.</li>
+  <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN maksimal ${data.depositGraceDays} hari dari selesainya masa peminjaman, DEPOSIT hanya akan dikembalikan sebanyak ${formatRupiahFormal(data.depositPartialAmount)}.</li>
   <li>Bila PIHAK KEDUA terlambat dalam mengembalikan INSTRUMEN setelah ${data.depositGraceDays} hari dari selesainya masa peminjaman, DEPOSIT tidak akan dikembalikan.</li>
 </ol>
 

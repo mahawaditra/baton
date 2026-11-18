@@ -11,10 +11,10 @@ import type {
 export const REQUEST_STATUS_LABELS: Record<BorrowingRequestStatus, string> = {
   submitted: "Diajukan",
   reviewing: "Ditinjau",
-  contract_generated: "Kontrak Terbit",
-  documents_uploaded: "Dokumen Masuk",
-  ready_to_pickup: "Siap Diambil",
-  active: "Sedang Dipinjam",
+  contract_generated: "Kontrak terbit",
+  documents_uploaded: "Dokumen masuk",
+  ready_to_pickup: "Siap diambil",
+  active: "Sedang dipinjam",
   returned: "Selesai",
   rejected: "Ditolak",
   overdue: "Terlambat",
@@ -31,8 +31,8 @@ export const DOCUMENT_REVIEW_STATUS_LABELS: Record<
 };
 
 export const ADDENDUM_TIMING_LABELS: Record<AddendumTiming, string> = {
-  initial: "Kondisi Awal",
-  final: "Kondisi Akhir",
+  initial: "Kondisi awal",
+  final: "Kondisi akhir",
 };
 
 export const CONDITION_LABELS: Record<ItemCondition, string> = {
@@ -58,8 +58,8 @@ export const ROLE_LABELS: Record<AdminRole, string> = {
 };
 
 export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  signed_contract: "Kontrak yang Ditandatangani",
-  deposit_proof: "Bukti Transfer Deposit",
+  signed_contract: "Kontrak yang ditandatangani",
+  deposit_proof: "Bukti transfer deposit",
   ktp_scan: "Scan KTP",
 };
 

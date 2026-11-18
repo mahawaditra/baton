@@ -56,7 +56,7 @@ export function SurveySection({
         </p>
         <div>
           <Button variant="outline" onClick={() => setIsOpen(true)}>
-            Isi Survey
+            Isi survey
           </Button>
         </div>
       </CardContent>

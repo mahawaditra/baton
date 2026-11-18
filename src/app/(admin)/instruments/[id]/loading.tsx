@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { key: "peminjam", label: "Borrower History" },
-  { key: "kondisi", label: "Condition History" },
+  { key: "peminjam", label: "Borrower history" },
+  { key: "kondisi", label: "Condition history" },
   { key: "addendum", label: "Addendum" },
   { key: "aktivitas", label: "Activity" },
 ] as const;
@@ -43,7 +43,7 @@ export default function InstrumentDetailLoading() {
               key={t.key}
               className={cn(
                 "shrink-0 px-5 py-3.5 text-sm whitespace-nowrap text-muted-foreground",
-                i === 0 && "-mb-px border-b-2 border-navy font-semibold",
+                i === 0 && "-mb-px border-b-2 border-primary font-semibold",
               )}
             >
               {t.label}

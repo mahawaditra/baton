@@ -5,23 +5,25 @@ import { requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { validationErrors, type FieldErrors } from "@/lib/form-errors";
 import { isOutOfServiceCondition } from "@/lib/loan/loan-rules";
 
 const createInstrumentSchema = z.object({
-  section: z.string().trim().min(1, "Section is required").max(100),
-  type: z.string().trim().min(1, "Type is required").max(100),
-  brand: z.string().trim().max(100).nullable(),
-  serialNumber: z.string().trim().max(100).nullable(),
+  section: z.string().trim().min(1, "Section is required").max(100, "100 characters max."),
+  type: z.string().trim().min(1, "Type is required").max(100, "100 characters max."),
+  brand: z.string().trim().max(100, "100 characters max.").nullable(),
+  serialNumber: z.string().trim().max(100, "100 characters max.").nullable(),
   condition: z.enum(
     ["ok", "need_repair", "retired", "lost"],
     "Invalid condition value",
   ),
-  location: z.string().trim().min(1, "Location is required").max(100),
-  notes: z.string().trim().max(1000).nullable(),
+  location: z.string().trim().min(1, "Location is required").max(100, "100 characters max."),
+  notes: z.string().trim().max(1000, "1000 characters max.").nullable(),
 });
 
 export type CreateInstrumentState = {
   error: string | null;
+  fieldErrors?: FieldErrors;
 };
 
 export async function createInstrument(
@@ -41,7 +43,7 @@ export async function createInstrument(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+    return validationErrors(parsed.error);
   }
 
   const { section, type, brand, serialNumber, condition, location, notes } =

@@ -78,13 +78,13 @@ export function InstrumentTypeSlotsPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Instrument Availability Slots</CardTitle>
+        <CardTitle>Instrument availability slots</CardTitle>
       </CardHeader>
       <CardContent className="gap-3">
         {!canEdit && (
           <p className="text-sm text-foreground-2">
-            Hanya Ketua (atau Overlord) yang bisa ubah slot ini. Kamu bisa liat
-            isinya, tapi nggak bisa ubah.
+            Only the Ketua (or Overlord) can change these slots. You can view
+            them but not save changes.
           </p>
         )}
         <div className="flex flex-col gap-2">

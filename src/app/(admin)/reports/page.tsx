@@ -7,6 +7,7 @@ import { AnnualReportPanel } from "./AnnualReportPanel";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionalMark } from "@/components/Field";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
   Card,
@@ -41,12 +42,14 @@ export default async function ReportsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Export Snapshot</CardTitle>
+            <CardTitle>Export snapshot</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <form action={exportInventorySnapshot} className="flex items-end gap-3">
               <div className="flex flex-1 flex-col gap-1.5">
-                <Label htmlFor="label">Label</Label>
+                <Label htmlFor="label">
+                  Label <OptionalMark language="en" />
+                </Label>
                 <Input
                   id="label"
                   name="label"
@@ -54,13 +57,13 @@ export default async function ReportsPage() {
                 />
               </div>
               <SubmitButton pendingText="Exporting...">
-                Export Snapshot
+                Export snapshot
               </SubmitButton>
             </form>
 
             {snapshots.length > 0 && (
               <div className="flex flex-col gap-2 border-t border-border pt-4">
-                <div className="text-sm font-semibold">Recent Snapshots</div>
+                <div className="text-sm font-semibold">Recent snapshots</div>
                 <ul className="flex flex-col gap-2 text-sm">
                   {snapshots.map((s) => (
                     <li

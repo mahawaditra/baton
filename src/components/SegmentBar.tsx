@@ -1,11 +1,18 @@
-import { staggerStyle } from "@/lib/utils";
+import { cn, staggerStyle } from "@/lib/utils";
+
+const FILL_TONE = {
+  primary: "bg-primary",
+  plum: "bg-plum",
+} as const;
 
 export function SegmentBar({
   filled,
   total,
+  tone = "primary",
 }: {
   filled: number;
   total: number;
+  tone?: keyof typeof FILL_TONE;
 }) {
   return (
     <div aria-hidden className="flex gap-0.5">
@@ -16,7 +23,10 @@ export function SegmentBar({
         >
           {index < filled && (
             <span
-              className="slot-fill block h-full rounded-full bg-plum"
+              className={cn(
+                "slot-fill block h-full rounded-full",
+                FILL_TONE[tone],
+              )}
               style={staggerStyle(index)}
             />
           )}

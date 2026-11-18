@@ -10,7 +10,7 @@ export default async function NewGoodPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-h1">New Good</h1>
+      <h1 className="text-h1">New good</h1>
 
       <Card>
         <CardHeader>

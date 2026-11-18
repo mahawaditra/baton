@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { Notice } from "@/components/Notice";
 
 type SummaryRow = { Metric: string; Value: number };
 type PreviewResult = Awaited<ReturnType<typeof previewAnnualReport>>;
@@ -104,7 +105,7 @@ export function AnnualReportPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Annual Report</CardTitle>
+        <CardTitle>Annual report</CardTitle>
       </CardHeader>
       <CardContent className="gap-4">
         <p className="text-sm text-foreground-2">
@@ -114,7 +115,7 @@ export function AnnualReportPanel({
 
         <div className="flex items-center gap-2">
           <Button onClick={handleGenerate} disabled={loading} variant="outline">
-            {loading ? "Generating report..." : "Generate Report"}
+            {loading ? "Generating report..." : "Generate report"}
           </Button>
 
           {preview && (
@@ -136,7 +137,7 @@ export function AnnualReportPanel({
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleSave} disabled={saving}>
-                    {saving ? "Saving..." : "Create Report"}
+                    {saving ? "Saving..." : "Create report"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -145,16 +146,16 @@ export function AnnualReportPanel({
         </div>
 
         {error && (
-          <p className="text-sm text-destructive" aria-live="polite">
+          <Notice tone="danger" compact aria-live="polite">
             {error}
-          </p>
+          </Notice>
         )}
 
         {preview && <SummaryTable rows={preview.summaryRows} />}
 
         {recentReports.length > 0 && (
           <div className="flex flex-col gap-2 border-t border-border pt-4">
-            <div className="text-sm font-semibold">Recent Reports</div>
+            <div className="text-sm font-semibold">Recent reports</div>
             <div className="flex flex-col gap-1.5">
               {recentReports.map((r) => {
                 const isExpanded = expandedId === r.id;

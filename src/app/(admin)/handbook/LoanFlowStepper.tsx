@@ -1,8 +1,9 @@
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type {
   BorrowingRequestStatus,
   InstrumentStatus,
 } from "@/generated/prisma/client";
+import { Disclosure, DisclosureChevron } from "@/components/Disclosure";
 import { MusicGlyph, type MusicGlyphName } from "@/components/MusicGlyph";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -181,29 +182,31 @@ function StepBody({
 }) {
   return (
     <>
-      <details className="details-animated group">
-        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
-          <h3
-            className={cn(
-              "flex items-center gap-2 font-heading text-foreground",
-              compact ? "text-body font-semibold" : "text-title",
-            )}
-          >
-            {lead}
-            {step.title}
-          </h3>
-          <span className="inline-flex items-center gap-1.5">
-            <ActorChip actor={step.actor} />
-            <ChevronDown
-              className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-              strokeWidth={1.75}
-            />
-          </span>
-        </summary>
+      <Disclosure
+        chevron={false}
+        summaryClassName="flex-wrap gap-x-3 gap-y-1.5 rounded-sm"
+        summary={
+          <>
+            <h3
+              className={cn(
+                "flex items-center gap-2 font-heading text-foreground",
+                compact ? "text-body font-semibold" : "text-title",
+              )}
+            >
+              {lead}
+              {step.title}
+            </h3>
+            <span className="inline-flex items-center gap-1.5">
+              <ActorChip actor={step.actor} />
+              <DisclosureChevron />
+            </span>
+          </>
+        }
+      >
         <p className="mt-2 max-w-prose text-sm text-foreground-2">
           {step.detail}
         </p>
-      </details>
+      </Disclosure>
       {step.changes && (
         <div className="mt-3 flex flex-col gap-1.5">
           {step.changes.map((change) => (
@@ -281,7 +284,7 @@ export function LoanFlowStepper() {
             className="grid grid-cols-[2.5rem_1fr] gap-x-3 sm:grid-cols-[4rem_1fr] sm:gap-x-4"
           >
             <div className="relative">
-              <span className="tabular font-heading text-2xl leading-none font-bold text-navy sm:text-4xl">
+              <span className="tabular font-heading text-2xl leading-none font-bold text-primary sm:text-4xl">
                 {String(index + 1).padStart(2, "0")}
               </span>
               <span

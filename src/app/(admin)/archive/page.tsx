@@ -72,7 +72,7 @@ export default async function ArchivePage({
               }),
             )}
           >
-            All Years
+            All years
           </Link>
           {availableYears.map((y) => (
             <Link
@@ -100,7 +100,7 @@ export default async function ArchivePage({
               }),
             )}
           >
-            All Statuses
+            All statuses
           </Link>
           {ARCHIVE_STATUSES.map((s) => (
             <Link

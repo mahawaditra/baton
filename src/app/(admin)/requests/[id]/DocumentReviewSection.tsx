@@ -52,7 +52,7 @@ export function DocumentReviewSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Review Documents</CardTitle>
+        <CardTitle>Review documents</CardTitle>
       </CardHeader>
       <CardContent className="gap-4">
         <div className="flex items-center gap-3">
@@ -196,7 +196,7 @@ export function DocumentReviewSection({
                 {anyRejected
                   ? "Notify for Reupload"
                   : isExtension
-                    ? "Submit Review"
+                    ? "Submit review"
                     : "Confirm Documents & Notify Ready for Pickup"}
               </SubmitButton>
               {!allDecided && (

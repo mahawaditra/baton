@@ -11,9 +11,9 @@ import {
 export const BOARD_COLUMNS = [
   { key: "requested", label: "Diajukan" },
   { key: "in_review", label: "Ditinjau" },
-  { key: "document_review", label: "Review Dokumen" },
+  { key: "document_review", label: "Review dokumen" },
   { key: "handover", label: "Handover" },
-  { key: "on_loan", label: "Sedang Dipinjam" },
+  { key: "on_loan", label: "Sedang dipinjam" },
   { key: "ongoing", label: "Ongoing" },
 ] as const;
 

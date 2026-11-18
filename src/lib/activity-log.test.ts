@@ -46,7 +46,7 @@ describe("buildAnnualSummaryRows", () => {
   });
 
   it("labels each request status in the breakdown instead of printing the enum", () => {
-    expect(rows).toContainEqual({ Metric: "  Status: Siap Diambil", Value: 3 });
+    expect(rows).toContainEqual({ Metric: "  Status: Siap diambil", Value: 3 });
     expect(rows).toContainEqual({ Metric: "  Status: Selesai", Value: 9 });
   });
 
@@ -64,7 +64,7 @@ describe("buildAnnualSummaryRows", () => {
   });
 
   it("keeps the counts intact", () => {
-    expect(rows[0]).toEqual({ Metric: "Active Loans", Value: 12 });
+    expect(rows[0]).toEqual({ Metric: "Active loans", Value: 12 });
     expect(rows[1].Value).toBe(20);
   });
 });
@@ -177,7 +177,7 @@ describe("formatActivityLog", () => {
           notes: "Nominal tidak sesuai",
         }),
       ),
-    ).toBe("rejected Bukti Transfer Deposit: Nominal tidak sesuai");
+    ).toBe("rejected Bukti transfer deposit: Nominal tidak sesuai");
   });
 
   it("names the label and count on export_snapshot", () => {

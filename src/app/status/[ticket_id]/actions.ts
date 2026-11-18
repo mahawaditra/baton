@@ -43,6 +43,11 @@ import {
   withServerErrorFallback,
 } from "@/lib/server-action-fallback";
 import { textFieldsOf } from "@/lib/network-fallback";
+import {
+  hasFieldErrors,
+  validationErrors,
+  type FieldErrors,
+} from "@/lib/form-errors";
 
 type VerifyResult =
   | { success: true; request: RequestData }
@@ -56,6 +61,7 @@ type FormActionState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
+  fieldErrors?: FieldErrors;
   fields: Record<string, string>;
 };
 
@@ -85,7 +91,7 @@ async function recordWrongAccessCode(ticketId: string): Promise<string> {
     `access-code:${ticketId}`,
   );
   return success
-    ? "Kode akses salah."
+    ? "Kode aksesnya belum cocok. Cek lagi email konfirmasi kamu."
     : "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.";
 }
 
@@ -264,12 +270,16 @@ const contractDataSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{16}$/, "Nomor KTP harus 16 digit"),
-  addressKtp: z.string().trim().min(1, "Alamat KTP wajib diisi").max(300),
+  addressKtp: z
+    .string()
+    .trim()
+    .min(1, "Alamat KTP wajib diisi")
+    .max(300, "Maksimal 300 karakter."),
   addressDomicile: z
     .string()
     .trim()
     .min(1, "Alamat domisili wajib diisi")
-    .max(300),
+    .max(300, "Maksimal 300 karakter."),
   faculty: z
     .string()
     .trim()
@@ -282,13 +292,21 @@ const contractDataSchema = z.object({
     .min(1, "Jurusan/prodi wajib diisi")
     .max(60, "Jurusan/prodi maksimal 60 karakter")
     .regex(/^[^/]+$/, "Jurusan/prodi tidak boleh mengandung tanda /"),
-  guardianName: z.string().trim().min(1, "Nama wali wajib diisi").max(100),
-  guardianPhone: z.string().trim().min(1, "Nomor HP wali wajib diisi").max(20),
+  guardianName: z
+    .string()
+    .trim()
+    .min(1, "Nama wali wajib diisi")
+    .max(100, "Maksimal 100 karakter."),
+  guardianPhone: z
+    .string()
+    .trim()
+    .min(1, "Nomor HP wali wajib diisi")
+    .max(20, "Maksimal 20 karakter."),
   guardianAddressKtp: z
     .string()
     .trim()
     .min(1, "Alamat KTP wali wajib diisi")
-    .max(300),
+    .max(300, "Maksimal 300 karakter."),
 });
 
 function echoContractFields(formData: FormData): Record<string, string> {
@@ -301,14 +319,22 @@ function echoContractFields(formData: FormData): Record<string, string> {
 }
 
 const addendumDataSchema = z.object({
-  completeness: z.string().trim().min(1, "Kelengkapan wajib diisi").max(500),
+  completeness: z
+    .string()
+    .trim()
+    .min(1, "Kelengkapan wajib diisi")
+    .max(500, "Maksimal 500 karakter."),
   bodyCondition: z
     .string()
     .trim()
     .min(1, "Kondisi badan alat wajib diisi")
-    .max(1000),
-  accessoriesCondition: z.string().trim().max(1000).nullable(),
-  notes: z.string().trim().max(1000).nullable(),
+    .max(1000, "Maksimal 1000 karakter."),
+  accessoriesCondition: z
+    .string()
+    .trim()
+    .max(1000, "Maksimal 1000 karakter.")
+    .nullable(),
+  notes: z.string().trim().max(1000, "Maksimal 1000 karakter.").nullable(),
 });
 
 async function submitStage2Unguarded(
@@ -334,7 +360,7 @@ async function submitStage2Unguarded(
     return {
       success: false,
       error: null,
-      generalError: "Pengajuan ini belum siap untuk Tahap 2.",
+      generalError: "Data kontrak belum bisa diisi karena staf belum mengonfirmasi instrumennya. Cek lagi setelah dapat email dari Logistik.",
       fields: {},
     };
   }
@@ -343,7 +369,7 @@ async function submitStage2Unguarded(
     return {
       success: false,
       error: null,
-      generalError: "Instrumen belum ditugaskan.",
+      generalError: "Staf belum memilihkan instrumen buat kamu. Tunggu email dari Logistik, lalu buka halaman ini lagi.",
       fields: {},
     };
   }
@@ -362,7 +388,7 @@ async function submitStage2Unguarded(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0].message,
+      ...validationErrors(parsed.error),
       generalError: null,
       fields: echoContractFields(formData),
     };
@@ -498,7 +524,7 @@ async function submitExtensionUnguarded(
     return {
       success: false,
       error: null,
-      generalError: "Pengajuan ini tidak bisa diperpanjang.",
+      generalError: "Peminjaman ini nggak bisa diperpanjang. Hubungi Logistik OSUI Mahawaditra kalau butuh waktu tambahan.",
       fields: {},
     };
   }
@@ -534,7 +560,7 @@ async function submitExtensionUnguarded(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0].message,
+      ...validationErrors(parsed.error),
       generalError: null,
       fields,
     };
@@ -563,7 +589,7 @@ async function submitExtensionUnguarded(
     return {
       success: false,
       error: null,
-      generalError: "Belum masuk periode waktu perpanjangan.",
+      generalError: "Perpanjangan baru bisa diajukan mulai 30 hari sebelum jatuh tempo.",
       fields,
     };
   }
@@ -573,7 +599,7 @@ async function submitExtensionUnguarded(
       success: false,
       error: null,
       generalError:
-        "Perpanjangan untuk pengajuan ini masih menunggu konfirmasi staf.",
+        "Perpanjangan kamu masih menunggu konfirmasi staf. Cek halaman ini lagi nanti.",
       fields,
     };
   }
@@ -658,7 +684,7 @@ export async function getContractPdf(
   });
 
   if (!period?.contractDriveFileId) {
-    return { success: false, error: "PDF kontrak tidak ditemukan." };
+    return { success: false, error: "Kontrak kamu belum tersedia. Muat ulang halaman ini, atau hubungi Logistik OSUI Mahawaditra kalau masih nggak muncul." };
   }
 
   const token = signDownloadToken(ticketId);
@@ -705,7 +731,7 @@ async function submitDocumentUnguarded(
     return {
       success: false,
       error: null,
-      generalError: "Periode peminjaman tidak ditemukan.",
+      generalError: "Data peminjaman kamu nggak ketemu. Hubungi Logistik OSUI Mahawaditra.",
     };
   }
 
@@ -716,7 +742,7 @@ async function submitDocumentUnguarded(
       return {
         success: false,
         error: null,
-        generalError: "Belum siap untuk upload dokumen.",
+        generalError: "Dokumen belum bisa diupload sekarang. Muat ulang halaman ini buat lihat langkah kamu sekarang.",
       };
     }
   } else {
@@ -724,14 +750,14 @@ async function submitDocumentUnguarded(
       return {
         success: false,
         error: null,
-        generalError: "Belum siap untuk upload dokumen.",
+        generalError: "Dokumen belum bisa diupload sekarang. Muat ulang halaman ini buat lihat langkah kamu sekarang.",
       };
     }
   }
 
   const file = formData.get("file") as File | null;
   if (!file?.size) {
-    return { success: false, error: "Silakan pilih file.", generalError: null };
+    return { success: false, error: "Pilih file dulu.", generalError: null };
   }
 
   const validation = await UPLOAD_VALIDATORS[documentType](file);
@@ -864,7 +890,7 @@ async function submitAddendumUnguarded(
     return {
       success: false,
       error: null,
-      generalError: "Periode peminjaman tidak ditemukan.",
+      generalError: "Data peminjaman kamu nggak ketemu. Hubungi Logistik OSUI Mahawaditra.",
       fields: {},
     };
   }
@@ -874,7 +900,7 @@ async function submitAddendumUnguarded(
       return {
         success: false,
         error: null,
-        generalError: "Pengajuan ini tidak bisa dikembalikan.",
+        generalError: "Pengembalian belum bisa diajukan sekarang. Muat ulang halaman ini buat lihat langkah kamu sekarang.",
         fields: {},
       };
     }
@@ -885,7 +911,7 @@ async function submitAddendumUnguarded(
       return {
         success: false,
         error: null,
-        generalError: "Addendum akhir untuk periode ini sudah pernah dikirim.",
+        generalError: "Addendum ini udah pernah kamu kirim, jadi nggak perlu dikirim lagi.",
         fields: {},
       };
     }
@@ -897,7 +923,7 @@ async function submitAddendumUnguarded(
         return {
           success: false,
           error: null,
-          generalError: "Pengajuan ini belum siap untuk addendum.",
+          generalError: "Addendum belum bisa diisi sekarang. Muat ulang halaman ini buat lihat langkah kamu sekarang.",
           fields: {},
         };
       }
@@ -908,7 +934,7 @@ async function submitAddendumUnguarded(
         return {
           success: false,
           error: null,
-          generalError: "Kontrak yang kamu tanda tangani masih direview staf.",
+          generalError: "Kontrak yang kamu tanda tangani masih direview staf. Addendum bisa diisi setelah disetujui.",
           fields: {},
         };
       }
@@ -917,7 +943,7 @@ async function submitAddendumUnguarded(
         return {
           success: false,
           error: null,
-          generalError: "Pengajuan ini belum siap untuk addendum.",
+          generalError: "Addendum belum bisa diisi sekarang. Muat ulang halaman ini buat lihat langkah kamu sekarang.",
           fields: {},
         };
       }
@@ -930,21 +956,16 @@ async function submitAddendumUnguarded(
       return {
         success: false,
         error: null,
-        generalError: "Addendum awal untuk periode ini sudah pernah dikirim.",
+        generalError: "Addendum ini udah pernah kamu kirim, jadi nggak perlu dikirim lagi.",
         fields: {},
       };
     }
   }
 
+  const photos = formData
+    .getAll("photos")
+    .filter((photo): photo is File => photo instanceof File && photo.size > 0);
   const confirmedTruthful = formData.get("confirmedTruthful") === "on";
-  if (!confirmedTruthful) {
-    return {
-      success: false,
-      error: "Kamu harus mengonfirmasi bahwa data kondisi ini benar.",
-      generalError: null,
-      fields,
-    };
-  }
 
   const parsed = addendumDataSchema.safeParse({
     completeness: formData.get("completeness"),
@@ -953,17 +974,42 @@ async function submitAddendumUnguarded(
     notes: formData.get("notes") || null,
   });
 
-  if (!parsed.success) {
+  const schemaErrors = parsed.success ? null : validationErrors(parsed.error);
+  const fieldErrors: FieldErrors = { ...schemaErrors?.fieldErrors };
+  if (photos.length === 0) {
+    fieldErrors.photos = "Upload minimal 1 foto kondisi instrumen.";
+  }
+  if (!confirmedTruthful) {
+    fieldErrors.confirmedTruthful =
+      "Kamu harus mengonfirmasi bahwa data kondisi ini benar.";
+  }
+  if (!parsed.success || hasFieldErrors(fieldErrors)) {
     return {
       success: false,
-      error: parsed.error.issues[0].message,
+      error: schemaErrors?.error ?? null,
       generalError: null,
+      fieldErrors,
       fields,
     };
   }
 
   const { completeness, bodyCondition, accessoriesCondition, notes } =
     parsed.data;
+
+  const validatedPhotos: { file: File; mimeType: string }[] = [];
+  for (const photo of photos) {
+    const validation = await validateImageUpload(photo);
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: null,
+        generalError: null,
+        fieldErrors: { photos: validation.error },
+        fields,
+      };
+    }
+    validatedPhotos.push({ file: photo, mimeType: validation.mimeType });
+  }
 
   const year = currentYearInJakarta();
   const archiveFolder = await getBorrowerArchiveFolder(
@@ -975,25 +1021,6 @@ async function submitAddendumUnguarded(
     timing === "initial" ? "Addendum_Awal" : "Addendum_Akhir",
     archiveFolder,
   );
-
-  const photos = formData
-    .getAll("photos")
-    .filter((photo): photo is File => photo instanceof File);
-
-  const validatedPhotos: { file: File; mimeType: string }[] = [];
-  for (const photo of photos) {
-    if (photo.size === 0) continue;
-    const validation = await validateImageUpload(photo);
-    if (!validation.valid) {
-      return {
-        success: false,
-        error: validation.error,
-        generalError: null,
-        fields,
-      };
-    }
-    validatedPhotos.push({ file: photo, mimeType: validation.mimeType });
-  }
 
   const driveFileIds: string[] = [];
   for (const [index, { file, mimeType }] of validatedPhotos.entries()) {

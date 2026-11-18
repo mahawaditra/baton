@@ -13,7 +13,7 @@ export function SlotMeter({
   const shared = used > 0 && used < max;
   return (
     <div className={cn("w-24 shrink-0", className)}>
-      <SegmentBar filled={used} total={max} />
+      <SegmentBar filled={used} total={max} tone="plum" />
       <div className="tabular mt-1 text-xs text-muted-foreground">
         Slot {used}/{max}
         {shared && " · shared"}

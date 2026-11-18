@@ -3,7 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { sendEmailSafely } from "@/lib/send-email-safely";
-import { daysBetween, escapeHtml, toJakartaCalendarDate } from "@/lib/format";
+import {
+  daysBetween,
+  escapeHtml,
+  formatRupiah,
+  toJakartaCalendarDate,
+} from "@/lib/format";
 import {
   calculateDepositRefund,
   determineInstrumentStatusOnReturn,
@@ -19,6 +24,7 @@ import {
 } from "@/lib/loan/loan-rules";
 import { revalidateRequestViews } from "@/lib/revalidate";
 import { z } from "zod";
+import type { FieldErrors } from "@/lib/form-errors";
 import * as Sentry from "@sentry/nextjs";
 
 const confirmReturnSchema = z.object({
@@ -27,7 +33,7 @@ const confirmReturnSchema = z.object({
     "Invalid condition value",
   ),
   status: z.enum(["available", "unavailable"], "Invalid status value"),
-  location: z.string().trim().min(1, "Location is required").max(100),
+  location: z.string().trim().min(1, "Location is required").max(100, "100 characters max."),
 });
 
 const MAX_REASON_LENGTH = 1000;
@@ -129,7 +135,7 @@ export async function assignInstrument(
     Sentry.captureException(err);
     return {
       success: false,
-      error: "Failed to assign instrument. Please try again.",
+      error: "Couldn't assign the instrument. Try again.",
     };
   }
 
@@ -181,7 +187,7 @@ export async function confirmAvailable(requestId: string) {
     <p>Halo ${escapeHtml(resolveNickname(request.borrowerName, request.borrowerNickname))},</p>
     <p>Instrumen yang kamu ajukan sekarang tersedia.</p>
     <p>Silakan lengkapi data kontrak di link berikut:</p>
-    <p><a href="${process.env.BETTER_AUTH_URL}/status/${request.ticketId}">Lanjut ke Tahap 2</a></p>
+    <p><a href="${process.env.BETTER_AUTH_URL}/status/${request.ticketId}">Lengkapi data kontrak</a></p>
   `,
   });
   await prisma.activityLog.create({
@@ -201,6 +207,7 @@ export type RejectRequestState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
+  fieldErrors?: FieldErrors;
 };
 
 export async function rejectRequest(
@@ -214,15 +221,17 @@ export async function rejectRequest(
   if (!reason) {
     return {
       success: false,
-      error: "Rejection reason is required.",
+      error: null,
       generalError: null,
+      fieldErrors: { reason: "Rejection reason is required." },
     };
   }
   if (reason.length > MAX_REASON_LENGTH) {
     return {
       success: false,
-      error: `Rejection reason must be ${MAX_REASON_LENGTH} characters or fewer.`,
+      error: null,
       generalError: null,
+      fieldErrors: { reason: `Rejection reason must be ${MAX_REASON_LENGTH} characters or fewer.` },
     };
   }
 
@@ -316,6 +325,7 @@ export type CancelRequestState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
+  fieldErrors?: FieldErrors;
 };
 
 export async function cancelRequest(
@@ -329,15 +339,17 @@ export async function cancelRequest(
   if (!reason) {
     return {
       success: false,
-      error: "Cancellation reason is required.",
+      error: null,
       generalError: null,
+      fieldErrors: { reason: "Cancellation reason is required." },
     };
   }
   if (reason.length > MAX_REASON_LENGTH) {
     return {
       success: false,
-      error: `Cancellation reason must be ${MAX_REASON_LENGTH} characters or fewer.`,
+      error: null,
       generalError: null,
+      fieldErrors: { reason: `Cancellation reason must be ${MAX_REASON_LENGTH} characters or fewer.` },
     };
   }
 
@@ -844,7 +856,7 @@ export async function confirmReturn(requestId: string, formData: FormData) {
 
   const depositMessage =
     depositRefundAmount > 0
-      ? `<p>Deposit yang akan dikembalikan: <strong>Rp${depositRefundAmount.toLocaleString("id-ID")}</strong>. Staf Logistik OSUI akan menghubungi kamu untuk proses transfer balik.</p>`
+      ? `<p>Deposit yang akan dikembalikan: <strong>${formatRupiah(depositRefundAmount)}</strong>. Staf Logistik OSUI akan menghubungi kamu untuk proses transfer balik.</p>`
       : `<p>Berdasarkan tanggal pengembalian, deposit yang kamu setorkan tidak dapat dikembalikan sesuai ketentuan peminjaman.</p>`;
 
   await sendEmailSafely({

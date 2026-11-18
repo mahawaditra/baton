@@ -7,11 +7,11 @@ export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <EmptyState
-        title="Halaman Tidak Ditemukan"
+        title="Halaman tidak ditemukan"
         description="Alamat yang kamu tuju tidak ada atau sudah dipindahkan. Coba periksa lagi link-nya, atau kembali ke beranda."
         action={
           <Link href="/" className={cn(buttonVariants())}>
-            Ke Beranda
+            Ke beranda
           </Link>
         }
       />

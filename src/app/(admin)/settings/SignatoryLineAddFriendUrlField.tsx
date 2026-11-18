@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { setSignatoryLineAddFriendUrl } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FieldError } from "@/components/Field";
 
 export function SignatoryLineAddFriendUrlField({
   defaultValue,
@@ -39,7 +40,9 @@ export function SignatoryLineAddFriendUrlField({
     <div className="flex flex-col gap-1">
       <div className="relative">
         <Input
-          aria-label="LINE Add Friend Link"
+          aria-label="LINE Add Friend link"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "signatoryLineUrlError" : undefined}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="https://line.me/ti/p/..."
@@ -57,13 +60,9 @@ export function SignatoryLineAddFriendUrlField({
           {pending ? "..." : "Save"}
         </Button>
       </div>
-      {error && (
-        <p className="text-sm text-destructive" aria-live="polite">
-          {error}
-        </p>
-      )}
+      {error && <FieldError id="signatoryLineUrlError">{error}</FieldError>}
       <p className="text-caption text-muted-foreground">
-        Generate dari app LINE (Profile → QR code di atas → Copy link).
+        Generate it in the LINE app (Profile → QR code at the top → Copy link).
       </p>
     </div>
   );

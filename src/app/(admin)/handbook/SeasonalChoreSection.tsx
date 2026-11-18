@@ -4,7 +4,7 @@ import { HandoverNote } from "./HandoverNote";
 
 const TASKS = {
   loanSettings: {
-    title: "Update Loan Settings",
+    title: "Update loan settings",
     body: (
       <>
         <p>
@@ -37,7 +37,7 @@ const TASKS = {
     ),
   },
   exportSnapshot: {
-    title: "Export Snapshot",
+    title: "Export snapshot",
     body: (
       <>
         <p>
@@ -81,7 +81,7 @@ const TASKS = {
     ),
   },
   annualReport: {
-    title: "Generate Annual Report",
+    title: "Generate annual report",
     body: (
       <>
         <p>
@@ -116,7 +116,9 @@ const TASKS = {
 
 type TaskKey = keyof typeof TASKS;
 
-const MOMENTS: { title: string; when: string; tasks: TaskKey[] }[] = [
+type MomentTask = TaskKey | { repeat: TaskKey; firstAt: string };
+
+const MOMENTS: { title: string; when: string; tasks: MomentTask[] }[] = [
   {
     title: "Awal kepengurusan",
     when: "Begitu tim baru mulai, awal tahun",
@@ -125,12 +127,15 @@ const MOMENTS: { title: string; when: string; tasks: TaskKey[] }[] = [
   {
     title: "Sebelum Prelude",
     when: "Tengah tahun, sebelum musim intake sekitar September–Oktober",
-    tasks: ["transferToOngoing", "exportSnapshot"],
+    tasks: [
+      "transferToOngoing",
+      { repeat: "exportSnapshot", firstAt: "Awal kepengurusan" },
+    ],
   },
   {
     title: "Setelah Prelude",
     when: "Begitu Prelude selesai",
-    tasks: ["exportSnapshot"],
+    tasks: [{ repeat: "exportSnapshot", firstAt: "Awal kepengurusan" }],
   },
   {
     title: "Akhir kepengurusan",
@@ -174,18 +179,32 @@ export function SeasonalChoreSection() {
               {moment.when}
             </p>
             <div className="overflow-hidden rounded-md border border-border bg-card">
-              {moment.tasks.map((taskKey) => (
-                <HandbookAccordionRow
-                  key={taskKey}
-                  summary={
+              {moment.tasks.map((task) =>
+                typeof task === "string" ? (
+                  <HandbookAccordionRow
+                    key={task}
+                    summary={
+                      <span className="text-label text-foreground">
+                        {TASKS[task].title}
+                      </span>
+                    }
+                  >
+                    {TASKS[task].body}
+                  </HandbookAccordionRow>
+                ) : (
+                  <div
+                    key={task.repeat}
+                    className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-border px-4 py-3 last:border-b-0 sm:px-5"
+                  >
                     <span className="text-label text-foreground">
-                      {TASKS[taskKey].title}
+                      {TASKS[task.repeat].title}
                     </span>
-                  }
-                >
-                  {TASKS[taskKey].body}
-                </HandbookAccordionRow>
-              ))}
+                    <span className="text-caption text-muted-foreground">
+                      Langkahnya sama kayak di {task.firstAt}.
+                    </span>
+                  </div>
+                ),
+              )}
             </div>
           </li>
         ))}

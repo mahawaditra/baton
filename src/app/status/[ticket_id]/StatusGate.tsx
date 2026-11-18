@@ -14,7 +14,6 @@ import {
   getStatusTurn,
   LOAN_STEP_LABELS,
   resolveNickname,
-  type StatusTurn,
 } from "@/lib/loan/loan-rules";
 import { toastError } from "@/lib/toast";
 import { normalizeAccessCode } from "@/lib/loan/id-generators";
@@ -32,30 +31,11 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { ContactLink, LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 import { Card, CardContent } from "@/components/ui/card";
 import { TicketCard, TicketLabel } from "@/components/TicketCard";
-import { StatusRow } from "@/components/StatusRow";
+import { Notice, NoticeRow } from "@/components/Notice";
 import { StatusLookupShell } from "../StatusLookupShell";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertTriangle,
-  Download,
-  Hourglass,
-  Info,
-  PenLine,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-
-function StatusNote({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-3 rounded-lg border border-gold/40 bg-gold-soft/40 p-4 text-sm">
-      <Info
-        className="mt-0.5 h-4 w-4 shrink-0 text-gold-soft-foreground"
-        strokeWidth={1.75}
-      />
-      <div className="text-foreground-2">{children}</div>
-    </div>
-  );
-}
+import { Download } from "lucide-react";
 
 const GATE_DESCRIPTION =
   "Masukkan kode akses yang dikirim ke email kamu untuk buka status peminjaman ini.";
@@ -94,7 +74,7 @@ function TicketHero({
   return (
     <div className="bg-hero-bg px-6 pt-2 pb-16 text-hero-fg">
       <div className="mx-auto w-full max-w-3xl">
-        <div className="text-micro uppercase text-gold">Tiket peminjaman</div>
+        <TicketLabel>Tiket peminjaman</TicketLabel>
         <h1 className="tabular mt-1 font-heading text-display tracking-[0.02em] text-hero-fg">
           {ticketId}
         </h1>
@@ -105,39 +85,28 @@ function TicketHero({
 }
 
 const TURN_TONE = {
-  borrower: {
-    label: "Giliran kamu",
-    icon: PenLine,
-    chip: "bg-gold text-hero-bg",
-    bottomTone: "gold",
-    callout: "border-gold/40 bg-gold-soft",
-  },
-  staff: {
-    label: "Giliran staf",
-    icon: Hourglass,
-    chip: "bg-plum text-plum-soft",
-    bottomTone: "plum",
-    callout: "border-plum/25 bg-plum-soft",
-  },
+  borrower: { label: "Giliran kamu", bottomTone: "gold" },
+  staff: { label: "Giliran staf", bottomTone: "plum" },
 } as const;
 
-function TurnRow({
-  turn,
-  className,
-}: {
-  turn: StatusTurn;
-  className?: string;
-}) {
-  const tone = TURN_TONE[turn.actor];
-  return (
-    <StatusRow
-      icon={tone.icon}
-      chipClassName={tone.chip}
-      title={tone.label}
-      message={turn.message}
-      className={className}
-    />
-  );
+const EXCEPTION_TITLE: Partial<Record<RequestData["status"], string>> = {
+  rejected: "Pengajuan ditolak",
+  cancelled: "Pengajuan dibatalkan",
+  overdue: "Terlambat",
+};
+
+function exceptionMessage(data: RequestData): string | null {
+  if (data.status === "rejected") return data.rejectionReason;
+  if (data.status === "cancelled") {
+    return (
+      data.cancellationReason ??
+      "Hubungi Logistik OSUI Mahawaditra kalau ada pertanyaan."
+    );
+  }
+  if (data.status === "overdue" && !data.hasFinalAddendum) {
+    return "Kamu belum mengembalikan instrumen sampai lewat tanggal kembali. Mohon segera dikembalikan ke Sekre.";
+  }
+  return null;
 }
 
 export function StatusGate({
@@ -274,59 +243,12 @@ export function StatusGate({
 
         <main className={TICKET_MAIN_CLASS}>
           {step === "exception" ? (
-            <div
-              className={cn(
-                "flex items-start gap-3 rounded-md border p-4 text-sm",
-                data.status === "cancelled"
-                  ? "border-border bg-muted"
-                  : "border-destructive/40 bg-destructive-soft",
-              )}
+            <Notice
+              tone={data.status === "cancelled" ? "neutral" : "danger"}
+              title={EXCEPTION_TITLE[data.status]}
             >
-              {data.status === "cancelled" ? (
-                <Info
-                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-              ) : (
-                <AlertTriangle
-                  className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-                  strokeWidth={1.75}
-                />
-              )}
-              <div>
-                <div
-                  className={cn(
-                    "font-semibold",
-                    data.status === "cancelled"
-                      ? "text-foreground"
-                      : "text-destructive",
-                  )}
-                >
-                  {data.status === "rejected"
-                    ? "Pengajuan Ditolak"
-                    : data.status === "cancelled"
-                      ? "Pengajuan Dibatalkan"
-                      : "Terlambat"}
-                </div>
-                {data.status === "rejected" && data.rejectionReason && (
-                  <div className="mt-0.5 text-foreground-2">
-                    {data.rejectionReason}
-                  </div>
-                )}
-                {data.status === "cancelled" && (
-                  <div className="mt-0.5 text-foreground-2">
-                    {data.cancellationReason ??
-                      "Hubungi Logistik OSUI Mahawaditra kalau ada pertanyaan."}
-                  </div>
-                )}
-                {data.status === "overdue" && !data.hasFinalAddendum && (
-                  <div className="mt-0.5 text-foreground-2">
-                    Kamu belum mengembalikan instrumen sampai lewat tanggal
-                    kembali. Mohon segera dikembalikan ke Sekre.
-                  </div>
-                )}
-              </div>
-            </div>
+              {exceptionMessage(data)}
+            </Notice>
           ) : turn ? (
             <TicketCard
               bottomTone={TURN_TONE[turn.actor].bottomTone}
@@ -335,7 +257,15 @@ export function StatusGate({
                   <LoanStepper steps={stepLabels} current={step} />
                 </div>
               }
-              bottom={<TurnRow turn={turn} className="px-6 pt-4 pb-5" />}
+              bottom={
+                <NoticeRow
+                  tone={turn.actor}
+                  title={TURN_TONE[turn.actor].label}
+                  className="px-6 pt-4 pb-5"
+                >
+                  {turn.message}
+                </NoticeRow>
+              }
             />
           ) : (
             <Card className="gap-0 py-0">
@@ -346,13 +276,9 @@ export function StatusGate({
           )}
 
           {step === "exception" && turn && (
-            <TurnRow
-              turn={turn}
-              className={cn(
-                "rounded-md border px-6 py-5",
-                TURN_TONE[turn.actor].callout,
-              )}
-            />
+            <Notice tone={turn.actor} title={TURN_TONE[turn.actor].label}>
+              {turn.message}
+            </Notice>
           )}
 
           {data.status === "reviewing" && data.instrumentConfirmed && (
@@ -364,21 +290,22 @@ export function StatusGate({
           )}
 
           {data.status === "returned" && (
-            <StatusNote>Makasih udah balikin instrumennya!</StatusNote>
+            <Notice tone="success" title="Udah dikembalikan">
+              Makasih udah balikin instrumennya!
+            </Notice>
           )}
 
           {data.status === "active" && !data.hasFinalAddendum && (
-            <StatusNote>
-              Kamu lagi pinjam instrumennya. Dijaga baik-baik, dan jangan lupa
-              balikin sebelum jatuh tempo ya!
-            </StatusNote>
+            <Notice tone="info" title="Kamu lagi pinjam instrumennya">
+              Dijaga baik-baik, dan jangan lupa balikin sebelum jatuh tempo ya!
+            </Notice>
           )}
 
           {data.status === "active" && data.dueDate && (
             <p className="text-sm text-muted-foreground">
-              Jatuh Tempo:{" "}
+              Jatuh tempo:{" "}
               <span className="tabular font-medium text-foreground">
-                {formatCalendarDate(data.dueDate, "id-ID")}
+                {formatCalendarDate(data.dueDate)}
               </span>
             </p>
           )}
@@ -419,7 +346,7 @@ export function StatusGate({
                 }}
               >
                 <Download className="h-4 w-4" strokeWidth={1.75} />
-                {downloadPending ? "Menyiapkan..." : "Download Kontrak"}
+                {downloadPending ? "Menyiapkan..." : "Download kontrak"}
               </Button>
             </div>
           )}
@@ -512,7 +439,7 @@ export function StatusGate({
                     !data.dueDate ||
                     new Date(data.dueDate) < new Date()
                       ? "Kembalikan"
-                      : "Kembalikan Lebih Awal"}
+                      : "Kembalikan lebih awal"}
                   </Button>
                 )}
             </div>
@@ -537,7 +464,7 @@ export function StatusGate({
               htmlFor="code"
               className="text-micro uppercase text-muted-foreground"
             >
-              Kode Akses
+              Kode akses
             </label>
             <Input
               id="code"

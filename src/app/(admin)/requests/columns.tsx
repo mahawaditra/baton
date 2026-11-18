@@ -1,13 +1,9 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { ExtensionBadge } from "@/components/ExtensionBadge";
 import { confirmedExtensionCount, formatNameWithNickname } from "@/lib/loan/loan-rules";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { formatJakartaDate } from "@/lib/format";
 import type { RequestRow } from "./request-row";
 
@@ -46,20 +42,6 @@ export const columns: ColumnDef<RequestRow>[] = [
       <span className="tabular">
         {formatJakartaDate(row.original.createdAt)}
       </span>
-    ),
-  },
-  {
-    id: "view",
-    header: "",
-    enableSorting: false,
-    cell: ({ row }) => (
-      <Link
-        href={`/requests/${row.original.id}`}
-        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-      >
-        View
-        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-      </Link>
     ),
   },
 ];

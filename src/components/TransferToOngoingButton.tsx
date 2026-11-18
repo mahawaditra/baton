@@ -37,7 +37,7 @@ export function TransferToOngoingButton({
         await transferToOngoing();
         setOpen(false);
       } catch {
-        toastError("Failed to transfer loans. Try again.");
+        toastError("Couldn't transfer the loans. Try again.");
       }
     });
   }

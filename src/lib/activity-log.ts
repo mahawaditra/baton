@@ -6,7 +6,7 @@ import {
   getRoleLabel,
   getStatusLabel,
 } from "@/lib/labels";
-import { formatCalendarDate } from "@/lib/format";
+import { formatLongCalendarDate, formatRupiah } from "@/lib/format";
 
 export const FORMER_MEMBER_LABEL = "Former member";
 
@@ -160,7 +160,7 @@ export function formatActivityLog(log: ActivityLogLike): string {
     case "confirm_extension":
       return "confirmed extension";
     case "confirm_return": {
-      const refund = `refund: Rp${typed.metadata.depositRefundAmount.toLocaleString("id-ID")}`;
+      const refund = `refund: ${formatRupiah(typed.metadata.depositRefundAmount)}`;
       if (typed.metadata.condition) {
         return `confirmed return (condition: ${getConditionLabel(typed.metadata.condition)}, ${refund})`;
       }
@@ -264,9 +264,9 @@ export function buildAnnualSummaryRows(params: {
   } = params;
 
   return [
-    { Metric: "Active Loans", Value: activeLoans },
+    { Metric: "Active loans", Value: activeLoans },
     {
-      Metric: `Requests Created (Jan 1, ${year} - ${formatCalendarDate(periodEnd)})`,
+      Metric: `Requests Created (1 January ${year} – ${formatLongCalendarDate(periodEnd, "en")})`,
       Value: requestsThisYear,
     },
     ...statusBreakdown.map((s) => ({

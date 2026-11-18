@@ -11,7 +11,7 @@ export default function ReportsLoading() {
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Annual Report</CardTitle>
+            <CardTitle>Annual report</CardTitle>
           </CardHeader>
           <CardContent className="gap-4">
             <Skeleton className="h-9 w-40" />
@@ -21,7 +21,7 @@ export default function ReportsLoading() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Export Snapshot</CardTitle>
+            <CardTitle>Export snapshot</CardTitle>
           </CardHeader>
           <CardContent className="gap-4">
             <div className="flex items-end gap-3">

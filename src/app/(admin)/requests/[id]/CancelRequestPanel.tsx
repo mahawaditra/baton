@@ -3,13 +3,13 @@
 import { CancelRequestForm } from "./CancelRequestForm";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function CancelRequestPanel({
   requestId,
@@ -19,24 +19,24 @@ export function CancelRequestPanel({
   triggerClassName?: string;
 }) {
   return (
-    <Dialog>
-      <DialogTrigger
+    <AlertDialog>
+      <AlertDialogTrigger
         render={
           <Button variant="outline" size="sm" className={triggerClassName} />
         }
       >
-        Cancel Request
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Cancel Request</DialogTitle>
-          <DialogDescription>
-            Stops this request. The borrower gets the reason by email and on
-            their status page.
-          </DialogDescription>
-        </DialogHeader>
+        Cancel request
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancel this request?</AlertDialogTitle>
+          <AlertDialogDescription>
+            The request stops for good and can&apos;t be reopened. The borrower
+            gets your reason by email and on their status page.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
         <CancelRequestForm requestId={requestId} />
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

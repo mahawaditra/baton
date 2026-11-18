@@ -1,12 +1,10 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
-import { buttonVariants } from "@/components/ui/button";
+import { EmptyCell } from "@/components/DataTable";
+import { formatRupiah } from "@/lib/format";
 import { formatNameWithNickname } from "@/lib/loan/loan-rules";
-import { cn } from "@/lib/utils";
 import type { ArchivedRequest } from "./archive-row";
 
 export const columns: ColumnDef<ArchivedRequest>[] = [
@@ -43,33 +41,22 @@ export const columns: ColumnDef<ArchivedRequest>[] = [
     header: "Period",
     accessorFn: (row) => row.loanPeriods.length,
     cell: ({ row }) =>
-      row.original.loanPeriods.length === 0
-        ? "—"
-        : `${row.original.loanPeriods.length} period${row.original.loanPeriods.length !== 1 ? "s" : ""}`,
+      row.original.loanPeriods.length === 0 ? (
+        <EmptyCell />
+      ) : (
+        `${row.original.loanPeriods.length} period${row.original.loanPeriods.length !== 1 ? "s" : ""}`
+      ),
   },
   {
     accessorKey: "depositRefundAmount",
-    header: "Deposit Refund",
-    cell: ({ row }) => (
-      <span className="tabular">
-        {row.original.depositRefundAmount != null
-          ? `Rp${row.original.depositRefundAmount.toLocaleString("id-ID")}`
-          : "—"}
-      </span>
-    ),
-  },
-  {
-    id: "view",
-    header: "",
-    enableSorting: false,
-    cell: ({ row }) => (
-      <Link
-        href={`/requests/${row.original.id}`}
-        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-      >
-        View
-        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-      </Link>
-    ),
+    header: "Deposit refund",
+    cell: ({ row }) =>
+      row.original.depositRefundAmount != null ? (
+        <span className="tabular">
+          {formatRupiah(row.original.depositRefundAmount)}
+        </span>
+      ) : (
+        <EmptyCell />
+      ),
   },
 ];

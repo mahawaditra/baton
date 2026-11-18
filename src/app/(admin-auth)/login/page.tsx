@@ -18,7 +18,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background p-6">
       <div className="flex flex-col items-center gap-2">
         <span className="h-2.5 w-10 rounded-full bg-gold" />
-        <div className="font-heading text-h1 text-navy">BATON</div>
+        <div className="font-heading text-h1 text-primary">BATON</div>
         <div className="text-micro uppercase text-muted-foreground">
           Admin — OSUI Mahawaditra
         </div>

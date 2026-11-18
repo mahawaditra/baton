@@ -1,6 +1,12 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { submitAddendum } from "./actions";
 import { CompressedFileInput } from "@/components/CompressedFileInput";
 import {
@@ -15,8 +21,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Field, FieldError, useFocusFirstInvalid } from "@/components/Field";
+import type { FieldErrors } from "@/lib/form-errors";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2 } from "lucide-react";
+import { Notice } from "@/components/Notice";
 
 const initialState = {
   success: false,
@@ -40,13 +49,19 @@ export function AddendumForm({
     submitAddendum.bind(null, ticketId, accessCode, timing),
   );
   const [state, formAction, isPending] = useActionState(action, initialState);
-  const [clientError, setClientError] = useState<string | null>(null);
+  const [clientErrors, setClientErrors] = useState<FieldErrors>({});
   const [isValidating, setIsValidating] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressProgress, setCompressProgress] = useState<{
     current: number;
     total: number;
   } | null>(null);
+
+  const errors = useMemo(
+    () => ({ ...state.fieldErrors, ...clientErrors }),
+    [state.fieldErrors, clientErrors],
+  );
+  const formRef = useFocusFirstInvalid(errors);
 
   useEffect(() => {
     if (state.success) onSuccess();
@@ -60,13 +75,15 @@ export function AddendumForm({
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const photos = formData.getAll("photos") as File[];
+    const photos = formData
+      .getAll("photos")
+      .filter((photo): photo is File => photo instanceof File && photo.size > 0);
 
     const totalSize = photos.reduce((sum, file) => sum + file.size, 0);
     if (totalSize > MAX_UPLOAD_SIZE_BYTES) {
-      setClientError(
-        `Total ukuran semua foto (${(totalSize / (1024 * 1024)).toFixed(1)}MB) melebihi batas ${MAX_UPLOAD_SIZE_LABEL}. Kurangi jumlah atau ukuran foto.`,
-      );
+      setClientErrors({
+        photos: `Total ukuran semua foto (${(totalSize / (1024 * 1024)).toFixed(1)}MB) melebihi batas ${MAX_UPLOAD_SIZE_LABEL}. Kurangi jumlah atau ukuran foto.`,
+      });
       return;
     }
 
@@ -74,14 +91,16 @@ export function AddendumForm({
     for (const [index, photo] of photos.entries()) {
       const validation = await validateImageUpload(photo);
       if (!validation.valid) {
-        setClientError(`Foto ke-${index + 1} (${photo.name}): ${validation.error}`);
+        setClientErrors({
+          photos: `Foto ke-${index + 1} (${photo.name}): ${validation.error}`,
+        });
         setIsValidating(false);
         return;
       }
     }
     setIsValidating(false);
 
-    setClientError(null);
+    setClientErrors({});
     startTransition(() => {
       formAction(formData);
     });
@@ -110,8 +129,8 @@ export function AddendumForm({
       <CardHeader>
         <CardTitle>
           {timing === "initial"
-            ? "Addendum Kondisi Awal"
-            : "Addendum Kondisi Akhir (Pengembalian)"}
+            ? "Addendum kondisi awal"
+            : "Addendum kondisi akhir (pengembalian)"}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -124,86 +143,110 @@ export function AddendumForm({
         )}
 
         <form
+          ref={formRef}
           action={formAction}
           onSubmit={handleSubmit}
+          noValidate
           key={JSON.stringify(state.fields)}
           className="flex flex-col gap-4"
         >
-          {(clientError ?? state.error) && (
-            <p className="text-sm text-destructive" aria-live="polite">
-              {clientError ?? state.error}
-            </p>
+          {state.error && (
+            <Notice tone="danger" compact aria-live="polite">
+              {state.error}
+            </Notice>
           )}
 
+          <Field
+            label="Kelengkapan (bow, case, rosin, dll.)"
+            error={errors.completeness}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                name="completeness"
+                type="text"
+                maxLength={500}
+                defaultValue={state.fields.completeness ?? ""}
+                required
+              />
+            )}
+          </Field>
+          <Field label="Kondisi badan alat" error={errors.bodyCondition}>
+            {(control) => (
+              <Textarea
+                {...control}
+                name="bodyCondition"
+                maxLength={1000}
+                defaultValue={state.fields.bodyCondition ?? ""}
+                required
+              />
+            )}
+          </Field>
+          <Field
+            label="Kondisi aksesori"
+            optional
+            error={errors.accessoriesCondition}
+          >
+            {(control) => (
+              <Textarea
+                {...control}
+                name="accessoriesCondition"
+                maxLength={1000}
+                defaultValue={state.fields.accessoriesCondition ?? ""}
+              />
+            )}
+          </Field>
+          <Field label="Catatan" optional error={errors.notes}>
+            {(control) => (
+              <Textarea
+                {...control}
+                name="notes"
+                maxLength={1000}
+                defaultValue={state.fields.notes ?? ""}
+              />
+            )}
+          </Field>
+          <Field label="Foto kondisi" error={errors.photos}>
+            {(control) => (
+              <CompressedFileInput
+                {...control}
+                name="photos"
+                accept="image/*"
+                multiple
+                required
+                onCompressingChange={setIsCompressing}
+                onCompressingProgress={(current, total) =>
+                  setCompressProgress({ current, total })
+                }
+              />
+            )}
+          </Field>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="completeness" required>
-              Kelengkapan (bow, case, rosin, dll.)
-            </Label>
-            <Input
-              id="completeness"
-              name="completeness"
-              type="text"
-              defaultValue={state.fields.completeness ?? ""}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="bodyCondition" required>
-              Kondisi Badan Alat
-            </Label>
-            <Textarea
-              id="bodyCondition"
-              name="bodyCondition"
-              defaultValue={state.fields.bodyCondition ?? ""}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="accessoriesCondition">Kondisi Aksesori</Label>
-            <Textarea
-              id="accessoriesCondition"
-              name="accessoriesCondition"
-              defaultValue={state.fields.accessoriesCondition ?? ""}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="notes">Catatan</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              defaultValue={state.fields.notes ?? ""}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="photos" required>
-              Foto Kondisi
-            </Label>
-            <CompressedFileInput
-              id="photos"
-              name="photos"
-              accept="image/*"
-              multiple
-              required
-              onCompressingChange={setIsCompressing}
-              onCompressingProgress={(current, total) =>
-                setCompressProgress({ current, total })
-              }
-            />
-          </div>
-          <div className="flex items-start gap-2.5">
-            <Checkbox
-              id="confirmedTruthful"
-              name="confirmedTruthful"
-              required
-              className="mt-0.5"
-            />
-            <Label
-              htmlFor="confirmedTruthful"
-              required
-              className="font-normal text-foreground-2"
-            >
-              Saya konfirmasi data kondisi di atas benar adanya dan sesuai dengan kenyataan.
-            </Label>
+            <div className="flex items-start gap-2.5">
+              <Checkbox
+                id="confirmedTruthful"
+                name="confirmedTruthful"
+                required
+                aria-invalid={errors.confirmedTruthful ? true : undefined}
+                aria-describedby={
+                  errors.confirmedTruthful
+                    ? "confirmedTruthful-error"
+                    : undefined
+                }
+                className="mt-0.5"
+              />
+              <Label
+                htmlFor="confirmedTruthful"
+                className="font-normal text-foreground-2"
+              >
+                Saya konfirmasi data kondisi di atas benar adanya dan sesuai dengan kenyataan.
+              </Label>
+            </div>
+            {errors.confirmedTruthful && (
+              <FieldError id="confirmedTruthful-error">
+                {errors.confirmedTruthful}
+              </FieldError>
+            )}
           </div>
 
           <Button
@@ -219,7 +262,7 @@ export function AddendumForm({
                 ? "Memeriksa foto..."
                 : isPending
                   ? "Mengirim..."
-                  : "Kirim Addendum"}
+                  : "Kirim addendum"}
           </Button>
         </form>
       </CardContent>

@@ -38,7 +38,7 @@ export function ActivityTimeline({
         );
         return (
           <div key={log.id} className="flex gap-3.5">
-            <span className="relative z-10 mt-0.5 h-3.5 w-3.5 shrink-0 rounded-full border-[3px] border-surface bg-navy" />
+            <span className="relative z-10 mt-0.5 h-3.5 w-3.5 shrink-0 rounded-full border-[3px] border-surface bg-primary" />
             <div>
               <div className="text-sm">
                 {url ? (

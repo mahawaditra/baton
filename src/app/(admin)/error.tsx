@@ -15,7 +15,7 @@ export default function AdminError({
       reset={reset}
       title="Something went wrong"
       description="This page failed to load. The error has been reported automatically — please try again in a moment."
-      resetLabel="Try Again"
+      resetLabel="Try again"
       homeHref="/"
       homeLabel="Back to Dashboard"
     />

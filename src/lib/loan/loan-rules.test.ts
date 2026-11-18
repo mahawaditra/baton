@@ -193,10 +193,10 @@ describe("canCancelRequest", () => {
 describe("getDocumentTypeLabel", () => {
   it("returns the human-readable label for known document types", () => {
     expect(getDocumentTypeLabel("signed_contract")).toBe(
-      "Kontrak yang Ditandatangani",
+      "Kontrak yang ditandatangani",
     );
     expect(getDocumentTypeLabel("deposit_proof")).toBe(
-      "Bukti Transfer Deposit",
+      "Bukti transfer deposit",
     );
     expect(getDocumentTypeLabel("ktp_scan")).toBe("Scan KTP");
   });

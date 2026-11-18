@@ -10,7 +10,7 @@ export default function SettingsLoading() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Loan Settings</CardTitle>
+          <CardTitle>Loan settings</CardTitle>
         </CardHeader>
         <CardContent className="gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -27,7 +27,7 @@ export default function SettingsLoading() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Admin Management</CardTitle>
+          <CardTitle>Admin management</CardTitle>
         </CardHeader>
         <CardContent className="gap-4">
           <div className="flex flex-col gap-2 border-t border-border pt-4">

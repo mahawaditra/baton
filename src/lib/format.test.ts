@@ -7,7 +7,10 @@ import {
   formatJakartaDate,
   formatJakartaDateTime,
   formatJakartaTime,
+  formatLongCalendarDate,
   formatRelativeDays,
+  formatRupiah,
+  formatRupiahFormal,
   toWhatsAppNumber,
   splitFacultyMajor,
 } from "./format";
@@ -144,7 +147,18 @@ describe('Jakarta date and time display', () => {
   it('shows a date-only column as stored, whatever timezone the reader is in', () => {
     const dueDate = new Date('2026-09-14T00:00:00Z');
     expect(formatCalendarDate(dueDate)).toBe('14/09/2026');
-    expect(formatCalendarDate(dueDate, 'id-ID')).toBe('14/9/2026');
+  });
+
+  it('always pads the day and month, so the public due date matches every other date', () => {
+    expect(formatCalendarDate(new Date('2027-06-30T00:00:00Z'))).toBe('30/06/2027');
+    expect(formatCalendarDate(new Date('2026-01-05T00:00:00Z'))).toBe('05/01/2026');
+  });
+
+  it('writes a date inside a sentence with the month spelled out in the reader language', () => {
+    const dueDate = new Date('2027-06-30T00:00:00Z');
+    expect(formatLongCalendarDate(dueDate, 'id')).toBe('30 Juni 2027');
+    expect(formatLongCalendarDate(dueDate, 'en')).toBe('30 June 2027');
+    expect(formatLongCalendarDate(new Date('2026-08-08T00:00:00Z'), 'id')).toBe('8 Agustus 2026');
   });
 
   it('rolls the year over at midnight Jakarta time, not midnight UTC', () => {
@@ -157,5 +171,17 @@ describe('Jakarta date and time display', () => {
 
   it('stamps Drive file names with the Jakarta date', () => {
     expect(driveTimestamp(new Date('2026-01-04T22:00:00Z'))).toBe('20260105');
+  });
+});
+
+describe('Rupiah display', () => {
+  it('groups thousands with dots and puts no space after Rp in the UI and emails', () => {
+    expect(formatRupiah(100000)).toBe('Rp100.000');
+    expect(formatRupiah(1250000)).toBe('Rp1.250.000');
+    expect(formatRupiah(0)).toBe('Rp0');
+  });
+
+  it('keeps the formal contract form with a space and ,00', () => {
+    expect(formatRupiahFormal(100000)).toBe('Rp 100.000,00');
   });
 });

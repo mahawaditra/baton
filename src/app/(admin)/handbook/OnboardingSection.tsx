@@ -1,5 +1,5 @@
 import { staggerStyle } from "@/lib/utils";
-import { HandbookCallout } from "./HandbookCallout";
+import { Notice } from "@/components/Notice";
 import { HandoverNote } from "./HandoverNote";
 import { InstallGuide } from "./InstallGuide";
 import { RoleMatrix } from "./RoleMatrix";
@@ -101,11 +101,11 @@ export function OnboardingSection() {
         bisa.
       </p>
     </TaskCard>,
-    <HandbookCallout key="drive">
+    <Notice key="drive" tone="danger" compact className="font-medium">
       Semua file BATON (kontrak, addendum, foto items dll) ada di Drive
       Logistik, folder BATON warna ungu. JANGAN PERNAH DIHAPUS! Isinya udah
       organized, cek aja sendiri.
-    </HandbookCallout>,
+    </Notice>,
     <TaskCard key="help" title="Cara minta bantuan">
       <ol className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {HELP_STEPS.map((step, index) => (

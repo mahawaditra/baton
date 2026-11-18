@@ -57,7 +57,7 @@ export const TROUBLESHOOTING_GROUPS: TroubleshootingGroup[] = [
       },
       {
         id: "download-kontrak",
-        title: 'Tombol "Download Kontrak" nggak kerespon di HP',
+        title: 'Tombol "Download kontrak" nggak kerespon di HP',
         owner: "self",
         incidentDate: "Sep 2026",
         why: ["Biasanya jaringan goyang pas mobile Safari."],
@@ -126,7 +126,7 @@ export const TROUBLESHOOTING_GROUPS: TroubleshootingGroup[] = [
         ],
         steps: [
           "Kalau ada laporan instrumen rusak SELAGI masih dipinjem, catat dulu di kolom Notes instrumennya (kolom ini tetep bisa diedit).",
-          "Input kondisi aslinya pas Confirm Return.",
+          "Input kondisi aslinya pas Confirm return.",
         ],
         note: "Intinya JANGAN BANDEL ganti-ganti kondisi dan status instrumen yang sedang dipinjam.",
       },
@@ -173,7 +173,7 @@ export const TROUBLESHOOTING_GROUPS: TroubleshootingGroup[] = [
           "Pindahin nama peminjamnya ke Notes instrumen, misal Adit '24 (pre-BATON).",
           "Ubah status instrumennya jadi Tersedia, nanti langsung muncul di Assign.",
           "Assign peminjam barunya seperti biasa.",
-          "Kalau peminjam barunya balikin duluan padahal yang pre-BATON masih pegang: di Confirm Return, ganti Location jadi nama dia (jangan biarin Sekre), terus ubah status ke Ditempatkan lewat form edit instrumen.",
+          "Kalau peminjam barunya balikin duluan padahal yang pre-BATON masih pegang: di Confirm return, ganti Location jadi nama dia (jangan biarin Sekre), terus ubah status ke Ditempatkan lewat form edit instrumen.",
           "Kalau peminjam pre-BATON-nya udah balikin, hapus namanya dari Notes.",
         ],
         note: "Agak manual, tapi sengaja nggak dibikinin fitur karena peminjam pre-BATON nanti habis sendiri.",
@@ -208,7 +208,7 @@ export const TROUBLESHOOTING_GROUPS: TroubleshootingGroup[] = [
         steps: [
           "Minta ketua buka app LINE-nya, generate ulang link Add Friend, terus copy.",
           'Paste ke field "LINE Add Friend Link" di Settings. Centang dulu "Enable LINE" kalau belum, field-nya baru muncul.',
-          'Klik Save di ujung field itu, bukan "Save Loan Settings" — dua-duanya independen.',
+          'Klik Save di ujung field itu, bukan "Save loan settings" — dua-duanya independen.',
         ],
       },
       {

@@ -8,6 +8,7 @@ export default function RequestDetailLoading() {
     <div className="flex flex-col gap-6">
       <TicketCard
         topTone="hero"
+        perforated
         top={
           <div className="px-6 pt-5 pb-6">
             <div className="flex items-center gap-3">

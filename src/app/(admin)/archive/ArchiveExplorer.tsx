@@ -1,11 +1,14 @@
+"use client";
+
 import { Calendar, RotateCcw } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import { EntityCard } from "@/components/EntityCard";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
 import { formatNameWithNickname } from "@/lib/loan/loan-rules";
-import { formatJakartaDate } from "@/lib/format";
+import { formatJakartaDate, formatRupiah } from "@/lib/format";
 import type { ArchivedRequest } from "./archive-row";
 import { columns } from "./columns";
+import { useTableFit } from "@/lib/use-table-fit";
 
 function ArchiveCard({ request }: { request: ArchivedRequest }) {
   const periodCount = request.loanPeriods.length;
@@ -34,7 +37,7 @@ function ArchiveCard({ request }: { request: ArchivedRequest }) {
           <RequestStatusBadge status={request.status} />
           {request.depositRefundAmount != null && (
             <span className="tabular text-caption font-medium text-foreground">
-              {`Rp${request.depositRefundAmount.toLocaleString("id-ID")}`}
+              {formatRupiah(request.depositRefundAmount)}
             </span>
           )}
         </div>
@@ -58,16 +61,31 @@ function ArchiveCard({ request }: { request: ArchivedRequest }) {
 }
 
 export function ArchiveExplorer({ requests }: { requests: ArchivedRequest[] }) {
+  const { rootRef, tableFits, onOverflow } = useTableFit();
+  const cardList = (
+    <div className="flex flex-col gap-2.5">
+      {requests.map((request) => (
+        <ArchiveCard key={request.id} request={request} />
+      ))}
+    </div>
+  );
+
   return (
     <>
-      <div className="hidden lg:block">
-        <DataTable data={requests} columns={columns} />
+      <div ref={rootRef} className="hidden lg:block">
+        {tableFits ? (
+          <DataTable
+            data={requests}
+            columns={columns}
+            getRowHref={(request) => `/requests/${request.id}`}
+            linkColumn="borrowerName"
+            onOverflow={onOverflow}
+          />
+        ) : (
+          cardList
+        )}
       </div>
-      <div className="flex flex-col gap-2.5 lg:hidden">
-        {requests.map((request) => (
-          <ArchiveCard key={request.id} request={request} />
-        ))}
-      </div>
+      <div className="lg:hidden">{cardList}</div>
     </>
   );
 }

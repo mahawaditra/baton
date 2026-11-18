@@ -27,7 +27,7 @@ export const ROLE_CAPABILITIES: {
   },
   { label: "Baca hasil survey", allowed: () => true },
   { label: "Ubah Loan Settings dan slot instrumen", allowed: canEditSettings },
-  { label: "Lihat Admin Management", allowed: canViewAdminManagement },
+  { label: "Lihat Admin management", allowed: canViewAdminManagement },
   {
     label: "Tambah Staff",
     allowed: (role) => assignableRoles(role).includes("staff"),

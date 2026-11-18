@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { Disclosure } from "@/components/Disclosure";
 import { BarlineHeading } from "@/components/BarlineHeading";
 import { Reveal } from "@/components/Reveal";
 
@@ -51,15 +51,13 @@ const RIGHT_COLUMN = FAQ_ITEMS.slice(5);
 
 function FaqItem({ item }: { item: { q: string; a: ReactNode } }) {
   return (
-    <details className="faq-item group w-full rounded-xl border border-border bg-background px-5 py-4">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body font-medium text-foreground [&::-webkit-details-marker]:hidden">
-        {item.q}
-        <span className="inline-flex shrink-0 text-muted-foreground transition-transform duration-250 group-open:rotate-180 motion-reduce:transition-none">
-          <ChevronDown className="h-4 w-4" strokeWidth={1.75} />
-        </span>
-      </summary>
+    <Disclosure
+      className="w-full rounded-xl border border-border bg-background px-5 py-4"
+      summaryClassName="rounded-sm text-body font-medium text-foreground"
+      summary={item.q}
+    >
       <div className="mt-3 text-body text-foreground-2">{item.a}</div>
-    </details>
+    </Disclosure>
   );
 }
 

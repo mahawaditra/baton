@@ -90,7 +90,7 @@ export default async function GoodDetailPage({
                   href={`/goods/${id}?edit=true`}
                   className={cn(buttonVariants({ size: "sm" }), "self-start")}
                 >
-                  Edit Good
+                  Edit good
                 </Link>
               </div>
             </div>

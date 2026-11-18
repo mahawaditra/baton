@@ -1,4 +1,4 @@
-import { HandbookCallout } from "./HandbookCallout";
+import { Notice } from "@/components/Notice";
 import {
   DocumentChecklist,
   RecipeCard,
@@ -82,14 +82,14 @@ export function DailiesSection() {
               "SEHARUSNYA kalo kalian udah assign instrument ke peminjam, instrumennya juga udah disiapin di Sekre — JANGAN MALES, jangan nunggu peminjam yang minta-minta.",
               "Peminjam nanti akan hubungi ketua logistik, atau lebih baiknya lagi kalian yang udah approve dokumen langsung aja hubungi si peminjamnya proactively, terus janjian kapan bisa ambil.",
               "Pas dia dateng ke Sekre, suruh aja di tempat, lu suruh dia isi woy addendum kondisi awal + foto.",
-              "Kalo udah oke, Confirm Handover di BATON. Instrumen resmi jadi tanggung jawab dia.",
+              "Kalo udah oke, Confirm handover di BATON. Instrumen resmi jadi tanggung jawab dia.",
             ]}
           />
         </RecipeRow>
-        <HandbookCallout>
+        <Notice tone="danger" compact className="font-medium">
           HARUS ADA staf yang saksi si peminjam ambil instrumen. Confirm
           Handover juga nggak bakal bisa sebelum addendum awal masuk.
-        </HandbookCallout>
+        </Notice>
       </RecipeCard>
 
       <RecipeCard
@@ -129,7 +129,7 @@ export function DailiesSection() {
           <RecipeSteps
             steps={[
               "Cek addendum kondisi akhir yang diisi peminjam, bandingin sama kondisi awal.",
-              "Confirm Return. Kalau instrumennya lagi di-share dan masih ada peminjam lain, lu cuma nutup peminjaman orang itu doang.",
+              "Confirm return. Kalau instrumennya lagi di-share dan masih ada peminjam lain, lu cuma nutup peminjaman orang itu doang.",
             ]}
           />
         </RecipeRow>

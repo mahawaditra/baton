@@ -23,17 +23,26 @@ const MUSIC_GLYPHS = {
 
 export type MusicGlyphName = keyof typeof MUSIC_GLYPHS;
 
+const INLINE_SCALE: Partial<Record<MusicGlyphName, number>> = {
+  fermata: 1.3,
+  leftRepeat: 1.15,
+  rightRepeat: 1.15,
+};
+
 export function MusicGlyph({
   glyph,
+  inline = false,
   className,
 }: {
   glyph: MusicGlyphName;
+  inline?: boolean;
   className?: string;
 }) {
   const { char, className: glyphClassName } = MUSIC_GLYPHS[glyph];
   return (
     <span
       aria-hidden
+      style={inline ? { fontSize: `${INLINE_SCALE[glyph] ?? 1}em` } : undefined}
       className={cn(
         notoMusic.className,
         glyphClassName,

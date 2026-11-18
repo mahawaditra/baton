@@ -21,12 +21,12 @@ function GithubIcon({ className }: { className?: string }) {
 
 const STEPS = [
   {
-    title: "Ajukan Permintaan",
+    title: "Ajukan permintaan",
     description:
       "Isi data singkat: nama, kontak, dan instrumen yang kamu butuhkan.",
   },
   {
-    title: "Tunggu Konfirmasi",
+    title: "Tunggu konfirmasi",
     description:
       "Staf Logistik cek ketersediaan dan siapkan instrumen untuk kamu.",
   },
@@ -43,9 +43,9 @@ const STEPS = [
 ] as const;
 
 function stepMarkerClass(index: number) {
-  if (index === 0) return "bg-navy text-background";
+  if (index === 0) return "bg-primary text-background";
   if (index === STEPS.length - 1) return "bg-gold text-hero-bg";
-  return "border-2 border-navy bg-background text-navy";
+  return "border-2 border-primary bg-background text-primary";
 }
 
 export default async function Home() {
@@ -67,7 +67,7 @@ export default async function Home() {
       <div className="relative isolate">
         <section className="bg-background px-6 py-12">
           <Reveal className="mx-auto max-w-7xl">
-            <BarlineHeading>Cara Pinjam</BarlineHeading>
+            <BarlineHeading>Cara pinjam</BarlineHeading>
             <ol className="mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-4 lg:gap-6">
               {STEPS.map((step, index) => {
                 const isLast = index === STEPS.length - 1;
@@ -139,7 +139,7 @@ export default async function Home() {
         <section className="bg-background px-6 py-12">
           <div className="mx-auto max-w-4xl">
             <Reveal className="grid grid-cols-1 items-start gap-10 sm:grid-cols-[auto_1fr]">
-              <div className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-xl bg-navy shadow-md">
+              <div className="h-[140px] w-[140px] shrink-0 overflow-hidden rounded-xl bg-primary shadow-md">
                 <Image
                   src="/about/haseul-loona.webp"
                   alt="haseulbintaro"

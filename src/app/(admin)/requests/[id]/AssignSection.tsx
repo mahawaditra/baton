@@ -31,11 +31,11 @@ export function AssignSection({
     try {
       const result = await assignInstrument(requestId, instrumentId);
       if (!result.success) {
-        toastError(result.error ?? "Failed to assign instrument.");
+        toastError(result.error ?? "Couldn't assign the instrument. Try again.");
       }
     } catch (err) {
       toastError(
-        err instanceof Error ? err.message : "Failed to assign instrument.",
+        err instanceof Error ? err.message : "Couldn't assign the instrument. Try again.",
       );
     } finally {
       setPendingId(null);
@@ -45,9 +45,9 @@ export function AssignSection({
   return (
     <div className="flex flex-col gap-2">
       {currentInstrument && (
-        <div className="flex items-center gap-3 rounded-md border border-navy bg-gold-soft/35 p-3">
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-navy">
-            <span className="h-1.5 w-1.5 rounded-full bg-navy" />
+        <div className="flex items-center gap-3 rounded-md border border-primary bg-gold-soft/35 p-3">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold">
@@ -69,7 +69,7 @@ export function AssignSection({
             used={currentInstrument.activeHolders}
             max={currentInstrument.maxConcurrentLoans}
           />
-          <span className="shrink-0 text-xs font-semibold text-navy">
+          <span className="shrink-0 text-xs font-semibold text-primary">
             Assigned
           </span>
         </div>
@@ -122,7 +122,7 @@ export function AssignSection({
                 used={inst.activeHolders}
                 max={inst.maxConcurrentLoans}
               />
-              <span className="shrink-0 text-xs font-medium text-navy">
+              <span className="shrink-0 text-xs font-medium text-primary">
                 {pendingId === inst.id ? "Assigning…" : "Assign"}
               </span>
             </button>

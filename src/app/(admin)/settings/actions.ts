@@ -10,6 +10,7 @@ import { addAdminSchema, handoverSchema } from "@/lib/admin/admin-schemas";
 import { invalidateFooterCache } from "@/lib/mail";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
+import { validationErrors, type FieldErrors } from "@/lib/form-errors";
 import { ACTIVE_INSTRUMENT_HOLD_STATUSES } from "@/lib/loan/loan-rules";
 import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
 import { validateImageUpload } from "@/lib/files/file-validation";
@@ -35,38 +36,38 @@ const updateLoanSettingsSchema = z
       .number("Grace days must be a number")
       .int()
       .nonnegative("Grace days cannot be negative"),
-    bankName: z.string().trim().min(1, "Bank name is required").max(100),
-    bankAccount: z.string().trim().min(1, "Bank account is required").max(50),
+    bankName: z.string().trim().min(1, "Bank name is required").max(100, "100 characters max."),
+    bankAccount: z.string().trim().min(1, "Bank account is required").max(50, "50 characters max."),
     bankHolder: z
       .string()
       .trim()
       .min(1, "Bank account holder is required")
-      .max(100),
+      .max(100, "100 characters max."),
     signatoryName: z
       .string()
       .trim()
       .min(1, "Signatory name is required")
-      .max(100),
+      .max(100, "100 characters max."),
     signatoryPhone: z
       .string()
       .trim()
       .min(1, "Signatory phone is required")
-      .max(20),
+      .max(20, "20 characters max."),
     signatoryLineId: z
       .string()
       .trim()
       .min(1, "Signatory LINE ID is required")
-      .max(50),
+      .max(50, "50 characters max."),
     signatoryAddressKtp: z
       .string()
       .trim()
       .min(1, "Signatory KTP address is required")
-      .max(300),
+      .max(300, "300 characters max."),
     signatoryAddressDomicile: z
       .string()
       .trim()
       .min(1, "Signatory domicile address is required")
-      .max(300),
+      .max(300, "300 characters max."),
     signatoryFaculty: z
       .string()
       .trim()
@@ -87,7 +88,7 @@ const updateLoanSettingsSchema = z
       .string()
       .trim()
       .min(1, "Signatory section is required")
-      .max(100),
+      .max(100, "100 characters max."),
     signatoryKtpNumber: z
       .string()
       .trim()
@@ -102,6 +103,7 @@ export type AddAdminState = {
   success: boolean;
   error: string | null;
   generalError: string | null;
+  fieldErrors?: FieldErrors;
 };
 
 export async function addAdmin(
@@ -127,7 +129,7 @@ export async function addAdmin(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0].message,
+      ...validationErrors(parsed.error),
       generalError: null,
     };
   }
@@ -226,6 +228,7 @@ export async function handoverKetua(
 export type UpdateLoanSettingsState = {
   success: boolean;
   error: string | null;
+  fieldErrors?: FieldErrors;
 };
 
 export async function updateLoanSettings(
@@ -258,7 +261,7 @@ export async function updateLoanSettings(
   });
 
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0].message };
+    return { success: false, ...validationErrors(parsed.error) };
   }
 
   const {

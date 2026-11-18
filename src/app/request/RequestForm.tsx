@@ -9,7 +9,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TicketCard, TicketLabel } from "@/components/TicketCard";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toastError } from "@/lib/toast";
 import { withNetworkFallback } from "@/lib/network-fallback";
+import { Notice } from "@/components/Notice";
+import { Field, useFocusFirstInvalid } from "@/components/Field";
 
 const initialState = {
   ticketId: null,
@@ -97,7 +98,7 @@ function FormSection({
     <Card>
       <CardContent className="flex flex-col gap-4">
         <h2 className="flex items-center gap-2.5 text-title text-foreground">
-          <span className="tabular flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy text-caption font-semibold text-background">
+          <span className="tabular flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-semibold text-background">
             {number}
           </span>
           {title}
@@ -113,6 +114,9 @@ export function RequestForm() {
     withNetworkFallback(submitRequest),
     initialState,
   );
+
+  const errors = state.fieldErrors ?? {};
+  const formRef = useFocusFirstInvalid(state.fieldErrors);
 
   useEffect(() => {
     if (state.generalError) {
@@ -156,14 +160,14 @@ export function RequestForm() {
           bottom={
             <div className="px-6 pt-4 pb-5">
               <div className="text-micro uppercase text-muted-foreground">
-                Kode Akses
+                Kode akses
               </div>
               <div className="mt-1 flex items-center justify-between gap-3">
                 <span className="tabular font-heading text-h2 tracking-[0.12em] text-foreground">
                   {state.accessCode}
                 </span>
                 <CopyButton
-                  label="Kode Akses"
+                  label="Kode akses"
                   value={state.accessCode ?? ""}
                   className="text-muted-foreground hover:bg-muted hover:text-foreground"
                 />
@@ -201,7 +205,7 @@ export function RequestForm() {
     <div>
       <div className="mb-8">
         <div className="text-micro uppercase text-gold-soft-foreground">
-          Formulir Peminjaman
+          Formulir peminjaman
         </div>
         <h1 className="mt-3 font-heading text-h1 text-foreground">
           Ajukan peminjaman alat
@@ -213,132 +217,130 @@ export function RequestForm() {
       </div>
 
       <form
+        ref={formRef}
         action={formAction}
         key={JSON.stringify(state.fields)}
+        noValidate
         className="flex flex-col gap-6"
       >
         {state.error && (
-          <p className="text-sm text-destructive" aria-live="polite">
+          <Notice tone="danger" compact aria-live="polite">
             {state.error}
-          </p>
+          </Notice>
         )}
 
         <FormSection number={1} title="Data diri">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="name" required>
-              Nama lengkap
-            </Label>
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              placeholder="Nama lengkap kamu"
-              defaultValue={state.fields.name ?? ""}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="nickname">
-              Nama panggilan{" "}
-              <span className="font-normal text-foreground-2">
-                (opsional)
-              </span>
-            </Label>
-            <Input
-              id="nickname"
-              name="nickname"
-              type="text"
-              placeholder="Nama panggilan kamu, kalau ada"
-              defaultValue={state.fields.nickname ?? ""}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="year" required>
-              Angkatan
-            </Label>
-            <Input
-              id="year"
-              name="year"
-              type="text"
-              inputMode="numeric"
-              placeholder="mis. 2023"
-              className="tabular"
-              defaultValue={state.fields.year ?? ""}
-              required
-            />
-          </div>
+          <Field label="Nama lengkap" error={errors.name}>
+            {(control) => (
+              <Input
+                {...control}
+                name="name"
+                type="text"
+                maxLength={100}
+                placeholder="Nama lengkap kamu"
+                defaultValue={state.fields.name ?? ""}
+                required
+              />
+            )}
+          </Field>
+          <Field label="Nama panggilan" optional error={errors.nickname}>
+            {(control) => (
+              <Input
+                {...control}
+                name="nickname"
+                type="text"
+                maxLength={100}
+                placeholder="Nama panggilan kamu, kalau ada"
+                defaultValue={state.fields.nickname ?? ""}
+              />
+            )}
+          </Field>
+          <Field label="Angkatan" error={errors.year}>
+            {(control) => (
+              <Input
+                {...control}
+                name="year"
+                type="text"
+                maxLength={4}
+                inputMode="numeric"
+                placeholder="mis. 2023"
+                className="tabular"
+                defaultValue={state.fields.year ?? ""}
+                required
+              />
+            )}
+          </Field>
         </FormSection>
 
         <FormSection number={2} title="Kontak">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email" required>
-              Email
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="nama@email.com"
-              defaultValue={state.fields.email ?? ""}
-              required
-            />
-            <p className="text-caption text-muted-foreground">
-              Kode akses status akan dikirim ke email ini.
-            </p>
-          </div>
+          <Field
+            label="Email"
+            hint="Kode akses status akan dikirim ke email ini."
+            error={errors.email}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                name="email"
+                type="email"
+                placeholder="nama@email.com"
+                defaultValue={state.fields.email ?? ""}
+                required
+              />
+            )}
+          </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="phone" required>
-                Nomor HP (WhatsApp)
-              </Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="+62 8xx xxxx xxxx"
-                className="tabular"
-                defaultValue={state.fields.phone ?? ""}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lineId" required>
-                LINE ID
-              </Label>
-              <Input
-                id="lineId"
-                name="lineId"
-                type="text"
-                placeholder="ID LINE kamu"
-                defaultValue={state.fields.lineId ?? ""}
-                required
-              />
-            </div>
+            <Field label="Nomor HP (WhatsApp)" error={errors.phone}>
+              {(control) => (
+                <Input
+                  {...control}
+                  name="phone"
+                  type="tel"
+                  maxLength={20}
+                  placeholder="+62 8xx xxxx xxxx"
+                  className="tabular"
+                  defaultValue={state.fields.phone ?? ""}
+                  required
+                />
+              )}
+            </Field>
+            <Field label="LINE ID" error={errors.lineId}>
+              {(control) => (
+                <Input
+                  {...control}
+                  name="lineId"
+                  type="text"
+                  maxLength={20}
+                  placeholder="ID LINE kamu"
+                  defaultValue={state.fields.lineId ?? ""}
+                  required
+                />
+              )}
+            </Field>
           </div>
         </FormSection>
 
         <FormSection number={3} title="Instrumen">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="instrumentType" required>
-              Instrumen yang diminati
-            </Label>
-            <Select
-              name="instrumentType"
-              defaultValue={state.fields.instrumentType || undefined}
-              required
-            >
-              <SelectTrigger id="instrumentType" className="w-full">
-                <SelectValue placeholder="Pilih instrumen..." />
-              </SelectTrigger>
-              <SelectContent>
-                {REQUESTABLE_INSTRUMENT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Field label="Instrumen yang diminati" error={errors.instrumentType}>
+            {(control) => (
+              <Select
+                name="instrumentType"
+                defaultValue={state.fields.instrumentType || undefined}
+                required
+              >
+                <SelectTrigger {...control} className="w-full">
+                  <SelectValue placeholder="Pilih instrumen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {REQUESTABLE_INSTRUMENT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
         </FormSection>
 
         <div className="sticky bottom-0 z-10 -mx-6 border-t border-border bg-background/95 px-6 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] backdrop-blur-sm sm:static sm:mx-0 sm:flex sm:justify-end sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
@@ -348,7 +350,7 @@ export function RequestForm() {
             size="lg"
             className="w-full sm:w-auto sm:px-6"
           >
-            {isPending ? "Mengirim..." : "Kirim Permintaan"}
+            {isPending ? "Mengirim..." : "Kirim permintaan"}
             <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
           </Button>
         </div>

@@ -13,11 +13,11 @@ export default function RootError({
     <ErrorPanel
       error={error}
       reset={reset}
-      title="Terjadi Kendala di Server"
+      title="Terjadi kendala di server"
       description="Insiden ini sudah dilaporkan otomatis ke admin. Silakan coba beberapa menit lagi."
-      resetLabel="Coba Lagi"
+      resetLabel="Coba lagi"
       homeHref="/"
-      homeLabel="Ke Beranda"
+      homeLabel="Ke beranda"
     />
   );
 }

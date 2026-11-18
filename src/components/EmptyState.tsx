@@ -7,7 +7,7 @@ const TONE_STYLE: Record<string, string> = {
   neutral: "bg-muted text-muted-foreground",
   search: "bg-gold-soft text-gold-soft-foreground",
   success: "bg-success-soft text-success-soft-foreground",
-  error: "bg-destructive-soft text-[oklch(0.5_0.14_35)]",
+  error: "bg-destructive-soft text-destructive-soft-foreground",
 };
 
 export function EmptyState({

@@ -29,14 +29,14 @@ export function LoanStepper({
                 <span
                   className={cn(
                     "absolute top-8 bottom-0 left-4 w-0.5 -translate-x-1/2",
-                    stepNumber < current ? "bg-navy" : "bg-border",
+                    stepNumber < current ? "bg-primary" : "bg-border",
                   )}
                 />
               )}
               <span
                 className={cn(
                   "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                  isDone && "bg-navy text-background",
+                  isDone && "bg-primary text-background",
                   isActive &&
                     "bg-gold text-background shadow-[0_0_0_4px_var(--gold-soft)]",
                   !isDone &&
@@ -80,14 +80,14 @@ export function LoanStepper({
                 <span
                   className={cn(
                     "absolute top-4 -left-1/2 right-1/2 h-0.5",
-                    stepNumber <= current ? "bg-navy" : "bg-border",
+                    stepNumber <= current ? "bg-primary" : "bg-border",
                   )}
                 />
               )}
               <span
                 className={cn(
                   "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold",
-                  isDone && "bg-navy text-background",
+                  isDone && "bg-primary text-background",
                   isActive &&
                     "bg-gold text-background shadow-[0_0_0_4px_var(--gold-soft)]",
                   !isDone &&

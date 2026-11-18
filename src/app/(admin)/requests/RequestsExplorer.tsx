@@ -4,6 +4,7 @@ import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { BorrowingRequestStatus } from "@/generated/prisma/client";
 import { DataTable } from "@/components/DataTable";
+import { useTableFit } from "@/lib/use-table-fit";
 import { columns } from "./columns";
 import type { RequestRow } from "./request-row";
 import { RequestStatusBadge } from "@/components/RequestStatusBadge";
@@ -17,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { Hash, Calendar, SquareKanban, Table2 } from "lucide-react";
-import { toggleSetValue } from "@/lib/utils";
 import { formatJakartaDate, todayInJakarta } from "@/lib/format";
 import {
   BOARD_COLUMNS,
@@ -116,9 +116,7 @@ export function RequestsExplorer({
   transferableCount: number;
 }) {
   const [search, setSearch] = useState("");
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    new Set(),
-  );
+  const { rootRef, tableFits, onOverflow } = useTableFit();
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -195,9 +193,33 @@ export function RequestsExplorer({
       />
     );
 
+  const cardList = (
+    <div className="flex flex-col">
+      {mobileGroups.map(({ key, label, items }) => (
+        <CollapsibleGroup
+          key={key}
+          label={
+            key === "ongoing" ? (
+              <span className="inline-flex items-center gap-1.5">
+                <MusicGlyph glyph="fermata" inline className="text-plum" />
+                {label}
+              </span>
+            ) : (
+              label
+            )
+          }
+          items={items}
+          renderItem={(request) => (
+            <RequestCard key={request.id} request={request} />
+          )}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="hidden flex-col gap-4 md:flex">
+      <div ref={rootRef} className="hidden flex-col gap-4 md:flex">
         <div className="flex items-center gap-3">
           <Input
             placeholder="Search ticket ID, name, year, instrument, status…"
@@ -219,15 +241,23 @@ export function RequestsExplorer({
         {view !== "board" && <div>{filters}</div>}
 
         <div className="text-xs text-muted-foreground">
-          {filtered.length} dari {requests.length} pengajuan
+          {filtered.length} of {requests.length} requests
         </div>
 
         {filtered.length === 0 ? (
           emptyState
         ) : view === "board" ? (
           <RequestsBoard requests={filtered} />
+        ) : tableFits ? (
+          <DataTable
+            data={filtered}
+            columns={columns}
+            getRowHref={(request) => `/requests/${request.id}`}
+            linkColumn="ticketId"
+            onOverflow={onOverflow}
+          />
         ) : (
-          <DataTable data={filtered} columns={columns} />
+          cardList
         )}
       </div>
 
@@ -241,38 +271,10 @@ export function RequestsExplorer({
         <div>{filters}</div>
 
         <div className="text-xs text-muted-foreground">
-          {filtered.length} dari {requests.length} pengajuan
+          {filtered.length} of {requests.length} requests
         </div>
 
-        {filtered.length === 0 ? (
-          emptyState
-        ) : (
-          <div className="flex flex-col">
-            {mobileGroups.map(({ key, label, items }) => (
-              <CollapsibleGroup
-                key={key}
-                label={
-                  key === "ongoing" ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <MusicGlyph glyph="fermata" className="text-[1rem]" />
-                      {label}
-                    </span>
-                  ) : (
-                    label
-                  )
-                }
-                items={items}
-                isCollapsed={collapsedGroups.has(key)}
-                onToggle={() =>
-                  setCollapsedGroups((prev) => toggleSetValue(prev, key))
-                }
-                renderItem={(request) => (
-                  <RequestCard key={request.id} request={request} />
-                )}
-              />
-            ))}
-          </div>
-        )}
+        {filtered.length === 0 ? emptyState : cardList}
       </div>
     </div>
   );

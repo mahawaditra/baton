@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin/require-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { validationErrors, type FieldErrors } from "@/lib/form-errors";
 import { replaceItemPhoto } from "@/lib/files/drive";
 import { driveTimestamp } from "@/lib/format";
 import { validateImageUpload } from "@/lib/files/file-validation";
@@ -14,8 +15,8 @@ import {
 } from "@/lib/loan/loan-rules";
 
 const updateInstrumentSchema = z.object({
-  brand: z.string().trim().max(100).nullable(),
-  serialNumber: z.string().trim().max(100).nullable(),
+  brand: z.string().trim().max(100, "100 characters max.").nullable(),
+  serialNumber: z.string().trim().max(100, "100 characters max.").nullable(),
   condition: z.enum(
     ["ok", "need_repair", "retired", "lost"],
     "Invalid condition value",
@@ -24,12 +25,13 @@ const updateInstrumentSchema = z.object({
     ["available", "reserved", "borrowed", "placed", "unavailable"],
     "Invalid status value",
   ),
-  location: z.string().trim().min(1, "Location is required").max(100),
-  notes: z.string().trim().max(1000).nullable(),
+  location: z.string().trim().min(1, "Location is required").max(100, "100 characters max."),
+  notes: z.string().trim().max(1000, "1000 characters max.").nullable(),
 });
 
 export type UpdateInstrumentState = {
   error: string | null;
+  fieldErrors?: FieldErrors;
 };
 
 export async function updateInstrument(
@@ -61,7 +63,7 @@ export async function updateInstrument(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+    return validationErrors(parsed.error);
   }
 
   const { brand, serialNumber, notes } = parsed.data;
@@ -123,7 +125,7 @@ export async function uploadInstrumentPhoto(id: string, formData: FormData) {
   const file = photo instanceof File ? photo : null;
   const validation = await validateImageUpload(file);
   if (!file || !validation.valid) {
-    throw new Error(validation.valid ? "File wajib dipilih." : validation.error);
+    throw new Error(validation.valid ? "Pilih file dulu." : validation.error);
   }
 
   const before = await prisma.instrument.findUniqueOrThrow({ where: { id } });

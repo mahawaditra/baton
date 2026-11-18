@@ -200,7 +200,7 @@ function BoardColumnView({
       <header className="flex shrink-0 items-center gap-2 py-3 pr-2 pl-3.5">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           {ongoing && (
-            <MusicGlyph glyph="fermata" className="text-[1.25rem] text-plum" />
+            <MusicGlyph glyph="fermata" inline className="text-plum" />
           )}
           {label}
         </h2>
