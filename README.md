@@ -25,6 +25,7 @@ A web platform for OSUI Mahawaditra's Logistics division to manage instrument bo
     - [Puppeteer only fully works locally](#puppeteer-only-fully-works-locally)
     - [No login for borrowers](#no-login-for-borrowers)
     - [Keeping the free-tier services awake](#keeping-the-free-tier-services-awake)
+    - [A weekly backup that never touches GitHub](#a-weekly-backup-that-never-touches-github)
     - [From one combined upload to one-per-document](#from-one-combined-upload-to-one-per-document)
     - ["Ongoing loans" is a timestamp, not a status](#ongoing-loans-is-a-timestamp-not-a-status)
     - [Two inputs for one field](#two-inputs-for-one-field)
@@ -142,6 +143,12 @@ Borrowers touch the platform a handful of times a year at most, so requiring the
 Supabase's free tier pauses a database after a stretch of inactivity, and Upstash's free tier deactivates an unused Redis database the same way — neither plays well with BATON's actual usage pattern: bursts during intake season, quiet stretches the rest of the year with some bits of updates on instruments when needed. `/api/cron/keepalive`, triggered daily by Vercel Cron, runs a bare `SELECT 1` against Postgres and a `PING` against Redis to keep both from being auto-paused. The route itself is locked behind a `CRON_SECRET` bearer token, since it's meant to be called by the scheduler, not relying on someone opening the URL by hand.
 
 Rate limiting fails open for the same reason: if Redis is ever unreachable, the request is let through and the error goes to Sentry, rather than locking borrowers out of a form over a side service.
+
+### A weekly backup that never touches GitHub
+
+Supabase's free tier has no automatic backups at all, so `.github/workflows/backup.yml` makes its own: every Monday at 02:17 WIB (or on demand from the Actions tab) it runs `pg_dump` against `DIRECT_URL`, gzips the plain SQL in memory, and uploads it to `Database Backups/` inside BATON's Drive folder through the same OAuth refresh token the app uses. The dump goes through Supavisor's session pooler on port 5432 rather than the transaction pooler on 6543, since `pg_dump` needs a real session. The repo is public, so the dump is never written to the repo, never kept as a workflow artifact (anyone who can see the Actions tab could download one), and never printed to the log: only the file name, size and Drive file ID are. The runner installs `postgresql-client-17` from the PostgreSQL apt repository, because `pg_dump` refuses to dump a server newer than its own major version and Ubuntu ships an older one.
+
+The same script runs locally with `npm run db:backup` (set `PG_DUMP` if `pg_dump` isn't on your `PATH`). To restore, download a file from Drive and run `gunzip -c BATON_<date>.sql.gz | psql "<connection string>"` against an empty database.
 
 ### From one combined upload to one-per-document
 
@@ -292,6 +299,9 @@ prisma/
   migrations/    Migration history
   seed.ts        Seeds instruments and goods from prisma/seed-data/*.xlsx (gitignored)
   reset.ts       Guarded wipe behind `npm run db:reset` — keeps Overlord, Pengurus and Loan Settings
+  backup.ts      `npm run db:backup`: pg_dump of DIRECT_URL, gzipped and uploaded to Drive
+.github/
+  workflows/backup.yml  Weekly run of db:backup on GitHub Actions, secrets only, no artifacts
 ```
 
 ## Testing
