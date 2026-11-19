@@ -45,7 +45,7 @@ export function TransferToOngoingButton({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger render={<Button variant="outline" size="sm" />}>
-        <ArrowRightLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
+        <ArrowRightLeft className="h-3.5 w-3.5" strokeWidth={2} />
         {label}
       </AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-[480px]">

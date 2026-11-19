@@ -4,8 +4,10 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const INNER_RADIUS = "rounded-[calc(var(--radius-lg)-3px)]";
+
 const OPTION_CLASS =
-  "relative z-10 inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+  "relative z-10 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 const ACTIVE_OPTION_CLASS = "font-semibold text-foreground";
 
 function isPlainClick(event: React.MouseEvent) {
@@ -44,7 +46,10 @@ export function SegmentedControl<T extends string>({
       <div className="relative grid auto-cols-fr grid-flow-col">
         <span
           aria-hidden
-          className="absolute inset-y-0 left-0 rounded bg-surface shadow-sm transition-[translate] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+          className={cn(
+            "absolute inset-y-0 left-0 bg-surface shadow-sm transition-[translate] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+            INNER_RADIUS,
+          )}
           style={{
             width: `${100 / options.length}%`,
             translate: `${Math.max(activeIndex, 0) * 100}% 0`,
@@ -52,11 +57,15 @@ export function SegmentedControl<T extends string>({
         />
         {options.map((option) => {
           const active = option.id === value;
-          const optionClass = cn(OPTION_CLASS, active && ACTIVE_OPTION_CLASS);
+          const optionClass = cn(
+            OPTION_CLASS,
+            INNER_RADIUS,
+            active && ACTIVE_OPTION_CLASS,
+          );
           const content = (
             <>
               {option.icon && (
-                <option.icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                <option.icon className="h-3.5 w-3.5" strokeWidth={2} />
               )}
               {option.label}
             </>

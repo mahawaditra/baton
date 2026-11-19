@@ -72,7 +72,7 @@ export function LandingHero() {
             >
               <ClipboardList
                 className="h-5 w-5 shrink-0"
-                strokeWidth={1.75}
+                strokeWidth={2}
               />
               Ajukan peminjaman
             </Link>
@@ -80,7 +80,7 @@ export function LandingHero() {
               href="/status"
               className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-hero-fg/40 bg-transparent text-sm font-medium whitespace-nowrap text-hero-fg uppercase transition-colors hover:bg-surface/10 dark:border-hero-fg/30 dark:hover:bg-hero-fg/8"
             >
-              <Search className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+              <Search className="h-5 w-5 shrink-0" strokeWidth={2} />
               Cek status peminjaman
             </Link>
           </div>
@@ -104,7 +104,7 @@ export function LandingHero() {
               >
                 <ClipboardList
                   className="h-[1.4em] w-[1.4em] shrink-0"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
                 AJUKAN PEMINJAMAN
               </Link>
@@ -114,7 +114,7 @@ export function LandingHero() {
               >
                 <Search
                   className="h-[1.4em] w-[1.4em] shrink-0"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
                 CEK STATUS PEMINJAMAN
               </Link>

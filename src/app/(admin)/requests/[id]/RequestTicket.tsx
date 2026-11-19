@@ -123,7 +123,7 @@ function StepSegments({
                 <Check
                   aria-hidden
                   className="h-3 w-3 text-primary"
-                  strokeWidth={2.5}
+                  strokeWidth={2}
                 />
               )}
               Step {index + 1}

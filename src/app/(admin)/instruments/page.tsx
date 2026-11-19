@@ -34,14 +34,14 @@ export default async function InstrumentsPage() {
           aria-label="New instrument"
           className="flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-muted"
         >
-          <Plus className="h-5 w-5" strokeWidth={1.75} />
+          <Plus className="h-5 w-5" strokeWidth={2} />
         </Link>
       </AdminHeaderAction>
       <InstrumentsExplorer
         instruments={instruments}
         action={
           <Link href="/instruments/new" className={buttonVariants()}>
-            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            <Plus className="h-4 w-4" strokeWidth={2} />
             New instrument
           </Link>
         }

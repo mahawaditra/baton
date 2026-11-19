@@ -5,7 +5,10 @@ const LOADING_MARQUEE_TEXT = `${LOADING_MARQUEE_ITEMS} ${LOADING_MARQUEE_ITEMS}`
 
 export function LoadingMarquee() {
   return (
-    <div aria-hidden className="w-full max-w-full min-w-0 overflow-hidden">
+    <div
+      aria-hidden
+      className="w-full max-w-full min-w-0 overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_10%,#000_90%,transparent)]"
+    >
       <div
         className="marquee-track marquee-l font-heading text-lg font-bold tracking-wide text-gold motion-reduce:animate-none"
         style={{ animationDuration: "16s" }}

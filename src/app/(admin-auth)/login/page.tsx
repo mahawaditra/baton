@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background p-6">
+    <div className="flex min-h-dynamic flex-col items-center justify-center gap-8 bg-background p-6">
       <div className="flex flex-col items-center gap-2">
         <span className="h-2.5 w-10 rounded-full bg-gold" />
         <div className="font-heading text-h1 text-primary">BATON</div>

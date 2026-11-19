@@ -83,7 +83,7 @@ export default async function StatusSearchPage({
               className="mt-1 w-full rounded-full bg-gold text-hero-bg hover:bg-gold-hover dark:text-hero-fg"
             >
               Cari tiket
-              <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+              <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </Button>
           </form>
         }

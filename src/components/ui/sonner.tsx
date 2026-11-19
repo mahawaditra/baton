@@ -47,11 +47,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       duration={5000}
       closeButton
       icons={{
-        success: <CheckCircle2 className="h-4 w-4" strokeWidth={2.2} />,
-        info: <Info className="h-4 w-4" strokeWidth={2.2} />,
-        warning: <TriangleAlert className="h-4 w-4" strokeWidth={2.2} />,
-        error: <OctagonX className="h-4 w-4" strokeWidth={2.2} />,
-        loading: <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.2} />,
+        success: <CheckCircle2 className="h-4 w-4" strokeWidth={2} />,
+        info: <Info className="h-4 w-4" strokeWidth={2} />,
+        warning: <TriangleAlert className="h-4 w-4" strokeWidth={2} />,
+        error: <OctagonX className="h-4 w-4" strokeWidth={2} />,
+        loading: <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />,
       }}
       toastOptions={{
         unstyled: true,

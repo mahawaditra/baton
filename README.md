@@ -20,6 +20,7 @@ A web platform for OSUI Mahawaditra's Logistics division to manage instrument bo
   - [Features](#features)
     - [For borrowers](#for-borrowers)
     - [For admins](#for-admins)
+    - [Design system](#design-system)
     - [Borrowing Flow](#borrowing-flow)
   - [Technical Decisions \& Challenges](#technical-decisions--challenges)
     - [Puppeteer only fully works locally](#puppeteer-only-fully-works-locally)
@@ -31,6 +32,8 @@ A web platform for OSUI Mahawaditra's Logistics division to manage instrument bo
     - [Two inputs for one field](#two-inputs-for-one-field)
     - [Sharing one instrument between two borrowers](#sharing-one-instrument-between-two-borrowers)
     - [One name, more than one display](#one-name-more-than-one-display)
+    - [A design system that can't drift from the app](#a-design-system-that-cant-drift-from-the-app)
+    - [React 19 resets every form after an action](#react-19-resets-every-form-after-an-action)
   - [Tech Stack](#tech-stack)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
@@ -96,6 +99,10 @@ One principle I always keep in mind is **_"Make websites that I, myself, would w
 - Annual settings (due dates, bank details, deposit amount, signatory data) — Ketua and Overlord only, visible but locked for everyone else
 - Admin management — Ketua (staff only), Pengurus and Overlord (staff and Ketua), each limited to deactivating roles below their own
 - Ketua handover — when a term ends, the outgoing Ketua hands the position over in one step: the staff accounts are cleared and the next Ketua is seated. Activity history keeps everyone's names even though their accounts are gone
+
+### Design system
+
+- A public `/design-system` page, linked from the landing page and the footer, that lays out BATON's visual language (Midnight Score): the palette and role tokens in both colour schemes, the type scale, radius, shadow and motion, the music glyphs and what each one means in BATON, every core component with live demos, and the writing and accessibility rules. It is built straight from the app's own tokens and components, see [below](#a-design-system-that-cant-drift-from-the-app)
 
 ### Borrowing Flow
 
@@ -184,25 +191,33 @@ Borrowers fill in their name in full, but that's rarely how anyone actually refe
 
 Two small pure functions in `loan-rules.ts`, `resolveNickname` and `formatNameWithNickname`, encode those two display rules; every call site picks whichever one matches its audience rather than reading `borrowerName` directly. Requests submitted before this field existed just have a `null` nickname — both functions fall back to the full name for those, so nothing looks broken for old data.
 
+### A design system that can't drift from the app
+
+A design system page goes stale the moment someone changes a colour and forgets to update the docs. So `/design-system` doesn't keep its own copy of anything: the palette, the light and dark role tokens and the type scale are parsed out of `globals.css` when the page is built (the page is fully static), and every specimen on it is the real component fed with demo data. Colours live in two layers, a raw palette that no component touches directly and role tokens like `--primary` that point into it, so picking a different palette later only changes the role mapping, not the components. If the CSS ever changes shape and the parser can't find what it needs, the build fails with a clear message instead of quietly shipping an empty palette, and the glyph documentation is typed against the glyph list in `MusicGlyph`, so adding a glyph without documenting it is a type error.
+
+### React 19 resets every form after an action
+
+For a while, every admin form threw away whatever you had typed the moment validation failed, Loan Settings and its 17 fields included. React 19 resets uncontrolled form fields every time a form `action` finishes, success or not (`startHostTransition` calls `requestFormReset` before running the action). The public forms already worked around it by echoing the submitted values back from the server and remounting the form with a `key`; the admin forms now submit through `onSubmit` + `startTransition` instead, which skips the automatic reset entirely and keeps the Loan Settings "unsaved changes" bar honest. With input surviving a failed submit, every Server Action now returns per-field errors (built with Zod's `z.flattenError`) that show up under the field that caused them, instead of one message at the top of the form.
+
 ## Tech Stack
 
-| Layer              | Choice                                                      | Why                                                                                                 |
-| ------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Framework          | Next.js 16 (App Router)                                     |                                                                                                     |
-| Language           | TypeScript 5                                                |                                                                                                     |
-| UI                 | Tailwind CSS 4, shadcn/ui, Base UI, TanStack Table          |                                                                                                     |
-| Database           | PostgreSQL via Supabase                                     |                                                                                                     |
-| ORM                | Prisma 7 + `@prisma/adapter-pg`                             | Prisma 7 requires an explicit driver adapter — a plain `new PrismaClient()` throws                  |
-| Auth               | Better Auth (Google OAuth)                                  | admin login only; borrowers use the ticket/access-code flow instead                                 |
-| File storage       | Google Drive API, OAuth-as-user with the `drive.file` scope | keeps files inside the existing OSUI Drive folder; no service account, no broader scope than needed |
-| PDF generation     | Puppeteer / `puppeteer-core` + `@sparticuz/chromium-min`    | see [Technical Decisions](#technical-decisions--challenges)                                         |
-| Spreadsheet export | SheetJS `xlsx`, installed from the official SheetJS CDN     | the `xlsx` package on the npm registry is stale and carries known vulnerabilities                   |
-| Email              | Nodemailer (Gmail)                                          |                                                                                                     |
-| Validation         | Zod 4                                                       |                                                                                                     |
-| Rate limiting      | Upstash Redis + `@upstash/ratelimit`                        | serverless functions are stateless — an in-memory counter resets on every invocation                |
-| Testing            | Vitest                                                      |                                                                                                     |
-| Error tracking     | Sentry                                                      |                                                                                                     |
-| Hosting            | Vercel, with Vercel Cron for scheduled jobs                 |                                                                                                     |
+| Layer              | Choice                                                                           | Why                                                                                                 |
+| ------------------ | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Framework          | Next.js 16 (App Router)                                                          |                                                                                                     |
+| Language           | TypeScript 5                                                                     |                                                                                                     |
+| UI                 | Tailwind CSS 4, shadcn/ui, Base UI, TanStack Table, Noto Music (notation glyphs) |                                                                                                     |
+| Database           | PostgreSQL via Supabase                                                          |                                                                                                     |
+| ORM                | Prisma 7 + `@prisma/adapter-pg`                                                  | Prisma 7 requires an explicit driver adapter — a plain `new PrismaClient()` throws                  |
+| Auth               | Better Auth (Google OAuth)                                                       | admin login only; borrowers use the ticket/access-code flow instead                                 |
+| File storage       | Google Drive API, OAuth-as-user with the `drive.file` scope                      | keeps files inside the existing OSUI Drive folder; no service account, no broader scope than needed |
+| PDF generation     | Puppeteer / `puppeteer-core` + `@sparticuz/chromium-min`                         | see [Technical Decisions](#technical-decisions--challenges)                                         |
+| Spreadsheet export | SheetJS `xlsx`, installed from the official SheetJS CDN                          | the `xlsx` package on the npm registry is stale and carries known vulnerabilities                   |
+| Email              | Nodemailer (Gmail)                                                               |                                                                                                     |
+| Validation         | Zod 4                                                                            |                                                                                                     |
+| Rate limiting      | Upstash Redis + `@upstash/ratelimit`                                             | serverless functions are stateless — an in-memory counter resets on every invocation                |
+| Testing            | Vitest                                                                           |                                                                                                     |
+| Error tracking     | Sentry                                                                           |                                                                                                     |
+| Hosting            | Vercel, with Vercel Cron for scheduled jobs                                      |                                                                                                     |
 
 ## Getting Started
 
@@ -281,6 +296,7 @@ src/
     api/         Route Handlers: /api/auth (Better Auth), /api/cron (reminders, keepalive),
                  /api/status/[ticket_id]/contract (contract PDF download, gated by a
                  60-second signed token)
+    design-system/ Public design system page (/design-system), rendered from globals.css and the real components
     legacy/      Public tribute page (/legacy) to fellow OSUI comrades (not contributors), and the routes that serve its photos
     request/     Public borrowing request form
     status/      Public per-ticket status page (access-code gated)
@@ -319,7 +335,9 @@ Coverage is aimed at the business-logic layer that would cause real problems if 
 - `role-capabilities.ts` / `troubleshooting-entries.ts` — the Handbook's role table stays derived from the real role rules, with no way shown to add a Pengurus or an Overlord; troubleshooting search and filtering
 - `board-rules.ts` — which Kanban column and chip a request lands in, and how cards are ordered within a column
 - `id-generators.ts` — `ticket_id` / `access_code` generation, including uniqueness under collision
-- `format.ts` — date/timezone handling (Jakarta calendar dates, relative days), WhatsApp numbers, the faculty/major split
+- `format.ts` — date/timezone handling (Jakarta calendar dates, relative days), the one place dates and Rupiah amounts get formatted (short dates, dates inside sentences, Rupiah for the UI and for the contract), WhatsApp numbers, the faculty/major split
+- `form-errors.ts` — a failed Zod parse turns into one message per field for the form to show, with anything not tied to a field kept as a form-level error
+- `design-system/tokens.ts` — the palette, role tokens and type scale the design system page shows are read from the real `globals.css`, and a missing block fails loudly instead of rendering nothing
 - `activity-log.ts` / `mail.ts` — activity-log and annual-report wording, the cached email footer
 - `server-action-fallback.ts` / `network-fallback.ts` — a server error or a dropped connection becomes an honest message instead of the error page
 - `labels.ts` / `StatusBadge` — every value of every Prisma enum the UI shows needs a human label, checked against the _generated_ enums, so a new enum value without one fails the tests instead of leaking to the screen as `need_repair`; the dropdown option lists must reuse those same labels

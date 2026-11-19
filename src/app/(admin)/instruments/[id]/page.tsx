@@ -154,7 +154,7 @@ export default async function InstrumentDetailPage({
                         )}
                       >
                         {resolveNickname(holder.borrowerName, holder.borrowerNickname)}
-                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
                       </Link>
                     ))}
                   </div>

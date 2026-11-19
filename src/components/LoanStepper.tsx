@@ -45,7 +45,7 @@ export function LoanStepper({
                 )}
               >
                 {isDone ? (
-                  <Check className="h-4 w-4" strokeWidth={2.5} />
+                  <Check className="h-4 w-4" strokeWidth={2} />
                 ) : (
                   stepNumber
                 )}
@@ -96,7 +96,7 @@ export function LoanStepper({
                 )}
               >
                 {isDone ? (
-                  <Check className="h-4 w-4" strokeWidth={2.5} />
+                  <Check className="h-4 w-4" strokeWidth={2} />
                 ) : (
                   stepNumber
                 )}

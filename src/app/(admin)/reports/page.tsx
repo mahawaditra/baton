@@ -85,7 +85,7 @@ export default async function ReportsPage() {
                       >
                         <ExternalLink
                           className="h-3.5 w-3.5"
-                          strokeWidth={1.75}
+                          strokeWidth={2}
                         />
                         Open in Drive
                       </a>

@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { Hash, MapPin } from "lucide-react";
-import { cn, toggleSetValue } from "@/lib/utils";
+import { toggleSetValue } from "@/lib/utils";
+import { SegmentedControl } from "@/components/SegmentedControl";
 import { useTableFit } from "@/lib/use-table-fit";
 
 const MOBILE_SORT_OPTIONS = [
@@ -215,22 +216,12 @@ export function GoodsExplorer({
         </div>
 
         <div className="flex flex-col gap-2 sm:-mx-2 sm:flex-row sm:items-center sm:overflow-x-auto sm:px-2">
-          <div className="flex w-full gap-0.5 rounded-lg border border-border bg-surface-2 p-[3px] sm:w-fit sm:shrink-0">
-            {MOBILE_SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setMobileSort(opt.id)}
-                className={cn(
-                  "flex-1 whitespace-nowrap rounded px-3 py-1.5 text-center text-sm font-medium text-muted-foreground sm:flex-none",
-                  mobileSort === opt.id &&
-                    "bg-surface font-semibold text-foreground shadow-sm",
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={MOBILE_SORT_OPTIONS}
+            value={mobileSort}
+            onChange={setMobileSort}
+            className="w-full sm:w-fit sm:shrink-0"
+          />
           <div className="hidden shrink-0 bg-border sm:block sm:h-5 sm:w-px" />
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-fit sm:shrink-0">
             <FacetFilter

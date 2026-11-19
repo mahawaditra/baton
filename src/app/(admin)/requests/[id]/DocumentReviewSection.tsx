@@ -106,7 +106,7 @@ export function DocumentReviewSection({
                       rel="noopener noreferrer"
                       className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                     >
-                      <Eye className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      <Eye className="h-3.5 w-3.5" strokeWidth={2} />
                       View
                     </a>
                     <span
@@ -136,7 +136,7 @@ export function DocumentReviewSection({
                       htmlFor={`approve_${doc.id}`}
                       className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/approve:border-success peer-checked/approve:bg-success-soft peer-checked/approve:text-success-soft-foreground"
                     >
-                      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      <Check className="h-3.5 w-3.5" strokeWidth={2} />
                       Approve
                     </label>
 
@@ -154,7 +154,7 @@ export function DocumentReviewSection({
                       htmlFor={`reject_${doc.id}`}
                       className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/reject:border-destructive peer-checked/reject:bg-destructive-soft peer-checked/reject:text-destructive"
                     >
-                      <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      <X className="h-3.5 w-3.5" strokeWidth={2} />
                       Reject
                     </label>
 

@@ -156,7 +156,7 @@ export default async function ActivityPage({
               page <= 1 && "pointer-events-none opacity-50",
             )}
           >
-            <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
+            <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2} />
             Prev
           </Link>
           <span className="tabular text-sm text-muted-foreground">
@@ -172,7 +172,7 @@ export default async function ActivityPage({
             )}
           >
             Next
-            <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
           </Link>
         </div>
       </FixedPortal>

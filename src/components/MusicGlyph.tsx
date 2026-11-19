@@ -23,10 +23,32 @@ const MUSIC_GLYPHS = {
 
 export type MusicGlyphName = keyof typeof MUSIC_GLYPHS;
 
+export type DynamicGlyphName = Extract<MusicGlyphName, `dynamic${string}`>;
+
+function isMusicGlyphName(name: string): name is MusicGlyphName {
+  return name in MUSIC_GLYPHS;
+}
+
+export function isDynamicGlyph(
+  glyph: MusicGlyphName,
+): glyph is DynamicGlyphName {
+  return glyph.startsWith("dynamic");
+}
+
+export const MUSIC_GLYPH_NAMES: MusicGlyphName[] =
+  Object.keys(MUSIC_GLYPHS).filter(isMusicGlyphName);
+
+const DYNAMIC_SCALE = 1.45;
+
 const INLINE_SCALE: Partial<Record<MusicGlyphName, number>> = {
   fermata: 1.3,
   leftRepeat: 1.15,
   rightRepeat: 1.15,
+  dynamicP: DYNAMIC_SCALE,
+  dynamicMP: DYNAMIC_SCALE,
+  dynamicMF: DYNAMIC_SCALE,
+  dynamicF: DYNAMIC_SCALE,
+  dynamicSFZ: DYNAMIC_SCALE,
 };
 
 export function MusicGlyph({

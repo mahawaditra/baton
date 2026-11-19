@@ -63,7 +63,7 @@ function FaqItem({ item }: { item: { q: string; a: ReactNode } }) {
 
 export function LandingFaq() {
   return (
-    <section className="border-t border-border bg-surface px-6 py-12">
+    <section className="bg-[linear-gradient(to_bottom,var(--background),var(--surface)_6rem)] px-6 pt-16 pb-12">
       <Reveal className="mx-auto max-w-5xl">
         <BarlineHeading>F.A.Q</BarlineHeading>
         <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-center lg:gap-4">

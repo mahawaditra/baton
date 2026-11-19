@@ -5,6 +5,7 @@ import { BarlineHeading } from "@/components/BarlineHeading";
 import { LandingHero } from "@/components/LandingHero";
 import { LandingFaq } from "@/components/LandingFaq";
 import { LandingLegacy } from "@/components/LandingLegacy";
+import { LandingDesignSystem } from "@/components/LandingDesignSystem";
 import { Reveal } from "@/components/Reveal";
 import { cn } from "@/lib/utils";
 import { getPublicContacts } from "@/lib/public-contacts";
@@ -31,7 +32,7 @@ const STEPS = [
       "Staf Logistik cek ketersediaan dan siapkan instrumen untuk kamu.",
   },
   {
-    title: "Lengkapi & Tanda Tangan",
+    title: "Lengkapi & tanda tangan",
     description:
       "Isi data kontrak, unduh, tanda tangan, lalu upload dokumennya.",
   },
@@ -55,7 +56,7 @@ export default async function Home() {
     <div className="min-h-screen bg-background">
       <section
         data-landing-hero
-        className="relative isolate -mt-[env(safe-area-inset-top,0px)] flex min-h-[100vh] items-end justify-center overflow-hidden bg-hero-bg [clip-path:inset(0)] pt-[env(safe-area-inset-top,0px)] select-none">
+        className="relative isolate -mt-[env(safe-area-inset-top,0px)] flex min-h-[100svh] items-end justify-center overflow-hidden bg-hero-bg [clip-path:inset(0)] pt-[env(safe-area-inset-top,0px)] select-none">
         <HeroMarquee />
         <div
           aria-hidden
@@ -90,7 +91,7 @@ export default async function Home() {
                     >
                       {isLast ? (
                         <>
-                          <Check className="h-5 w-5" strokeWidth={2.25} />
+                          <Check className="h-5 w-5" strokeWidth={2} />
                           <span className="sr-only">{index + 1}</span>
                         </>
                       ) : (
@@ -135,6 +136,8 @@ export default async function Home() {
         <LandingFaq />
 
         <LandingLegacy />
+
+        <LandingDesignSystem />
 
         <section className="bg-background px-6 py-12">
           <div className="mx-auto max-w-4xl">

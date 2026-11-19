@@ -8,28 +8,30 @@ import { cn } from "@/lib/utils";
 
 export function LandingLegacy() {
   return (
-    <section className="relative isolate bg-plum-soft px-6 py-12 [clip-path:inset(0)]">
-      <HeroMarquee textClassName="text-plum/5 dark:text-plum/10" />
-      <Reveal className="relative mx-auto flex max-w-2xl flex-col items-center gap-5 text-center">
-        <BarlineHeading className="text-plum dark:text-gold">
-          BATON Legacy
-        </BarlineHeading>
-        <p className="text-body-lg text-foreground-2">
-          Every Ketua Logistik eventually hands over the baton. This is the wall
-          of everyone who did and a tribute to haseulbintaro&apos;s fellow
-          comrades.
-        </p>
-        <Link
-          href="/legacy"
-          className={cn(
-            buttonVariants(),
-            "bg-plum px-4 text-background hover:bg-plum/90",
-          )}
-        >
-          Visit the Legacy
-          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
-        </Link>
-      </Reveal>
-    </section>
+    <div className="bg-[linear-gradient(to_bottom,var(--surface),var(--legacy-band)_6rem)]">
+      <section className="relative isolate px-6 py-20 [clip-path:inset(0)] [mask-image:linear-gradient(to_bottom,transparent,#000_20%,#000_85%,transparent)]">
+        <HeroMarquee textClassName="text-plum/6 dark:text-plum/10" />
+        <Reveal className="relative mx-auto flex max-w-2xl flex-col items-center gap-5 text-center">
+          <BarlineHeading className="text-plum dark:text-gold">
+            BATON Legacy
+          </BarlineHeading>
+          <p className="text-body-lg text-foreground-2">
+            Every Ketua Logistik eventually hands over the baton. This is the
+            wall of everyone who did and a tribute to haseulbintaro&apos;s
+            fellow comrades.
+          </p>
+          <Link
+            href="/legacy"
+            className={cn(
+              buttonVariants(),
+              "bg-plum px-4 text-background hover:bg-plum/90",
+            )}
+          >
+            Visit the Legacy
+            <ArrowRight className="h-4 w-4" strokeWidth={2} />
+          </Link>
+        </Reveal>
+      </section>
+    </div>
   );
 }

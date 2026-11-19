@@ -3,9 +3,18 @@ import { LineIcon, WhatsAppIcon } from "@/components/ContactLink";
 import { getPublicContacts } from "@/lib/public-contacts";
 import { cn } from "@/lib/utils";
 
-const FOOTER_LINKS = [
-  { href: "/request", label: "Ajukan peminjaman" },
-  { href: "/status", label: "Cek status" },
+const FOOTER_GRID_CLASS =
+  "grid grid-cols-2 gap-x-10 gap-y-2.5 text-caption sm:gap-x-14";
+
+const FOOTER_COLUMNS = [
+  [
+    { href: "/request", label: "Ajukan peminjaman" },
+    { href: "/status", label: "Cek status" },
+  ],
+  [
+    { href: "/design-system", label: "Design system" },
+    { href: "/legacy", label: "Legacy" },
+  ],
 ] as const;
 
 export async function PublicFooter({
@@ -25,24 +34,25 @@ export async function PublicFooter({
               Logistik OSUI Mahawaditra
             </p>
           </div>
-          <nav
-            aria-label="Tautan footer"
-            className="grid grid-cols-2 gap-x-10 gap-y-2.5 text-caption sm:gap-x-14"
-          >
-            <ul className="flex flex-col gap-2.5">
-              {FOOTER_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-hero-fg/90 transition-colors hover:text-gold"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
+          <nav aria-label="Tautan footer" className="flex flex-col gap-4">
+            <div className={FOOTER_GRID_CLASS}>
+              {FOOTER_COLUMNS.map((column, index) => (
+                <ul key={index} className="flex flex-col gap-2.5">
+                  {column.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-hero-fg/90 transition-colors hover:text-gold"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               ))}
-            </ul>
+            </div>
             {(whatsappNumber || lineAddFriendUrl) && (
-              <ul className="flex flex-col gap-2.5">
+              <ul className={FOOTER_GRID_CLASS}>
                 {whatsappNumber && (
                   <li>
                     <a

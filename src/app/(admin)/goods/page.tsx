@@ -17,14 +17,14 @@ export default async function GoodsPage() {
           aria-label="New good"
           className="flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-muted"
         >
-          <Plus className="h-5 w-5" strokeWidth={1.75} />
+          <Plus className="h-5 w-5" strokeWidth={2} />
         </Link>
       </AdminHeaderAction>
       <GoodsExplorer
         goods={goods}
         action={
           <Link href="/goods/new" className={buttonVariants()}>
-            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            <Plus className="h-4 w-4" strokeWidth={2} />
             New good
           </Link>
         }

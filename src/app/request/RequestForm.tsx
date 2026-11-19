@@ -79,7 +79,7 @@ function CopyButton({
       {copied ? (
         <Check className="h-4 w-4" strokeWidth={2} />
       ) : (
-        <Copy className="h-4 w-4" strokeWidth={1.75} />
+        <Copy className="h-4 w-4" strokeWidth={2} />
       )}
     </button>
   );
@@ -195,7 +195,7 @@ export function RequestForm() {
           )}
         >
           Buka halaman status
-          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+          <ArrowRight className="h-4 w-4" strokeWidth={2} />
         </Link>
       </div>
     );
@@ -351,7 +351,7 @@ export function RequestForm() {
             className="w-full sm:w-auto sm:px-6"
           >
             {isPending ? "Mengirim..." : "Kirim permintaan"}
-            <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+            <ArrowRight className="h-4 w-4" strokeWidth={2} />
           </Button>
         </div>
       </form>

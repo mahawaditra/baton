@@ -363,7 +363,7 @@ export default async function DashboardPage() {
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
               >
                 View all
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
               </Link>
             </CardAction>
           </CardHeader>
@@ -433,7 +433,7 @@ export default async function DashboardPage() {
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
               >
                 View all
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
               </Link>
             </CardAction>
           </CardHeader>
@@ -464,7 +464,7 @@ export default async function DashboardPage() {
                 )}
               >
                 View all
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
               </Link>
             </div>
           </CardAction>
@@ -498,7 +498,7 @@ export default async function DashboardPage() {
                 )}
               >
                 View all
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
               </Link>
             </CardAction>
           </CardHeader>

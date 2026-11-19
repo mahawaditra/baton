@@ -137,7 +137,7 @@ export default async function ArchivePage({
           <input type="hidden" name="status" value={parsedStatus} />
         )}
         <Button type="submit" variant="outline" size="sm">
-          <Search className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <Search className="h-3.5 w-3.5" strokeWidth={2} />
           Search
         </Button>
       </form>

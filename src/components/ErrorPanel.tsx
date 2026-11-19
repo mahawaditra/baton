@@ -28,7 +28,7 @@ export function ErrorPanel({
   const [eventId] = useState(() => Sentry.captureException(error));
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
+    <div className="flex min-h-dynamic flex-col items-center justify-center bg-background px-6">
       <EmptyState
         icon={TriangleAlert}
         title={title}

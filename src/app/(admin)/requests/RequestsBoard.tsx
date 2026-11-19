@@ -217,7 +217,7 @@ function BoardColumnView({
           aria-label={sortHint}
         >
           {isNewestFirst ? "Newest" : "Oldest"}
-          <SortIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <SortIcon className="h-3.5 w-3.5" strokeWidth={2} />
         </Button>
       </header>
       <div className="scrollbar-subtle flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto [scrollbar-gutter:stable] pt-0.5 pr-0.5 pb-2.5 pl-2.5">

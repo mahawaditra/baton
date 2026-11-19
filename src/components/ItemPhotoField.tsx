@@ -29,7 +29,7 @@ export function ItemPhotoField({
           aria-label={fileId ? "Replace photo" : "Add photo"}
           className="absolute right-2 bottom-2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-sm transition-colors hover:bg-muted"
         >
-          <Camera className="h-4 w-4" strokeWidth={1.75} />
+          <Camera className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
       <PhotoUploadModal open={open} onOpenChange={setOpen} action={action} />

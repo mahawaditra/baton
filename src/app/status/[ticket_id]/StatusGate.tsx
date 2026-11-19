@@ -345,7 +345,7 @@ export function StatusGate({
                   });
                 }}
               >
-                <Download className="h-4 w-4" strokeWidth={1.75} />
+                <Download className="h-4 w-4" strokeWidth={2} />
                 {downloadPending ? "Menyiapkan..." : "Download kontrak"}
               </Button>
             </div>
