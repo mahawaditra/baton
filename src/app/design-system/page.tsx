@@ -59,11 +59,13 @@ export default function DesignSystemPage() {
               style={staggerStyle(2)}
               className="text-body-lg text-hero-fg/80"
             >
-              Midnight Score is BATON&apos;s visual language: ink navy as the
-              lead voice, plum as the bass, matte gold as the accent and warm
-              cream as the paper. Everything on this page is rendered from the
-              real tokens and components in the codebase, so it can&apos;t drift
-              from the app.
+              BATON&apos;s visual language is quite literally definitely loosely
+              defined by haseulbintaro&apos;s personal identity: matte gold,
+              warm cream, soft plum and midnight ink, which definitely
+              doesn&apos;t have any other meaning whatsoever,{" "}
+              <b>or at least that&apos;s what they want you to believe</b>.
+              Everything on this page is rendered from the real tokens and
+              components in the codebase, so it can&apos;t drift from the app.
             </p>
             <a
               href="https://github.com/mahawaditra/baton"

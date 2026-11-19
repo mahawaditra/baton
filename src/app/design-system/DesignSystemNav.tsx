@@ -80,8 +80,13 @@ export function DesignSystemChips() {
       `[data-section="${active}"]`,
     );
     if (!container || !chip || container.offsetParent === null) return;
-    const left =
-      chip.offsetLeft - (container.clientWidth - chip.offsetWidth) / 2;
+    const { paddingLeft, paddingRight } = getComputedStyle(container);
+    const visibleCenter =
+      (parseFloat(paddingLeft) +
+        container.clientWidth -
+        parseFloat(paddingRight)) /
+      2;
+    const left = chip.offsetLeft + chip.offsetWidth / 2 - visibleCenter;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -89,31 +94,33 @@ export function DesignSystemChips() {
   }, [active]);
 
   return (
-    <nav
-      ref={chipsRef}
-      aria-label="Design system sections"
-      className="sticky top-0 z-20 -mx-6 flex gap-2 overflow-x-auto bg-background/95 px-6 py-2.5 backdrop-blur-sm [mask-image:linear-gradient(to_right,#000_calc(100%-5rem),transparent)] [scrollbar-width:none] lg:hidden"
-    >
-      {NAV_GROUPS.flatMap((group) => group.items).map((item) => {
-        const isActive = item.id === active;
-        return (
-          <a
-            key={item.id}
-            href={`#${item.id}`}
-            data-section={item.id}
-            aria-current={isActive ? "location" : undefined}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-caption transition-colors duration-200 motion-reduce:transition-none",
-              isActive
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-surface text-foreground-2",
-            )}
-          >
-            {item.title}
-          </a>
-        );
-      })}
-    </nav>
+    <div className="sticky top-0 z-20 -mx-6 bg-background/95 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-2.5 backdrop-blur-sm lg:hidden">
+      <nav
+        ref={chipsRef}
+        aria-label="Design system sections"
+        className="relative flex h-11 items-center gap-2 overflow-x-auto pr-28 pl-6 [mask-image:linear-gradient(to_right,transparent,#000_1.25rem,#000_calc(100%-7rem),transparent_calc(100%-5rem))] [scrollbar-width:none]"
+      >
+        {NAV_GROUPS.flatMap((group) => group.items).map((item) => {
+          const isActive = item.id === active;
+          return (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              data-section={item.id}
+              aria-current={isActive ? "location" : undefined}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1.5 text-caption transition-colors duration-200 motion-reduce:transition-none",
+                isActive
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-surface text-foreground-2",
+              )}
+            >
+              {item.title}
+            </a>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
 
