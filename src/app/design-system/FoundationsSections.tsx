@@ -5,6 +5,8 @@ import {
   type DynamicGlyphName,
   type MusicGlyphName,
 } from "@/components/MusicGlyph";
+import { REQUESTABLE_INSTRUMENT_TYPES } from "@/lib/constants";
+import { CURSOR_NAMES, type CursorName } from "@/lib/cursors";
 import { cn } from "@/lib/utils";
 import { SchemePreview } from "./demos";
 import { GroupHeading, Specimen, Subsection } from "./parts";
@@ -76,6 +78,13 @@ const MOTION = [
   },
 ];
 
+const CURSOR_DOCS: Record<CursorName, { label: string; use: string }> = {
+  normal: { label: "Normal", use: "Everywhere by default" },
+  link: { label: "Link", use: "Links, buttons, tabs" },
+  text: { label: "Text", use: "Inputs and text areas" },
+  unavailable: { label: "Unavailable", use: "Disabled controls" },
+};
+
 const GLYPH_DOCS: Record<
   Exclude<MusicGlyphName, DynamicGlyphName>,
   { name: string; music: string; baton: string; colour: string }
@@ -89,7 +98,7 @@ const GLYPH_DOCS: Record<
   finalBarline: {
     name: "Final barline",
     music: "Closes a score",
-    baton: "Closes landing headings, end of a returned loan",
+    baton: "Closes landing headings and the hero staff, end of a returned loan",
     colour: "Gold",
   },
   leftRepeat: {
@@ -329,6 +338,63 @@ export function FoundationsSections({ tokens }: { tokens: DesignTokens }) {
               ))}
             </tbody>
           </table>
+        </Specimen>
+      </Subsection>
+
+      <Subsection
+        id="pointer"
+        title="Cursor & scrollbar"
+        description={
+          <>
+            On desktop the pointer is part of the set too. Each cursor is a CSS
+            variable with a keyword fallback, so a file that fails to load falls
+            back to the system cursor, and the three common ones are preloaded.
+            Scrollbars are thin everywhere, with a quiet thumb that brightens on
+            hover. Cursors from{" "}
+            <a
+              href="https://www.rw-designer.com/cursor-set/ff1-0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              FF1.0 Cursors
+            </a>{" "}
+            by THTH, released to the public domain.
+          </>
+        }
+      >
+        <Specimen label="Hover each box">
+          <ul className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+            {CURSOR_NAMES.map((name) => (
+              <li
+                key={name}
+                style={{ cursor: `var(--cursor-${name})` }}
+                className="flex h-24 flex-col justify-end gap-0.5 rounded-md border border-dashed border-border-strong bg-background p-3"
+              >
+                <span className="text-label text-foreground">
+                  {CURSOR_DOCS[name].label}
+                </span>
+                <code className="truncate text-caption text-muted-foreground">
+                  --cursor-{name}
+                </code>
+                <span className="text-caption text-muted-foreground">
+                  {CURSOR_DOCS[name].use}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Specimen>
+        <Specimen label="Thin scrollbar, brighter on hover">
+          <ol className="h-32 w-full max-w-xs overflow-y-auto rounded-md border border-border bg-background">
+            {REQUESTABLE_INSTRUMENT_TYPES.map((instrument) => (
+              <li
+                key={instrument}
+                className="border-b border-border px-3 py-2 text-body text-foreground last:border-b-0"
+              >
+                {instrument}
+              </li>
+            ))}
+          </ol>
         </Specimen>
       </Subsection>
 

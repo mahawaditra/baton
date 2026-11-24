@@ -266,7 +266,7 @@ export function SurveyRadar({
                     ? "no ratings"
                     : `${axis.value.toFixed(1)} of ${MAX_RATING}`
                 }`}
-                className="cursor-default fill-transparent outline-none"
+                className="cursor-(--cursor-normal) fill-transparent outline-none"
                 onPointerEnter={() => setActiveIndex(index)}
                 onPointerLeave={() => setActiveIndex(null)}
                 onFocus={() => setActiveIndex(index)}

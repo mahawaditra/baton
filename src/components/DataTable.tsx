@@ -192,7 +192,7 @@ table.data-table tbody td:hover {
                       <button
                         type="button"
                         onClick={header.column.getToggleSortingHandler()}
-                        className="flex h-10 w-full cursor-pointer items-center gap-1 px-4 uppercase outline-none select-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
+                        className="flex h-10 w-full cursor-(--cursor-link) items-center gap-1 px-4 uppercase outline-none select-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
                       >
                         {label}
                         {sorted === "asc" ? (
@@ -221,7 +221,7 @@ table.data-table tbody td:hover {
                 onClick={(event) => handleRowClick(event, href)}
                 onAuxClick={(event) => handleRowAuxClick(event, href)}
                 data-selected={selectedHref === href || undefined}
-                className="h-14 cursor-pointer divide-x divide-border border-t border-border hover:bg-muted/75 data-selected:bg-gold-soft/60 data-selected:hover:bg-gold-soft/60"
+                className="h-14 cursor-(--cursor-link) divide-x divide-border border-t border-border hover:bg-muted/75 data-selected:bg-gold-soft/60 data-selected:hover:bg-gold-soft/60"
               >
                 {row.getVisibleCells().map((cell) => {
                   const content = flexRender(

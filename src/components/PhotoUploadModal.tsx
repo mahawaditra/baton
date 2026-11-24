@@ -88,7 +88,7 @@ export function PhotoUploadModal({
         </DialogHeader>
 
         {!imageSrc ? (
-          <label className="flex aspect-[3/4] w-full cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-border bg-muted text-sm text-muted-foreground hover:bg-muted/70">
+          <label className="flex aspect-[3/4] w-full cursor-(--cursor-link) flex-col items-center justify-center rounded-md border border-dashed border-border bg-muted text-sm text-muted-foreground hover:bg-muted/70">
             <input
               type="file"
               accept="image/*"

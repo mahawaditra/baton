@@ -29,12 +29,14 @@ export async function PublicFooter({
       <div className={cn("mx-auto", containerClassName)}>
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="font-heading text-h3 font-bold">BATON</p>
-            <p className="mt-1 text-caption text-hero-fg/70">
+            <p className="-mt-[3px] font-heading text-[3.125rem] leading-none font-extrabold tracking-tighter text-hero-fg [mask-image:linear-gradient(to_bottom,transparent,#000_70%)]">
+              BATON
+            </p>
+            <p className="mt-[9px] text-caption text-hero-fg/70">
               Logistik OSUI Mahawaditra
             </p>
           </div>
-          <nav aria-label="Tautan footer" className="flex flex-col gap-4">
+          <nav aria-label="Tautan footer" className="flex flex-col gap-2.5">
             <div className={FOOTER_GRID_CLASS}>
               {FOOTER_COLUMNS.map((column, index) => (
                 <ul key={index} className="flex flex-col gap-2.5">
@@ -59,7 +61,7 @@ export async function PublicFooter({
                       href={`https://wa.me/${whatsappNumber}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-hero-fg/90 transition-colors hover:text-gold"
+                      className="flex w-fit items-center gap-2 text-hero-fg/90 transition-colors hover:text-gold"
                     >
                       <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
                       WhatsApp
@@ -72,7 +74,7 @@ export async function PublicFooter({
                       href={lineAddFriendUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-hero-fg/90 transition-colors hover:text-gold"
+                      className="flex w-fit items-center gap-2 text-hero-fg/90 transition-colors hover:text-gold"
                     >
                       <LineIcon className="h-3.5 w-3.5 shrink-0" />
                       LINE

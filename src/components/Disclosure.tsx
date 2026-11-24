@@ -36,7 +36,7 @@ export function Disclosure({
     >
       <summary
         className={cn(
-          "flex cursor-pointer list-none items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden",
+          "flex cursor-(--cursor-link) list-none items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden",
           summaryClassName,
         )}
       >

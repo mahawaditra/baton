@@ -96,7 +96,7 @@ export function LimboForm() {
           previewUrl
             ? "border border-border"
             : "border-2 border-dashed border-gold/40 hover:bg-muted/70",
-          busy && "cursor-not-allowed opacity-60",
+          busy && "cursor-(--cursor-unavailable) opacity-60",
         )}
       >
         {previewUrl ? (

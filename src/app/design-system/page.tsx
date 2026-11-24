@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BackHomeLink } from "@/components/BackHomeLink";
 import { MusicGlyph } from "@/components/MusicGlyph";
+import { ProjectLinks } from "@/components/ProjectLinks";
 import { PublicFooter } from "@/components/PublicFooter";
 import { TicketLabel } from "@/components/TicketCard";
 import { ComponentSections } from "./ComponentSections";
@@ -67,16 +68,9 @@ export default function DesignSystemPage() {
               Everything on this page is rendered from the real tokens and
               components in the codebase, so it can&apos;t drift from the app.
             </p>
-            <a
-              href="https://github.com/mahawaditra/baton"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-stagger
-              style={staggerStyle(3)}
-              className="w-fit text-caption text-hero-fg/70 underline-offset-4 hover:text-hero-fg hover:underline"
-            >
-              mahawaditra/baton on GitHub
-            </a>
+            <div data-stagger style={staggerStyle(3)} className="mt-2">
+              <ProjectLinks tone="hero" />
+            </div>
           </div>
         </div>
       </header>

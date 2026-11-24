@@ -35,7 +35,7 @@ const initialState = {
 };
 
 const PILL_CLASS =
-  "rating-pill flex cursor-pointer items-center justify-center rounded border border-border bg-surface text-label transition-colors hover:bg-muted peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:hover:bg-primary peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50";
+  "rating-pill flex cursor-(--cursor-link) items-center justify-center rounded border border-border bg-surface text-label transition-colors hover:bg-muted peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:hover:bg-primary peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50";
 
 const RATING_DYNAMICS = {
   1: "dynamicP",

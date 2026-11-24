@@ -13,6 +13,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: "typography", title: "Typography" },
       { id: "shape", title: "Radius & shadow" },
       { id: "motion", title: "Motion" },
+      { id: "pointer", title: "Cursor & scrollbar" },
       { id: "glyphs", title: "Music glyphs" },
     ],
   },

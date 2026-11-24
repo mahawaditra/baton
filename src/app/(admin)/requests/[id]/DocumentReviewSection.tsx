@@ -134,7 +134,7 @@ export function DocumentReviewSection({
                     />
                     <label
                       htmlFor={`approve_${doc.id}`}
-                      className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/approve:border-success peer-checked/approve:bg-success-soft peer-checked/approve:text-success-soft-foreground"
+                      className="inline-flex h-8 cursor-(--cursor-link) items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/approve:border-success peer-checked/approve:bg-success-soft peer-checked/approve:text-success-soft-foreground"
                     >
                       <Check className="h-3.5 w-3.5" strokeWidth={2} />
                       Approve
@@ -152,7 +152,7 @@ export function DocumentReviewSection({
                     />
                     <label
                       htmlFor={`reject_${doc.id}`}
-                      className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/reject:border-destructive peer-checked/reject:bg-destructive-soft peer-checked/reject:text-destructive"
+                      className="inline-flex h-8 cursor-(--cursor-link) items-center gap-1.5 rounded border border-border px-3 text-xs font-medium text-muted-foreground peer-checked/reject:border-destructive peer-checked/reject:bg-destructive-soft peer-checked/reject:text-destructive"
                     >
                       <X className="h-3.5 w-3.5" strokeWidth={2} />
                       Reject

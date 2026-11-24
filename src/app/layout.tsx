@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CursorPreload } from "@/components/CursorPreload";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -58,6 +59,7 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", plusJakartaSans.variable)}
     >
       <body className="min-h-full flex flex-col">
+        <CursorPreload />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

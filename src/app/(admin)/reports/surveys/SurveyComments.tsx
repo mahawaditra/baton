@@ -104,7 +104,7 @@ export function SurveyComments({
                 </span>
               </CardHeader>
               <CardContent className="flex-1">
-                <div className="scrollbar-subtle h-72 overflow-y-auto pr-3">
+                <div className="h-72 overflow-y-auto pr-3">
                   {entries.length === 0 ? (
                     <EmptyState
                       size="compact"

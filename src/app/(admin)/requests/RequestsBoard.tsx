@@ -220,7 +220,7 @@ function BoardColumnView({
           <SortIcon className="h-3.5 w-3.5" strokeWidth={2} />
         </Button>
       </header>
-      <div className="scrollbar-subtle flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto [scrollbar-gutter:stable] pt-0.5 pr-0.5 pb-2.5 pl-2.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto [scrollbar-gutter:stable] pt-0.5 pr-0.5 pb-2.5 pl-2.5">
         {items.length === 0 ? (
           <EmptyState size="compact" title="No requests" />
         ) : (
@@ -298,7 +298,7 @@ export function RequestsBoard({ requests }: { requests: RequestRow[] }) {
       )}
       <div
         ref={boardRef}
-        className="scrollbar-subtle flex items-stretch gap-3 overflow-x-auto max-lg:snap-x max-lg:snap-mandatory"
+        className="flex items-stretch gap-3 overflow-x-auto max-lg:snap-x max-lg:snap-mandatory"
       >
         {visibleColumns.map((column) => (
           <BoardColumnView

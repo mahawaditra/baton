@@ -98,7 +98,7 @@ export function AssignSection({
               disabled={pendingId !== null}
               className={cn(
                 "flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-muted",
-                "disabled:cursor-not-allowed disabled:opacity-60",
+                "disabled:cursor-(--cursor-unavailable) disabled:opacity-60",
               )}
             >
               <span className="h-4 w-4 shrink-0 rounded-full border-2 border-border-strong" />

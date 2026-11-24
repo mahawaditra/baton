@@ -131,7 +131,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-
   --radius: var(--radius);
   --radius-xs: var(--radius-xs);
   --radius-sm: var(--radius-sm);
@@ -318,9 +317,12 @@
   --shadow-lg:
     0 8px 24px color-mix(in oklch, var(--shadow-color) 10%, transparent),
     0 2px 6px color-mix(in oklch, var(--shadow-color) 5%, transparent);
-  --shadow-popover: 0 12px 32px color-mix(in oklch, var(--shadow-color) 14%, transparent);
-  --shadow-focus: 0 0 0 3px color-mix(in oklch, var(--gold-400) 35%, transparent);
-  --shadow-hero-btn: 0 8px 24px color-mix(in oklch, var(--night-900) 35%, transparent);
+  --shadow-popover: 0 12px 32px
+    color-mix(in oklch, var(--shadow-color) 14%, transparent);
+  --shadow-focus: 0 0 0 3px
+    color-mix(in oklch, var(--gold-400) 35%, transparent);
+  --shadow-hero-btn: 0 8px 24px
+    color-mix(in oklch, var(--night-900) 35%, transparent);
 }
 
 .dark {
@@ -342,7 +344,8 @@
   --gold-soft-foreground: var(--gold-300);
   --hero-bg: var(--night-800);
   --hero-fg: var(--cream-300);
-  --shadow-hero-btn: 0 8px 24px color-mix(in oklch, var(--night-950) 55%, transparent);
+  --shadow-hero-btn: 0 8px 24px
+    color-mix(in oklch, var(--night-950) 55%, transparent);
 
   --success: var(--sage-300);
   --success-soft: var(--sage-900);
@@ -396,8 +399,31 @@
 }
 
 @layer base {
+  :root {
+    --cursor-normal: url("/cursors/normal.cur"), auto;
+    --cursor-link: url("/cursors/link.cur"), pointer;
+    --cursor-text: url("/cursors/text.cur"), text;
+    --cursor-unavailable: url("/cursors/unavailable.cur"), not-allowed;
+  }
+  html {
+    cursor: var(--cursor-normal);
+  }
+  :where(a[href], button, summary, label[for], [role="button"], [role="tab"]) {
+    cursor: var(--cursor-link);
+  }
+  :where(input:not([type="checkbox"], [type="radio"], [type="range"]), textarea) {
+    cursor: var(--cursor-text);
+  }
+  :where(:disabled, [aria-disabled="true"]) {
+    cursor: var(--cursor-unavailable);
+  }
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  :not(html):hover {
+    scrollbar-color: var(--muted-foreground) transparent;
   }
   :is(h1, h2, h3, h4, h5, h6) {
     text-wrap: balance;
@@ -755,49 +781,92 @@
 .ticket-notch-bottom {
   mask:
     var(--ticket-holes),
-    radial-gradient(circle at 0 100%, #0000 var(--ticket-notch), #000 calc(var(--ticket-notch) + 0.5px)),
-    radial-gradient(circle at 100% 100%, #0000 var(--ticket-notch), #000 calc(var(--ticket-notch) + 0.5px));
+    radial-gradient(
+      circle at 0 100%,
+      #0000 var(--ticket-notch),
+      #000 calc(var(--ticket-notch) + 0.5px)
+    ),
+    radial-gradient(
+      circle at 100% 100%,
+      #0000 var(--ticket-notch),
+      #000 calc(var(--ticket-notch) + 0.5px)
+    );
   mask-composite: intersect;
 }
 
 .ticket-notch-top {
   mask:
     var(--ticket-holes),
-    radial-gradient(circle at 0 0, #0000 var(--ticket-notch), #000 calc(var(--ticket-notch) + 0.5px)),
-    radial-gradient(circle at 100% 0, #0000 var(--ticket-notch), #000 calc(var(--ticket-notch) + 0.5px));
+    radial-gradient(
+      circle at 0 0,
+      #0000 var(--ticket-notch),
+      #000 calc(var(--ticket-notch) + 0.5px)
+    ),
+    radial-gradient(
+      circle at 100% 0,
+      #0000 var(--ticket-notch),
+      #000 calc(var(--ticket-notch) + 0.5px)
+    );
   mask-composite: intersect;
 }
 
 @media (width >= 64rem) {
   .ticket-perforated.ticket-notch-bottom {
     --ticket-holes:
-      radial-gradient(circle at 25% 100%, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px)),
-      radial-gradient(circle at 50% 100%, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px)),
-      radial-gradient(circle at 75% 100%, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px));
+      radial-gradient(
+        circle at 25% 100%,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      ),
+      radial-gradient(
+        circle at 50% 100%,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      ),
+      radial-gradient(
+        circle at 75% 100%,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      );
   }
 
   .ticket-perforated.ticket-notch-top {
     --ticket-holes:
-      radial-gradient(circle at 25% 0, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px)),
-      radial-gradient(circle at 50% 0, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px)),
-      radial-gradient(circle at 75% 0, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px)),
-      radial-gradient(circle at 25% 100%, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px)),
-      radial-gradient(circle at 50% 100%, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px)),
-      radial-gradient(circle at 75% 100%, #0000 var(--ticket-perforation), #000 calc(var(--ticket-perforation) + 0.5px));
+      radial-gradient(
+        circle at 25% 0,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      ),
+      radial-gradient(
+        circle at 50% 0,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      ),
+      radial-gradient(
+        circle at 75% 0,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      ),
+      radial-gradient(
+        circle at 25% 100%,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      ),
+      radial-gradient(
+        circle at 50% 100%,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      ),
+      radial-gradient(
+        circle at 75% 100%,
+        #0000 var(--ticket-perforation),
+        #000 calc(var(--ticket-perforation) + 0.5px)
+      );
   }
 }
 
 body:has([data-admin-shell]) [data-theme-toggle] {
   display: none;
-}
-
-.scrollbar-subtle {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
-}
-
-.scrollbar-subtle:hover {
-  scrollbar-color: var(--muted-foreground) transparent;
 }
 
 input:-webkit-autofill,

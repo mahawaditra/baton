@@ -21,7 +21,7 @@ export function LoanableCheckbox({
       }
       className={cn(
         "flex h-10 items-center gap-2 text-sm",
-        blocked && "cursor-not-allowed text-muted-foreground opacity-60",
+        blocked && "cursor-(--cursor-unavailable) text-muted-foreground opacity-60",
       )}
     >
       <Checkbox
