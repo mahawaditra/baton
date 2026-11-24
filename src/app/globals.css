@@ -411,7 +411,10 @@
   :where(a[href], button, summary, label[for], [role="button"], [role="tab"]) {
     cursor: var(--cursor-link);
   }
-  :where(input:not([type="checkbox"], [type="radio"], [type="range"]), textarea) {
+  :where(
+    input:not([type="checkbox"], [type="radio"], [type="range"]),
+    textarea
+  ) {
     cursor: var(--cursor-text);
   }
   :where(:disabled, [aria-disabled="true"]) {
@@ -923,6 +926,33 @@ input:autofill {
   }
 }
 
+.gold-hairline {
+  position: relative;
+}
+
+.gold-hairline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--gold) 80%, transparent),
+    color-mix(in oklab, var(--gold) 25%, transparent),
+    color-mix(in oklab, var(--gold) 60%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
 .legacy-plaque {
   isolation: isolate;
   background-color: var(--surface);
@@ -966,6 +996,223 @@ html:has([data-force-dark]) body {
   mix-blend-mode: soft-light;
   background-size: 160px 160px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::view-transition-group(crew-photo) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+::view-transition-old(crew-photo),
+::view-transition-new(crew-photo) {
+  height: 100%;
+  object-fit: cover;
+}
+
+:root[data-crew-morph]::view-transition-old(root),
+:root[data-crew-morph]::view-transition-new(root) {
+  animation-duration: 220ms;
+}
+
+.limbo-veil,
+.limbo-vignette {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.limbo-veil {
+  background: #000;
+}
+
+.limbo-vignette {
+  background: radial-gradient(
+    circle at var(--limbo-focus-x, 50%) var(--limbo-focus-y, 50%),
+    transparent 90px,
+    rgb(0 0 0 / 0.6) 320px,
+    rgb(0 0 0 / 0.92) 900px
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .limbo-veil {
+    animation: limbo-dawn 1600ms ease-out backwards;
+    transition: opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1) 300ms;
+  }
+
+  .limbo-vignette {
+    transition: opacity 300ms ease-out;
+  }
+
+  [data-limbo-mood="holding"] .limbo-vignette {
+    opacity: 1;
+    transition: opacity 1500ms ease-out;
+  }
+
+  [data-limbo-mood="farewell"] :is(.limbo-vignette, .limbo-veil) {
+    opacity: 1;
+  }
+
+  .limbo-card {
+    animation: limbo-card-in 900ms cubic-bezier(0.2, 0, 0, 1) 200ms backwards;
+    transition:
+      opacity 1200ms ease-in 300ms,
+      translate 1200ms ease-in 300ms,
+      filter 1200ms ease-in 300ms;
+  }
+
+  [data-limbo-mood="farewell"] .limbo-card {
+    opacity: 0;
+    translate: 0 -32px;
+    filter: blur(6px);
+  }
+
+  [data-limbo-enter] {
+    animation: limbo-in 700ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    animation-delay: var(--limbo-delay, 0ms);
+  }
+
+  .limbo-glow {
+    animation:
+      limbo-in 700ms cubic-bezier(0.2, 0, 0, 1) backwards,
+      limbo-glow 2400ms ease-out backwards;
+    animation-delay: var(--limbo-delay, 0ms);
+  }
+
+  .limbo-develop {
+    animation: limbo-develop 1600ms cubic-bezier(0.2, 0, 0, 1) backwards;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-legacy-enter] {
+    animation: legacy-rise 600ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    animation-delay: var(--legacy-delay, 0ms);
+  }
+
+  .legacy-divider {
+    transition: scale 900ms cubic-bezier(0.2, 0, 0, 1) 150ms;
+  }
+
+  [data-reveal="waiting"] .legacy-divider {
+    scale: 0 1;
+  }
+
+  .legacy-reveal[data-reveal="static"] .legacy-divider {
+    animation: legacy-draw 900ms cubic-bezier(0.2, 0, 0, 1) 900ms backwards;
+  }
+
+  .legacy-reveal[data-reveal="static"]
+    :is([data-reveal-child], [data-reveal-grid] > *) {
+    animation: legacy-rise 600ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    animation-delay: calc(1000ms + var(--grid-index, 0) * 70ms);
+  }
+
+  .legacy-reveal[data-reveal="static"] .legacy-emblem-glow {
+    animation: limbo-glow 2400ms ease-out backwards;
+    animation-delay: calc(1400ms + var(--grid-index, 0) * 70ms);
+  }
+
+  .legacy-reveal[data-reveal="shown"] .legacy-emblem-glow {
+    animation: limbo-glow 2400ms ease-out backwards;
+    animation-delay: calc(400ms + var(--grid-index, 0) * 70ms);
+  }
+}
+
+@keyframes legacy-draw {
+  from {
+    scale: 0 1;
+  }
+}
+
+.scramble-cell {
+  position: relative;
+  display: inline-block;
+  height: 1lh;
+  clip-path: inset(-0.15em);
+}
+
+.scramble-final {
+  visibility: hidden;
+}
+
+.scramble-strip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1lh;
+  translate: -50% calc(var(--scramble-steps) * -2lh);
+}
+
+.scramble-strip > span {
+  height: 1lh;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scramble-strip {
+    animation: scramble-roll var(--scramble-duration)
+      steps(var(--scramble-steps)) var(--scramble-delay) both;
+  }
+}
+
+@keyframes scramble-roll {
+  from {
+    translate: -50% 0;
+  }
+}
+
+@keyframes legacy-rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+@keyframes limbo-dawn {
+  from {
+    opacity: 1;
+  }
+}
+
+@keyframes limbo-card-in {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+    scale: 0.98;
+  }
+}
+
+@keyframes limbo-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+
+@keyframes limbo-glow {
+  from {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  45% {
+    filter: drop-shadow(
+      0 0 14px color-mix(in oklab, var(--gold) 70%, transparent)
+    );
+  }
+  to {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+@keyframes limbo-develop {
+  from {
+    opacity: 0;
+    filter: grayscale(1) blur(10px) brightness(1.6) contrast(0.8);
+  }
+  35% {
+    opacity: 1;
+  }
 }
 
 @keyframes marquee-l {

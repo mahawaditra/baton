@@ -3,18 +3,33 @@ import type { Tombstone } from "@/generated/prisma/client";
 import { formatKetuaLine, usesTwoStaffColumns } from "@/lib/legacy/legacy";
 import { cn } from "@/lib/utils";
 
+function StaffLines() {
+  return (
+    <span aria-hidden className="flex h-2.5 flex-1 flex-col justify-between">
+      {Array.from({ length: 5 }, (_, index) => (
+        <span key={index} className="h-px bg-border-strong" />
+      ))}
+    </span>
+  );
+}
+
 export function TombstoneCard({ tombstone }: { tombstone: Tombstone }) {
   const twoColumns = usesTwoStaffColumns(tombstone.staffNames.length);
 
   return (
-    <article className="flex w-[19.5rem] shrink-0 rounded-t-[9.75rem] rounded-b-2xl bg-linear-to-b from-gold/80 via-gold/25 to-gold/60 p-[1.5px] shadow-sm transition-shadow hover:shadow-[0_12px_36px_-12px_color-mix(in_oklab,var(--gold)_45%,transparent)]">
-      <div className="legacy-plaque relative flex min-h-[36.75rem] flex-1 flex-col items-center gap-3 rounded-t-[calc(9.75rem-1.5px)] rounded-b-[calc(1rem-1.5px)] px-6 pt-7 pb-9 text-center">
+    <article className="flex w-[19.5rem] shrink-0 gold-hairline rounded-t-[9.75rem] rounded-b-2xl shadow-sm transition-shadow hover:shadow-[0_12px_36px_-12px_color-mix(in_oklab,var(--gold)_45%,transparent)]">
+      <div className="legacy-plaque relative flex min-h-[36.75rem] flex-1 flex-col items-center gap-3 rounded-t-[9.75rem] rounded-b-2xl px-6 pt-7 pb-9 text-center">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-2.5 rounded-t-[9.25rem] rounded-b-xl border border-gold/30"
         />
 
-        <div aria-hidden className="legacy-emblem aspect-[1146/1820] h-[4.75rem]" />
+        <span className="legacy-emblem-glow block">
+          <span
+            aria-hidden
+            className="legacy-emblem block aspect-[1146/1820] h-[4.75rem]"
+          />
+        </span>
 
         <div className="font-heading text-h2 tabular text-gold-soft-foreground">
           {tombstone.termYear}
@@ -46,11 +61,11 @@ export function TombstoneCard({ tombstone }: { tombstone: Tombstone }) {
         {tombstone.staffNames.length > 0 && (
           <div className="mt-3 flex w-full flex-col items-center gap-2.5">
             <div className="flex w-full items-center gap-3">
-              <span aria-hidden className="h-px flex-1 bg-border" />
+              <StaffLines />
               <span className="text-micro tracking-[0.2em] text-muted-foreground uppercase">
                 Staffs
               </span>
-              <span aria-hidden className="h-px flex-1 bg-border" />
+              <StaffLines />
             </div>
             <ul
               className={cn(

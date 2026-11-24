@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { MUSIC_GLYPH_NAMES, MusicGlyph } from "@/components/MusicGlyph";
 import { Reveal } from "@/components/Reveal";
@@ -99,7 +98,6 @@ export function LandingDesignSystem() {
               )}
             >
               Open the design system
-              <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </Link>
           </div>
 

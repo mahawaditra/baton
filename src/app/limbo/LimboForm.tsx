@@ -10,6 +10,7 @@ import { toastError } from "@/lib/toast";
 import { HoldButton } from "@/components/HoldButton";
 import { cn } from "@/lib/utils";
 import { Notice } from "@/components/Notice";
+import { useSetLimboMood } from "./LimboShell";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png"];
 
@@ -21,6 +22,24 @@ export function LimboForm() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [holding, setHolding] = useState(false);
+  const holdRef = useRef<HTMLDivElement>(null);
+  const setMood = useSetLimboMood();
+
+  useEffect(() => {
+    setMood(pending ? "farewell" : holding ? "holding" : "idle");
+  }, [pending, holding, setMood]);
+
+  function handleHoldChange(nextHolding: boolean) {
+    const rect = holdRef.current?.getBoundingClientRect();
+    if (nextHolding && rect) {
+      setMood("holding", {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    }
+    setHolding(nextHolding);
+  }
 
   useEffect(() => {
     return () => {
@@ -60,9 +79,13 @@ export function LimboForm() {
     startTransition(async () => {
       try {
         const result = await completeHandover(formData);
-        if (result.error) setError(result.error);
+        if (result.error) {
+          setError(result.error);
+          setHolding(false);
+        }
       } catch (err) {
         unstable_rethrow(err);
+        setHolding(false);
         toastError("Couldn't finish the handover. Try again.");
       }
     });
@@ -92,20 +115,21 @@ export function LimboForm() {
           previewUrl ? "Choose a different photo" : "Attach your soul"
         }
         className={cn(
-          "relative flex aspect-square w-56 items-center justify-center overflow-hidden rounded-2xl bg-muted transition-colors sm:w-64",
+          "relative flex aspect-square w-56 items-center justify-center overflow-hidden rounded-2xl bg-muted transition-colors sm:w-[clamp(10rem,calc(100svh-37.5rem),16rem)]",
           previewUrl
-            ? "border border-border"
+            ? "border-2 border-gold/70"
             : "border-2 border-dashed border-gold/40 hover:bg-muted/70",
           busy && "cursor-(--cursor-unavailable) opacity-60",
         )}
       >
         {previewUrl ? (
           <Image
+            key={previewUrl}
             src={previewUrl}
             alt="Your photo"
             fill
             unoptimized
-            className="object-cover"
+            className="limbo-develop object-cover"
           />
         ) : (
           <span className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -131,16 +155,19 @@ export function LimboForm() {
         </Notice>
       )}
 
-      <HoldButton
-        label="Hold to sacrifice yourself"
-        holdingLabel="Keep holding..."
-        pendingLabel="Goodbye..."
-        pending={pending}
-        disabled={!file || processing}
-        size="lg"
-        className="min-w-64"
-        onConfirm={() => formRef.current?.requestSubmit()}
-      />
+      <div ref={holdRef}>
+        <HoldButton
+          label="Hold to sacrifice yourself"
+          holdingLabel="Keep holding..."
+          pendingLabel="Goodbye..."
+          pending={pending}
+          disabled={!file || processing}
+          size="lg"
+          className="min-w-64"
+          onHoldChange={handleHoldChange}
+          onConfirm={() => formRef.current?.requestSubmit()}
+        />
+      </div>
     </form>
   );
 }

@@ -2,6 +2,7 @@ type LegacyCrewMember = {
   slug: string;
   name: string;
   lines: string[];
+  previewLines?: string[];
   featured?: boolean;
   photoDriveFileId: string | null;
   mimeType: string;
@@ -17,6 +18,7 @@ export const LEGACY_CREW: LegacyCrewMember[] = [
       "Wakadiv '22 & Kadiv '23",
       "BATON sole developer",
     ],
+    previewLines: ["Percussion '20", "Wakadiv '22 & Kadiv '23"],
     featured: true,
     photoDriveFileId: "19-vUjHeQzeaKfc_FB0zP8o8q8pPRfQ1E",
     mimeType: "image/webp",

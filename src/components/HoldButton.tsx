@@ -17,6 +17,7 @@ type HoldButtonProps = {
   size?: "default" | "lg";
   className?: string;
   describedBy?: string;
+  onHoldChange?: (holding: boolean) => void;
   onConfirm: () => void;
 };
 
@@ -30,6 +31,7 @@ export function HoldButton({
   size = "default",
   className,
   describedBy,
+  onHoldChange,
   onConfirm,
 }: HoldButtonProps) {
   const [holding, setHolding] = useState(false);
@@ -45,6 +47,7 @@ export function HoldButton({
     if (disabled || pending || timerRef.current !== null) return;
 
     setHolding(true);
+    onHoldChange?.(true);
     timerRef.current = setTimeout(() => {
       timerRef.current = null;
       setHolding(false);
@@ -57,6 +60,7 @@ export function HoldButton({
     clearTimeout(timerRef.current);
     timerRef.current = null;
     setHolding(false);
+    onHoldChange?.(false);
   }
 
   const filled = holding || pending;

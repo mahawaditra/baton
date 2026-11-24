@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { BarlineHeading } from "@/components/BarlineHeading";
 import { HeroMarquee } from "@/components/HeroMarquee";
@@ -28,7 +27,6 @@ export function LandingLegacy() {
             )}
           >
             Visit the Legacy
-            <ArrowRight className="h-4 w-4" strokeWidth={2} />
           </Link>
         </Reveal>
       </section>
